@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description"
+	content="Cet article présente le fonctionnement de Mk, un système d'exploitation compatible avec les familles de composants STM32F74 et STM32F75.">
+<title>Un système d'exploitation pour MCU</title>
+<link rel="canonical"
+	href="https://lafabriquedumcu.com/articles/rtos/mk.html">
+<link href="../../index/css/style.css" rel="stylesheet">
+<link href="../../index/css/template.css" rel="stylesheet">
+<link href="css/main.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+	href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+	rel="stylesheet">
+</head>
+
+<body>
+	<header>
+		<div>
+			<a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+		</div>
+		<div class="onglet">
+			<nav>
+				<a href="https://github.com/EmbSoft3 " target="_blank">Github</a>
+			</nav>
+		</div>
+	</header>
+
+	<main>
+		<section class="mk">
+			<div>
+
+				<!-- Introduction -->
+				<p>Si vous êtes ici, c'est que vous souhaitez en apprendre plus
+					sur mon système d'exploitation ou perfectionner vos connaissances
+					sur les MCU. Ça tombe bien, je vous assure que cette page est faite
+					pour vous ... 😅 !</p>
+				<br>
+				<p>Mais pas si vite, avant d'entrer dans le vif du sujet, je
+					dois m'assurer que vous maîtrisiez les pré-requis nécessaires à la
+					bonne compréhension de celui-ci. Je vous ai donc rédigé quelques
+					articles expliquant l'architecture et le fonctionnement d'un MCU.</p>
+				<br>
+
+				<p>Si vous êtes déjà familier avec les notions ci-dessous, pas
+					de panique, vous pouvez sauter les premiers articles et passer
+					directement au vif du sujet. Notez cependant que certains articles
+					contiennent de petites combines idéales pour impressionner votre
+					entourage. Pas-grand-chose hein, juste de quoi briller de mille
+					feux lors de vos interventions. Allez, c'est parti 🚀 !</p>
+
+
+				<p></p>
+				<!-- Chapitre 1 -->
+				<p class="title">1. Des rappels à la pelle</p>
+
+				<p>Le monde des MCU est vaste et depuis leur création, beaucoup
+					d'architectures ont émergées. Bien qu'arpentant le domaine depuis
+					quelques années déjà, je ne suis pas en mesure de vous fournir un
+					cours totalement exhaustif.</p>
+				<p>
+					C'est pourquoi, nous nous concentrerons sur un MCU en particulier,
+					celui que je connais le mieux, le <a
+						href="https://www.st.com/en/microcontrollers-microprocessors/stm32f746ng.html"
+						target="_blank"><strong>STM32F746NG</strong></a>.
+				</p>
+				<br>
+				<p>Dans l'ensemble des articles ci-dessous, je me baserais
+					principalement sur les documents suivants :
+				<p>
+				<ul>
+					<li><span class="gray">✔</span> le doc <a
+						href="https://developer.arm.com/documentation/dui0646/c/?lang=en"
+						target="_blank">"Arm Cortex-M7 Devices Generic User Guide
+							(REV. r1P2)"</a> du coeur.</li>
+					<li><span class="gray">✔</span> le doc <a
+						href="https://developer.arm.com/documentation/ddi0489/f/?lang=en"
+						target="_blank">"Arm Cortex-M7 Technical Reference Manual
+							(REV. r1P2)"</a> du coeur.</li>
+					<li><span class="gray">✔</span> le doc <a
+						href="https://www.st.com/en/microcontrollers-microprocessors/stm32f746ng.html#documentation"
+						target="_blank">"Reference manual (RM0385 REV. 8)"</a> du MCU.</li>
+				</ul>
+				<p>Ces 3 documents constituent la bible du composant. Ils sont
+					essentiels à sa mise en oeuvre. Nous les découvrirons ensemble au
+					fil de nos aventures et à la fin de celle-ci, j'espère bien qu'ils
+					n'auront plus aucun secret pour vous 😉.</p>
+				<br>
+				<p>Bon, je crois que tout est dit ! Nous pouvons commencer.
+					Ci-dessous, vous trouverez la liste des articles que j'ai déjà
+					rédigés sur le sujet :</p>
+				<ul>
+					<li><span class="gray">✔</span> Article 1 - <a
+						href="../mcu/architecture.html">L'architecture du MCU</a>.</li>
+					<li><span class="gray">✔</span> Article 2 - <a
+						href="../../progress/progress.html">Les registres du MCU</a>.</li>
+					<li><span class="gray">✔</span> Article 3 - <a
+						href="../../progress/progress.html">Le cache et les
+							accélérateurs du MCU</a>.</li>
+					<li><span class="gray">✔</span> Article 4 - <a
+						href="../../progress/progress.html">La DMA, des transferts
+							sans intervention du CPU</a>.</li>
+					<li><span class="gray">✔</span> Article 5 - <a
+						href="../../progress/progress.html">La MPU et l'organisation
+							mémoire</a>.</li>
+					<li><span class="gray">✔</span> Article 6 - <a
+						href="../../progress/progress.html">La FPU, ses avantages et
+							ses inconvénients</a>.</li>
+					<li><span class="gray">✔</span> Article 7 - <a
+						href="../../progress/progress.html">L'architecture du CPU</a>.</li>
+				</ul>
+
+				<!-- Chapitre 2 -->
+				<h1>2. Un système d'exploitation sur MCU</h1>
+				<p>Désolé, la suite de cette page n'a pas encore été écrite 😭.
+					Je l'actualiserai prochainement quand les articles de la section
+					précédente seront terminés.</p>
+
+			</div>
+		</section>
+	</main>
+
+	<footer>
+		<div>
+			<p>La fabrique du MCU.</p>
+			<p>Copyright © 2024, All rights reserved.</p>
+		</div>
+	</footer>
+
+</body>
+</html>
+

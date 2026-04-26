@@ -1,0 +1,197 @@
+
+/* ************************************************************************** */
+/* Sections header */
+
+header
+{
+	display: flex;
+    flex-wrap: wrap;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	padding-top: 2.5%;
+	padding-bottom: 0.5em;
+    border-bottom: 1px dotted rgb(255, 255, 255);
+    font-weight: bold;
+}
+
+header .onglet
+{
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-end;
+}
+
+header div a
+{
+	color: rgb(255, 255, 255);;
+	font-size: 1.5em;
+	text-decoration: none;	
+}
+
+header .onglet a
+{
+	color: rgb(43, 188, 138);
+	font-size: 1.5em;
+	padding-left: 0.3em;
+}
+
+header div span
+{
+	color: rgb(43, 188, 138);
+}
+
+@media screen and (max-width: 640px) 
+{
+	header
+	{
+		display: flex;
+	    flex-wrap: wrap;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		padding-top: 1.5em;
+		padding-bottom: 1em;
+	    border-bottom: 1px dotted rgb(255, 255, 255);
+	    font-weight: bold;
+	}
+	
+	header .onglet 
+	{
+		padding-top: 0.3em;
+	}
+	
+	header .onglet a
+	{
+		color: rgb(43, 188, 138);
+		font-size: 1.1em;
+		padding-left: 0.35em;
+		padding-right: 0.35em;
+	}
+	
+	header div span
+	{
+		display: none;
+		color: rgb(43, 188, 138);
+	}
+}
+
+/* ************************************************************************** */
+/* Sections main */
+
+main
+{
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: column;
+	padding-top: 2%;
+}
+
+main section div 
+{
+	padding-top: 1%;
+	padding-bottom: 1%;
+}
+
+/* ************************************************************************** */
+/* Section next-article */
+
+.button-article
+{
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	margin-top : 40px;
+	font-size: 1.0em;
+}
+
+.button-article div
+{
+	display: flex;
+	align-items: center;
+	background-color:  #212326;
+	border-radius: 10px;
+}
+
+.button-article p, .button-article a 
+{
+	color: rgb(230, 230, 230);
+	margin-top : 0em;
+	padding-left: 10px;
+	padding-right: 10px;
+	text-align: center;
+	font-weight: normal;
+	border-radius: 10px;
+}
+
+/* ************************************************************************** */
+
+.emoji-font
+{
+	font-family: "Noto Color Emoji", sans-serif;
+  	font-weight: 400;
+  	font-style: normal;			
+}
+
+/* ************************************************************************** */
+/* Section comment */
+
+.warning, .answer, .comment
+{
+	display: flex;
+	align-items: center;
+	background: #212326;
+	padding-left: 1em;
+	padding-right: 1.5em;
+	border-radius: 10px;
+}
+
+.warning-logo, .answer-logo, .comment-logo
+{
+	font-family: "Noto Color Emoji";
+  	font-weight: 400;
+  	font-style: normal;
+	margin-top : 0em;
+	font-size: 3em;
+	margin-right: 0.5em;
+	/*color: rgb(134, 154, 181);*/
+}
+
+.warning-text, .answer-text, .comment-text
+{
+	display: flex;
+	flex-direction: column;
+}
+
+.comment-text p
+{
+	margin-bottom: 1.0em;
+}
+
+/* ************************************************************************** */
+/* Section Footer */
+
+footer
+{
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: auto;
+	margin-bottom: 16px;
+	width: 100%;
+}
+
+footer div
+{
+    display: flex;
+	align-items: center;
+	flex-direction: column;
+    padding-top: 240px;
+    font-style: italic;
+    /*border-top: 1px dotted rgb(255, 255, 255);*/
+}
+
+footer div p
+{
+	text-align: center;
+}

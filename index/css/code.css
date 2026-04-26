@@ -1,0 +1,48 @@
+.code 
+{
+	padding: 10px 15px;
+	margin: 0px;
+	font-size: 1.1em;
+	line-height: 1.5em;
+	border-radius: 10px;
+	font-family: monospace;
+  	background: #212326;
+  	color: #d1d9e1;
+  	white-space: pre-line;
+}
+
+.code .default
+{
+  	color: #d1d9e1;
+}
+
+.code .multi-line-comment
+{
+	color: #969896;
+  	font-style: italic;		
+}
+
+.code .type
+{
+	color: #c9c;	
+}
+
+.code .keyword
+{
+	color: #c9c;
+}
+
+.code .string
+{
+	color: #8abeb7;
+}
+
+.code .number
+{
+	color: #f99157;
+}
+
+.code .instruction
+{
+	color: #8abeb7;
+}

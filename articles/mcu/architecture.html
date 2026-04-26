@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description"
+	content="Cet article présente l'exécution d'un  programme informatique et les interactions du CPU avec les périphériques, les mémoires et les bus de communication.">
+<title>L'architecture du MCU</title>
+<link rel="canonical"
+	href="https://lafabriquedumcu.com/articles/mcu/architecture.html">
+<link href="../../index/css/style.css" rel="stylesheet">
+<link href="../../index/css/template.css" rel="stylesheet">
+<link href="../../index/css/code.css" rel="stylesheet">
+<link href="css/mcu.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+	href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+	rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+	href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap"
+	rel="stylesheet">
+</head>
+
+<body>
+	<header>
+		<div>
+			<a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+		</div>
+		<div class="onglet">
+			<nav>
+				<a href="https://github.com/EmbSoft3 " target="_blank">Github</a>
+			</nav>
+		</div>
+	</header>
+
+	<main>
+		<section>
+			<div>
+				<!-- Introduction -->
+
+				<p>
+					Cling <span class="emoji-font">🔨</span>, Cling <span
+						class="emoji-font">🔨</span>, Zzzou <span class="emoji-font">🪚</span>,
+					Zzzou <span class="emoji-font">🪚</span>, Bom <span
+						class="emoji-font">🔨</span>, Bom <span class="emoji-font">🔨</span>,
+					..., pfffiou 😮‍💨 !
+				</p>
+				<br>
+
+				<p>
+					Nous y voilà, la <strong>Fabrique du MCU</strong> est enfin prête
+					pour son premier article 🥰. Cela étant fait, nous allons enfin
+					pouvoir commencer à étudier l'architecture de nos composants
+					préférés, "ou détestés pour la plupart", les MCUs.
+				</p>
+				<br>
+
+				<p>
+					Le sujet est vaste, très vaste. C'est pourquoi, pour commencer,
+					j'ai décidé de me concentrer sur les 4 notions essentielles que
+					sont les <span class="bold">périphériques</span>, la <span
+						class="bold">mémoire</span>, les <span class="bold">bus de
+						communication</span> et les <span class="bold"> matrices</span>
+					d'interconnexion.
+				</p>
+				<br>
+
+				<p>Mais avant ça, comme tout article qui se respecte un minimum,
+					commençons par les bonnes vieilles définitions. Ça fait toujours
+					mieux !</p>
+
+				<!-- Définitions -->
+				<p class="title">1. Définitions</p>
+
+				<p>
+					Un <span class="bold">microcontrôleur</span> ou MCU est un circuit
+					électronique constitué d'un CPU, d'une ou plusieurs mémoires et
+					d'un ensemble de périphériques.
+				</p>
+				<br>
+
+				<p>
+					On le distingue de son grand frère le <span class="bold">microprocesseur</span>
+					(MPU) par une fréquence de fonctionnement plus faible, une
+					consommation moindre, une architecture simplifiée et l'intégration
+					des mémoires et des périphériques à l'intérieur de la puce.
+				</p>
+				<br>
+
+				<p>On utilisera généralement un MCU pour des applications
+					embarquées demandant des performances réduites alors que le MPU
+					sera réservé aux applications demandant des performances élevées.</p>
+				<br>
+
+				<div class="comment">
+					<p class="comment-logo">💬</p>
+					<p>Voilà, simple non ! On pourrait comparer un MCU à une p'tite
+						berline alors qu'un MPU c'est la sportive qui va de 0 à 100 en une
+						seconde et demie !</p>
+				</div>
+				<br>
+
+				<p>Allez, trêve de plaisanterie et demandons-nous comment
+					fonctionnent ces MCU ?</p>
+
+				<!-- L'architecture -->
+				<h1>2. L'architecture du MCU</h1>
+				<p>
+					C'est une très bonne question. D'ailleurs, l'image ci-dessous nous
+					présente l'architecture des familles de composants <span
+						class="bold">STM32F75xxx</span> et <span class="bold">STM32F74xxx</span>
+					:
+				</p>
+				<figure>
+					<img src="img/mcu_arch.jpg"
+						alt="architecture des composants STM32F75xxx et STM32F74xxx">
+					<figcaption>
+						<span class="underline">Figure 1</span> : architecture des
+						composants STM32F75xxx et STM32F74xxx
+					</figcaption>
+				</figure>
+
+				<h2 class="subtitle">2-1. Le CPU</h2>
+				<p>
+					En haut à gauche, on observe l'organe central du composant, le <span
+						class="bold">CPU</span> pour "Central Process Unit". Nous ne
+					l'étudierons pas en détail, car un chapitre entier lui sera
+					consacré. L'important à retenir est que sa mission est d'exécuter
+					un programme informatique stocké dans une mémoire.
+				</p>
+				<br>
+
+				<h2 class="subtitle">2-2. La mémoire</h2>
+				<p>
+					En parlant <span class="bold">mémoire</span>, on observe que notre
+					MCU en possède plusieurs :
+				</p>
+				<ul>
+					<li class="newLine"><span class="gray">✔</span> La première
+						est une mémoire persistante ou <a
+						href="https://fr.wikipedia.org/wiki/M%C3%A9moire_non_volatile"
+						target="_blank"><span class="bold">non-volatile</span></a>
+						(mémoire FLASH). C'est généralement ce type de mémoire qu'on
+						utilise pour stocker le programme informatique, car elle n'est pas
+						effacée lorsque l'alimentation disparaît.</li>
+					<li class="newLine"><span class="gray">✔</span> Les autres
+						sont des mémoires non-persistantes ou mémoires <a
+						href="https://fr.wikipedia.org/wiki/M%C3%A9moire_volatile"
+						target="_blank"><span class="bold">volatiles</span></a>. Ces
+						mémoires (SRAM1, SRAM2, DTCM RAM et ITCM RAM) sont beaucoup plus
+						rapides que les mémoires FLASH et sont généralement utilisées pour
+						stocker les variables du programme.</li>
+				</ul>
+
+				<div class="comment">
+					<!-- ➤ -->
+					<p class="comment-logo">💬</p>
+					<p>
+						On remarque que l'ensemble des mémoires volatiles peuvent être
+						accédées par le CPU, mais aussi par des <span class="bold">périphériques</span>
+						comme la DMA1, l'USB ou encore le périphérique LCD-TFT. Cette
+						notion est importante et nous y reviendrons par la suite !
+					</p>
+				</div>
+				<br>
+
+				<h2 class="subtitle">2-3. Les périphériques</h2>
+				<p>
+					Un <span class="bold">périphérique</span> est un dispositif
+					électronique relié au MCU qui lui ajoute de nouvelles
+					fonctionnalités. Il permet au CPU d'exécuter des fonctions
+					alternatives comme envoyer un octet sur une liaison série (UART),
+					acquérir une donnée analogique (ADC) ou encore générer un nombre
+					aléatoire (RNG). Il existe de nombreuses variétés de périphériques
+					et leur fonctionnement sera abordé plus en profondeur dans notre
+					chapitre sur les <span class="bold">registres</span>.
+				</p>
+				<br>
+
+				<div class="comment">
+					<p class="comment-logo">💬</p>
+					<p>
+						On remarque tout de même la présence de deux périphériques en bas
+						à droite de la figure, le périphérique <span class="bold">QuadSPI</span>
+						et le périphérique <span class="bold">FMC</span> (Flexible Memory
+						Controller). Dans la situation ou la quantité de mémoire du
+						système ne serait pas suffisante, ces périphériques nous
+						permettraient de relier une ou plusieurs mémoires externes à notre
+						CPU en adaptant les bus de communication. Pratique non 😉 ?
+					</p>
+				</div>
+				<br>
+
+				<h2 class="subtitle">2-4. Les bus de communication</h2>
+				<p>
+					Un <span class="bold">bus de communication</span> est une voie de
+					communication contenant une ou plusieurs lignes de données. Sa
+					mission est de transporter une information d'un point A à un point
+					B. Ils peuvent être unidirectionnel, bidirectionnel, synchrone ou
+					asynchrone, single-point ou multi-points et bien plus encore. Bref,
+					il existe une multitude de topologies et on les catégorise en deux
+					grandes familles :
+				</p>
+
+				<ul>
+					<li class="newLine"><span class="gray">✔</span> Les bus série.
+						Ce sont des bus de taille réduite possédant un nombre de broches
+						limitées. De par leur structure restreinte et l'absence de broches
+						dédiée, les données protocolaires (adresse, état, ...) doivent
+						souvent être transférées les unes à suites des autres sur les
+						mêmes lignes. La bande passante de la liaison est alors
+						automatiquement limitée. Les bus série les plus connus sont les
+						bus UART, I2C et SPI.</li>
+					<li class="newLine"><span class="gray">✔</span> Les bus
+						parallèles. Ils sont beaucoup plus complexe que les bus série, il
+						existe de nombreuses variantes. Ils sont constitués de plusieurs
+						lignes de données (8, 16, 32, et même <span class="underline">64
+							lignes</span>), de plusieurs lignes d'adresse et d'un ensemble de
+						signaux de contrôle. Ils ont une taille très importante et sont
+						très rapides. Ils sont utilisés dans les applications où un flux
+						de données élevé est nécessaire comme par exemple le cadencement
+						d'un CPU ou d'une mémoire 😇.</li>
+				</ul>
+
+				<p>
+					On observe que notre MCU possède 3 bus principaux (DTCM, ITCM et
+					AXIM) et plusieurs bus secondaires. Certains bus (AHB, APB1 et
+					APB2) relient le CPU à un composant du MCU (mémoire ou
+					périphérique). D'autres bus (DMA1, DMA2, ETHERNET, etc.) relient
+					directement un périphérique vers une mémoire. Les liaisons peuvent
+					être directes (bus DTCM), réalisées par le biais d'une passerelle
+					(AXI to multi-AHB) ou interconnectées par le biais d'une des 2 <span
+						class="bold">matrices</span> d'interconnexion (32bits ou 64bits).
+				</p>
+				<br>
+
+				<h2 class="subtitle">2-5. Les matrices d'interconnexion</h2>
+
+				<p>
+					Le rôle d'une <span class="bold">matrice d'interconnexion</span>
+					est d'arbitrer les accès simultanés entre les différents
+					intervenants d'un bus de communication selon un algorithme donnée.
+				</p>
+				<br>
+
+				<p>
+					Plusieurs algorithmes d'attribution existent. Celui utilisé par
+					notre composant est un algorithme est de type <a
+						href="https://fr.wikipedia.org/wiki/Round-robin_%28informatique%29"
+						target="_blank"><span class="bold">Round-Robin</span></a>. Il
+					consiste à partager équitablement le bus en l'attribuant à chaque
+					entité le demandant pendant une durée déterminée.
+				</p>
+				<br>
+
+				<p>Il existe bien d'autres algorithmes, les plus connus étant
+					ceux basés sur la priorité, ou encore ceux basés sur l'ordre
+					d'arrivée (FIFO).</p>
+				<br>
+
+				<h2 class="subtitle">2-6. Un premier bilan</h2>
+
+				<div class="comment">
+					<p class="comment-logo">💬</p>
+					<p>L'objectif de cette partie était d'introduire le vocabulaire
+						et les organes principaux de notre MCU. Je suis resté délibérément
+						vague sur leur constitution afin de ne pas vous noyer avec un
+						excès d'information. Cependant, le peu d'information que je vous
+						ai déjà communiqué et suffisant pour que l'on s'attaque au
+						fonctionnement de notre MCU 😉.</p>
+				</div>
+
+				<!-- Le fonctionnement -->
+				<h2>3. Le fonctionnement du MCU</h2>
+
+				<h2 class="subtitle">3.1. Le rôle</h2>
+
+				<div class="comment">
+					<p class="comment-logo">💬</p>
+					<p>Le rôle d'un MCU est simple. Il consiste à exécuter un
+						programme informatique.</p>
+				</div>
+
+				<br>
+				<p>Dans la suite de ce paragraphe, nous allons donc nous
+					attaquer à l'ensemble des mécanismes internes mis en oeuvre pour
+					exécuter le dit programme.</p>
+
+				<br>
+
+				<h2 class="subtitle">3.2. Un programme simple</h2>
+
+				<p>
+					Afin de mieux appréhender le fonctionnement du MCU, je vous propose
+					de partir sur un exemple de programme simple et vraiment original
+					🙈 : <span class="underline">l'incrémentation</span>.
+				</p>
+				<br>
+
+				<p>Commençons par analyser le pseudo-code suivant :</p>
+				<br>
+
+				<pre class="code">
+						
+						<span class="multi-line-comment">/* La variable globale ci-dessous est déclarée dans la mémoire SRAM1 à l'adresse 0x20010000 */</span>
+						<span class="type">uint32_t</span> myVar = <span class="number">0</span>;
+						
+						... 
+						
+						<span class="multi-line-comment">/* Actualisation de la valeur de la variable */</span>
+						myVar++;
+						
+						...
+
+					</pre>
+
+				<br>
+				<p>
+					La variable globale
+					<var>myVar</var>
+					est initialisée à l'adresse 0x20010000 par le <span class="bold">linker</span>
+					et plus loin dans le programme celle-ci est incrémentée. Rien de
+					bien compliqué.
+				</p>
+				<br>
+
+
+				<h2 class="subtitle">3.3. Une ligne peut en cacher plusieurs
+					...</h2>
+
+				<p>
+					Une incrémentation est en fait constituée d'une lecture, d'une
+					modification et d'une écriture. Nous pouvons traduire la ligne de
+					code ci-dessus par les <span class="bold">instructions</span>
+					assembleurs suivantes :
+				</p>
+				<br>
+				<pre class="code">
+						
+						<span class="multi-line-comment">/* 1. On charge l'adresse de la variable MyVar dans R0 */</span>
+						<span class="instruction">LDR</span> R0, =0x20010000
+						
+						<span class="multi-line-comment">/* 2. On charge la valeur présente à l'adresse de MyVar dans R1 */</span>
+						<span class="instruction">LDR</span> R1, [R0]
+						
+						<span class="multi-line-comment">/* 3. On incrémente d'une unité le registre R1 */</span>
+						<span class="instruction">ADD</span> R1, R1, #0x01
+						
+						<span class="multi-line-comment">/* 4. Enfin, on enregistre la valeur de R1 à l'adresse de MyVar */</span>
+						<span class="instruction">STR</span> R1, [R0]
+						
+					</pre>
+				<br>
+
+				<p>A noter que les registres R0 et R1 sont des espaces mémoire à
+					l'intérieur même du CPU. Dans notre situation, ils servent de zone
+					de stockage temporaire. Nous les étudierons plus en détail dans
+					notre article dédié au CPU.</p>
+				<br>
+
+				<div class="answer">
+					<p class="answer-logo">❔</p>
+					<p class="answer-text">Euh, le passage en assembleur, c'était
+						vraiment nécessaire ?</p>
+				</div>
+				<br>
+
+				<p>
+					Oui, car le processeur ne comprend pas les langages évolués comme
+					le C, mais uniquement un jeu d'instructions restreint. Le nôtre
+					peut d'ailleurs être retrouvé dans le document <a
+						href="https://developer.arm.com/documentation/dui0646/c/?lang=en"
+						target="_blank"><span class="bold">"Arm Cortex-M7
+							Devices Generic User Guide (REV. r1P2)"</span></a> au §3. L'objectif ici
+					n'est pas de comprendre l'assembleur, mais plutôt de comprendre
+					comment le CPU interprète un programme informatique.
+				</p>
+				<br>
+
+				<div class="comment">
+					<p class="comment-logo">💬</p>
+					<p>Un programme informatique n'est rien d'autre qu'une suite
+						d'instructions exécutées tour à tour par le CPU. Chaque
+						instruction indique au CPU l'opération qu'il doit réaliser.</p>
+				</div>
+				<br>
+
+				<p>L'assembleur étant très proche du langage machine, il est
+					donc bien adapté à notre cas d'emploi.</p>
+				<br>
+
+				<h2 class="subtitle">3.4. Une machinerie bien rodée</h2>
+
+				<p>Cela étant dit, nous pouvons commencer à analyser le
+					séquencement des flux internes du MCU lors de l'exécution de notre
+					incrémentation :</p>
+
+				<ul>
+					<li class="newLine"><span class="gray">✔</span> Tout d'abord,
+						le CPU doit aller chercher l'instruction à exécuter. Il réalise
+						donc une lecture dans la mémoire FLASH en utilisant le bus ITCM.
+						Le CPU décode l'instruction numéro 1 et l'exécute en chargeant
+						l'adresse de <var>myVar</var> (0x20010000) dans le registre R0.</li>
+					<li class="newLine"><span class="gray">✔</span> La première
+						instruction étant exécutée, le CPU passe à la suivante en
+						réalisant une nouvelle lecture dans la mémoire FLASH. On dit que
+						le CPU <span class="bold">fetch</span> l'instruction (ici <var>LDR
+							R1, [R0]</var>). Il la décode et s'aperçoit que la valeur de <var>myVar</var>
+						doit être récupérée et stockée dans R1. Il réalise donc une
+						lecture à l'adresse de <var>myVar</var> (0x20010000). Cette
+						adresse correspond à la mémoire SRAM1. Il réalise alors un accès
+						via le bus AXIM en passant par la matrice d'interconnexion 32
+						bits. Lorsque la lecture est terminée, le CPU stocke la valeur
+						obtenue dans le registre R1.</li>
+					<li class="newLine"><span class="gray">✔</span> Ensuite, le
+						CPU continue son travail en fetchant la troisième instruction.
+						Cette instruction (ADD) ne nécessite aucun accès mémoire. Le CPU
+						incrémente juste d'une unité le registre R1.</li>
+					<li class="newLine"><span class="gray">✔</span> Enfin, après
+						le fetch de la dernière instruction, le CPU stocke la valeur de R1
+						à l'adresse de <var>myVar</var> de la même manière que
+						précédemment. Il réalise une écriture dans la mémoire SRAM1 en
+						utilisant le bus AXIM.</li>
+				</ul>
+
+				<p>La représentation visuelle ci-dessous permet de mieux
+					appréhender les phénomènes rencontrés :</p>
+
+				<figure>
+					<img src="img/mcu_flux_simple.jpg"
+						alt="fetch d'instructions simple (incrémentation)">
+					<figcaption>
+						<span class="underline">Figure 2</span> : incrémentation d'une
+						variable dans la mémoire
+					</figcaption>
+				</figure>
+
+				<p>Le bus rouge représente le fetch des instructions par le CPU
+					et le bus turquoise les accès sur la mémoire RAM1. Aucun flux
+					externe n'est représenté pour l'instruction ADD, car celle-ci est
+					réalisée à l'intérieur du CPU.</p>
+				<br>
+
+				<p>
+					Bien que l'exemple utilisé soit très simple, il présente les 2
+					principes fondamentaux de l'exécution d'un programme que sont le
+					fetch d'instruction et les accès mémoire. Cependant, notre
+					description est simpliste et correspond à un processeur primitif.
+					De nos jours, ceux-ci sont devenus tellement performants qu'ils
+					spéculent sur les prochaines instructions à exécuter (<span
+						class="bold">prefetch</span>) et sur les prochains accès mémoire à
+					réaliser. Mais ça, c'est une autre histoire 😉.
+				</p>
+				<br>
+
+				<h2 class="subtitle">3.5. Un CPU, mais pour quoi faire ?</h2>
+
+				<p>Nous venons de voir à quoi ressemblait le séquencement d'un
+					programme simple ne faisant intervenir que le CPU. À titre
+					d'exemple, pour des programmes plus complexes avec plusieurs
+					intervenants, les flux de données deviennent très vite compliqués
+					comme en témoigne la figure ci-dessous :</p>
+
+				<figure>
+					<img src="img/mcu_flux_complexe.jpg"
+						alt="fetch d'instructions avec périphérique LTDC et DMA">
+					<figcaption>
+						<span class="underline">Figure 3</span> : flux de données d'un
+						programme complexe
+					</figcaption>
+				</figure>
+
+
+				<p>Vous vous souvenez que je vous avais dit que les accès
+					mémoires peuvent se produire depuis le CPU, mais aussi depuis un
+					périphérique. Bah là, nous sommes exactement dans cette situation.</p>
+				<br>
+
+				<p>En parallèle des requêtes du CPU sur les mémoires FLASH,
+					QuadSPI et sur les périphériques ABP1, deux nouveaux intervenants
+					viennent manipuler les mémoires indépendamment du CPU :</p>
+
+				<ul>
+					<li class="newLine"><span class="gray">✔</span> Le
+						périphérique LCD-TFT vient à intervalle régulier récupérer une
+						image stockée dans une mémoire externe pour l'afficher sur un
+						écran.</li>
+					<li class="newLine"><span class="gray">✔</span> Le moteur DMA1
+						vient par l'intermédiaire du bus DMA_P1 récupérer des données (par
+						exemple le résultat d'une conversion analogique) pour les stocker
+						directement dans la mémoire SRAM2 en utilisant le bus DMA_MEM1.</li>
+				</ul>
+
+				<h2 class="subtitle">3.6. Le surmenage de la matrice</h2>
+
+				<p>Les deux exemples précédents montraient des situations
+					nominales où les transferts de données se déroulaient correctement
+					sans aucune perturbation.</p>
+				<br>
+				<p>
+					Mais faites attention, lorsque vraiment beaucoup de données
+					transitent simultanément sur un même bus, un phénomène pénalisant
+					nommé la <span class="bold">congestion</span> peut se produire. La
+					bande passante du bus n'est alors plus suffisante pour acheminer
+					l'ensemble des informations en temps réel. Des artefacts graphiques
+					ou des erreurs peuvent alors apparaître et pénaliser l'expérience
+					utilisateur.
+				</p>
+				<br>
+
+				<p>
+					J'y ai moi-même été confronté lors du développement du moteur
+					graphique de <span class="bold">Mk</span>. Le bus permettant la
+					communication avec une mémoire externe était sur-chargé et pouvait
+					tout juste assurer les transferts de données (environ 4x74MB/s). Le
+					problème est devenu critique lorsque désireux d'obtenir toujours
+					plus, j'ai souhaité exécuter des applications localisées dans la
+					mémoire graphique. En rajoutant un nouvel intervenant sur le bus,
+					le périphérique LCD n'était alors plus en mesure de récupérer ses
+					données en temps réel et des distorsions graphiques se produisaient
+					continuellement.
+				</p>
+				<br>
+				<p>Ne pouvant agir ni sur les fréquences de fonctionnement des
+					mémoires ni sur les fréquences de fonctionnement des périphériques,
+					la seule solution fut de diminuer la quantité de données
+					nécessaires à l'écran. Je passais donc d'une configuration 60 Hz *
+					640 * 480 pixels sur 2 layers (32 bits / pixels), à une
+					configuration 60 Hz * 640 * 480 pixels avec 1 layer en 24 bits /
+					pixels et 1 autre layer en 32 bits / pixels.</p>
+
+				<br>
+				<p>Comme le montre l'exemple ci-dessus, pour une application
+					donnée, il est très difficile de prédire si une congestion peut se
+					produire ou non et malheureusement, il est encore plus difficile de
+					l'éliminer le fait accompli. C'est pourquoi, il est essentiel de
+					bien comprendre les mécanismes qui entrent en jeu durant
+					l'exécution d'un programme et encore plus important de réaliser des
+					levées de risques lorsque nécessaire. Pour autant, ne prenez pas
+					peur, les situations où une congestion peut se produire sont plutôt
+					rares et avec l'expérience, vous apprendrez à les flairer à 10 km à
+					la ronde 😎.</p>
+				<br>
+
+				<h2 class="subtitle">3.7. Une architecture pour les gouverner
+					toutes</h2>
+
+				<p>
+					Avant de clôturer cet article, j'aimerais vous introduire les deux
+					architectures que sont les architectures de types <a
+						href="https://fr.wikipedia.org/wiki/Architecture_de_type_Harvard"><span
+						class="bold">Harvard</span></a> et <a
+						href="https://fr.wikipedia.org/wiki/Architecture_de_von_Neumann"><span
+						class="bold">Von Neumann</span></a>.
+				</p>
+				<br>
+
+				<p>Ces architectures sont les premières à avoir vues le jour et
+					se sont fait concurrence aux prémices de l'informatique. Elles se
+					différencient de la manière suivante :</p>
+
+				<ul>
+					<li class="newLine"><span class="gray">✔</span> L'architecture
+						Harvard utilise des bus de données distincts pour acheminer les
+						instructions et les données.</li>
+					<li class="newLine"><span class="gray">✔</span> L'architecture
+						Von Neumann utilise un seul bus de données pour acheminer à la
+						fois les instructions et les données.</li>
+				</ul>
+
+				<div class="answer">
+					<p class="answer-logo">❔</p>
+					<p>
+						Mais du coup, notre architecture elle est plutôt <span
+							class="bold">Harvard</span> ou <span class="bold">Von
+							Neumann</span> ?
+					</p>
+				</div>
+				<br>
+
+				<p>
+					En fait, notre architecture exploite le meilleur des deux mondes.
+					Elle est capable de fetcher les instructions depuis le bus ITCM (<span
+						class="bold">Harvard</span>) mais aussi depuis le bus de données
+					AXIM (<span class="bold">Von Neumann</span>). Il y a cependant
+					quelques restrictions. Le bus ITCM est entièrement dédié au fetch
+					des instructions et la mémoire FLASH ne peut pas être écrite depuis
+					ce bus. Le bus AXIM lui est capable de réaliser les deux
+					opérations, mais les accès mémoire sont partagés avec les autres
+					entités concurrentes.
+				</p>
+
+				<figure>
+					<img src="img/mcu_fetch.jpg"
+						alt="fetch d'instruction en utilisant le bus AXI.">
+					<figcaption>
+						<span class="underline">Figure 4</span> : le fetch par le bus AXIM
+					</figcaption>
+				</figure>
+
+				<p>Bien que l'utilisation du bus ITCM sera toujours plus
+					performante, l'utilisation du bus AXIM est possible pour la plupart
+					des applications. La passerelle fournit une voie de communication
+					dédiée et le bus AXIM est suffisamment performant pour répondre à
+					l'ensemble des besoins dans la majorité des cas.</p>
+				<br>
+
+				<h2>4. Le mini-quiz 👑</h2>
+
+				<p>Afin de vérifier que vous avez bien assimilé toutes les
+					notions clé de ce premier article et aussi d'en aborder de
+					nouvelles, je vous ai préparé un petit quiz de seigneur.</p>
+				<br>
+
+				<h3>4.1. Question 1</h3>
+				<p>Lorsque nous avons étudié les mécanismes mis en oeuvre durant
+					une incrémentation, nous avons vu que le fetch se produisait depuis
+					la mémoire FLASH. D'une manière générale, l'utilisation d'une
+					mémoire FLASH pour fetcher les instructions est-elle la meilleure
+					solution ?</p>
+
+				<details>
+					<summary>
+						<span class="underline">Réponse</span>
+					</summary>
+					<div class="comment">
+						<p class="comment-logo">💬</p>
+						<div class="comment-text ">
+							<p>La réponse est non. Les mémoires non-volatiles sont des
+								mémoires dites lentes. D'un point de vue performance, le fetch
+								dans une mémoire RAM sera toujours plus rapide qu'un fetch dans
+								une mémoire FLASH.</p>
+							<p>Pour optimiser la rapidité d'exécution, il est possible de
+								transférer le code exécutable dans une mémoire RAM au démarrage
+								et de fetcher depuis celle-ci. La mémoire RAM ITCM est
+								d'ailleurs faite pour ça.</p>
+							<p>Néanmoins, dans 95% des applications, le transfert du
+								programme dans une mémoire RAM ne sera pas nécessaire et je
+								recommanderais l'utilisation de la FLASH. ST nous a d'ailleurs
+								gâtés en ajoutant l'accélérateur ART pour optimiser la vitesse
+								de récupération des instructions dans la mémoire FLASH.</p>
+						</div>
+
+					</div>
+				</details>
+				<br>
+
+				<h3>4.2. Question 2</h3>
+				<p>En analysant de nouveau la figure décrivant le principe d'une
+					incrémentation, pouvez-vous m'indiquer le mécanisme pénalisant le
+					plus la rapidité d'exécution d'un programme ?</p>
+
+				<details>
+					<summary>
+						<span class="underline">Réponse</span>
+					</summary>
+					<div class="comment">
+						<p class="comment-logo">💬</p>
+						<div class="comment-text ">
+							<p>La vitesse d'exécution d'un programme est pénalisée par
+								les accès mémoire. Plus le nombre d'accès sera faible plus la
+								vitesse d'exécution d'un programme sera importante.</p>
+							<p>
+								Afin de limiter la récurrence de ces accès, des mémoires <span
+									class="bold">cache</span> sont généralement ajoutées au
+								processeur. Notre CPU en possède d'ailleurs une de taille 4kB.
+								Ces mémoires sont bien plus performantes que les mémoires
+								standards mais aussi bien plus coûteuses. L'objectif d'un cache
+								et de diminuer le nombre d'accès réalisés dans la mémoire
+								principale. Au lieu de déclencher un accès mémoire sur le bus,
+								le CPU interroge le cache et si l'accès mémoire a déjà été
+								répertorié, il récupère directement la valeur stockée dans
+								celui-ci.
+							</p>
+							<p>Les caches étant maintenant des éléments incontournables,
+								nous reviendrons dessus dans un chapitre dédié.</p>
+						</div>
+
+					</div>
+				</details>
+				<br>
+
+				<h3>4.3. Question 3</h3>
+				<p>En considérant que le fetch d'une instruction, son décodage
+					et son traitement prennent plusieurs cycles au CPU à être réalisés,
+					quel mécanisme pourrait-on mettre en oeuvre pour exécuter une
+					instruction à chaque cycle d'horloge ?</p>
+
+				<details>
+					<summary>
+						<span class="underline">Réponse</span>
+					</summary>
+					<div class="comment">
+						<p class="comment-logo">💬</p>
+						<div class="comment-text ">
+							<p>
+								La solution est de commencer à traiter la prochaine instruction
+								à exécuter en parallèle de l'instruction courante et c'est
+								exactement la mission de la <a
+									href="https://fr.wikipedia.org/wiki/Pipeline_(architecture_des_processeurs)"
+									target="_blank"> <span class="bold">pipeline</span></a>
+								d'exécution.
+							</p>
+
+							<p>L'idée est de gagner du temps en spéculant sur la
+								prochaine instruction à exécuter. En cas de succès,
+								l'instruction est acceptée et exécutée, du temps est alors
+								gagné. En cas d'échec, la pipeline est réinitialisée et doit
+								fetcher la bonne instruction à exécutée. Le temps économisé en
+								spéculant est alors perdu.</p>
+						</div>
+
+					</div>
+				</details>
+				<br>
+
+				<h2>5. En résumé</h2>
+
+				<p>Allez, pour terminer cette page, je vous ai résumé l'ensemble
+					des points importants de cet article en quelques lignes :</p>
+
+				<ul>
+					<li class="newLine"><span class="gray">✔</span> Un
+						microcontrôleur est architecturé autour d'un CPU, d'une mémoire
+						stockant le programme (FLASH), d'une mémoire stockant les données
+						(RAM) et d'un ensemble de périphériques. Ses organes sont
+						interconnectés par des bus de communication.</li>
+					<li class="newLine"><span class="gray">✔</span> Le rôle
+						principal d'un microcontrôleur est d'exécuter un programme
+						informatique. Un programme est une suite d'instructions exécutées
+						par le processeur. Chaque CPU supporte un jeu d'instructions plus
+						ou moins important.</li>
+					<li class="newLine"><span class="gray">✔</span> L'opération
+						consistant à aller chercher une instruction dans une mémoire pour
+						l'exécuter s'appelle le <span class="bold">fetch</span>. Lorsque
+						les prochaines instructions à exécuter sont récupérées afin
+						d'optimiser la vitesse d'exécution, on parlera plutôt de <span
+						class="bold">prefetch</span>.</li>
+					<li class="newLine"><span class="gray">✔</span> Les accès
+						mémoire contraignent le plus la vitesse d'exécution du processeur.
+						Des mécanismes d'optimisation (cache) sont donc intégrés au CPU et
+						au MCU pour réduire au maximum leurs occurrences.</li>
+
+					<li class="newLine"><span class="gray">✔</span> La mémoire
+						peut être accédée par le CPU mais aussi directement par le biais
+						d'un périphérique indépendamment du CPU.</li>
+				</ul>
+
+				<p>
+					Bon ben voilà, cet article est terminé. Il est maintenant temps de
+					s'attaquer à la prochaine partie que j'ai nommé <span class="bold">les
+						registres du MCU</span>. Dans ce nouvel article, nous découvrirons
+					comment sont constitués ces petits espaces mémoire nous permettant
+					de communiquer avec nos périphériques, et même qu'il est possible
+					avec un peu d'audace et de persévérance d'en greffer de nouveaux à
+					notre MCU.
+				</p>
+
+			</div>
+		</section>
+
+		<section>
+			<div class="button-article">
+				<div></div>
+				<a href="../../progress/progress.html">
+					<div>
+						<p>Les registres du MCU</p>
+						<p>></p>
+					</div>
+				</a>
+			</div>
+		</section>
+
+	</main>
+
+	<footer>
+		<div>
+			<p>La fabrique du MCU.</p>
+			<p>Copyright © 2024, All rights reserved.</p>
+		</div>
+	</footer>
+
+</body>
+</html>
+

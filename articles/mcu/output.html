@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Insert title here</title>
+</head>
+<body>
+
+	<div class="answer">
+		<p class="answer-logo">❔</p>
+		<p>
+			Non mais minute papillon, depuis tout à l'heure tu nous parles de <span
+				class="italic">PUSH-PULL</span> et <span class="italic">d'OPEN-DRAIN</span>
+			mais c'est quoi au juste ?
+		</p>
+	</div>
+	<br>
+
+	<p>Effectivement, je suis peut-être passé un peu vite sur ces
+		notions mais notez cependant que dans mon infini bonté, je vais vous
+		les expliquer 😇 :</p>
+
+	<ul>
+		<li class="newLine"><span class="gray">✔</span> Le montage <a
+			class="bold"
+			href="https://fr.wikipedia.org/wiki/Push-pull_(%C3%A9lectronique)"
+			target="_blank">PUSH-PULL</a> permet de générer deux tensions, un
+			tension basse (0V) et une tension haute dont la valeur est imposée
+			par le rail d'alimentation interne du port GPIO. Contrairement au
+			montage OPEN-DRAIN, le montage PUSH-PULL est auto-suffisant et ne
+			nécessite pas d'ajouter une résistance de tirage suplémentaire.</li>
+		<li class="newLine"><span class="gray">✔</span> Le montage <a
+			class="bold"
+			href="https://fr.wikipedia.org/wiki/Sortie_collecteur_ouvert"
+			target="_blank">OPEN-DRAIN</a> permet lui aussi de générer deux
+			tensions, un tension basse (0V) et une tension haute. Contrairement
+			au montage <var>PUSH-PULL</var>, la valeur de la tension haute est
+			cette fois imposée par une source de tension externe au
+			micro-contrôleur. D'ailleurs, une résistance de tirage à l'état haut
+			(pull-up) doit obligatoirement être connectée sur la broche GPIO. En
+			général, si la valeur de la résistance n'a pas d'importance, on
+			utilisera les résistances internes du microcontrôleur pour ne pas
+			griller l'étage de sortie 😝.</li>
+	</ul>
+
+	<p>Enfin, pour conclure ce petit laïus et pour bien déterminer
+		quand utiliser un montage plutôt qu'un autre, je vous conseille
+		d'utiliser la régle suivante :</p>
+	<br>
+
+	<div class="comment">
+		<p class="comment-logo">💬</p>
+		<div>
+			<p>
+				Si une résistance de tirage est présente sur une broche GPIO,
+				préférer l'utilisation d'un montage
+				<var>OPEN-DRAIN</var>
+				.
+			</p>
+			<p>
+				Sinon, si il n'y a pas d'incompatibilité avec la valeur de tension
+				haute, préférer l'utilisation d'un montage
+				<var>PUSH-PULL</var>
+				.
+			</p>
+		</div>
+	</div>
+	<br>
+
+
+</body>
+</html>
