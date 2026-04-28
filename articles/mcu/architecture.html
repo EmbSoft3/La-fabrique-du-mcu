@@ -1,27 +1,22 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description"
-	content="Cet article présente l'exécution d'un  programme informatique et les interactions du CPU avec les périphériques, les mémoires et les bus de communication.">
-<title>L'architecture du MCU</title>
-<link rel="canonical"
-	href="https://lafabriquedumcu.com/articles/mcu/architecture.html">
-<link href="../../index/css/style.css" rel="stylesheet">
-<link href="../../index/css/template.css" rel="stylesheet">
-<link href="../../index/css/code.css" rel="stylesheet">
-<link href="css/mcu.css" rel="stylesheet">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link
-	href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
-	rel="stylesheet">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link
-	href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap"
-	rel="stylesheet">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description"
+		content="Cet article présente l'exécution d'un  programme informatique et les interactions du CPU avec les périphériques, les mémoires et les bus de communication.">
+	<title>L'architecture du MCU</title>
+	<link rel="canonical" href="https://lafabriquedumcu.com/articles/mcu/architecture.html">
+	<link href="../../index/css/style.css" rel="stylesheet">
+	<link href="../../index/css/template.css" rel="stylesheet">
+	<link href="../../index/css/code.css" rel="stylesheet">
+	<link href="css/mcu.css" rel="stylesheet">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+		rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -31,7 +26,7 @@
 		</div>
 		<div class="onglet">
 			<nav>
-				<a href="https://github.com/EmbSoft3 " target="_blank">Github</a>
+				<a href="https://github.com/EmbSoft3" target="_blank">Github</a>
 			</nav>
 		</div>
 	</header>
@@ -42,10 +37,10 @@
 				<!-- Introduction -->
 
 				<p>
-					Cling <span class="emoji-font">🔨</span>, Cling <span
-						class="emoji-font">🔨</span>, Zzzou <span class="emoji-font">🪚</span>,
-					Zzzou <span class="emoji-font">🪚</span>, Bom <span
-						class="emoji-font">🔨</span>, Bom <span class="emoji-font">🔨</span>,
+					Cling <span class="emoji-font">🔨</span>, Cling <span class="emoji-font">🔨</span>, Zzzou <span
+						class="emoji-font">🪚</span>,
+					Zzzou <span class="emoji-font">🪚</span>, Bom <span class="emoji-font">🔨</span>, Bom <span
+						class="emoji-font">🔨</span>,
 					..., pfffiou 😮‍💨 !
 				</p>
 				<br>
@@ -61,8 +56,8 @@
 				<p>
 					Le sujet est vaste, très vaste. C'est pourquoi, pour commencer,
 					j'ai décidé de me concentrer sur les 4 notions essentielles que
-					sont les <span class="bold">périphériques</span>, la <span
-						class="bold">mémoire</span>, les <span class="bold">bus de
+					sont les <span class="bold">périphériques</span>, la <span class="bold">mémoire</span>, les <span
+						class="bold">bus de
 						communication</span> et les <span class="bold"> matrices</span>
 					d'interconnexion.
 				</p>
@@ -110,13 +105,12 @@
 				<h1>2. L'architecture du MCU</h1>
 				<p>
 					C'est une très bonne question. D'ailleurs, l'image ci-dessous nous
-					présente l'architecture des familles de composants <span
-						class="bold">STM32F75xxx</span> et <span class="bold">STM32F74xxx</span>
+					présente l'architecture des familles de composants <span class="bold">STM32F75xxx</span> et <span
+						class="bold">STM32F74xxx</span>
 					:
 				</p>
 				<figure>
-					<img src="img/mcu_arch.jpg"
-						alt="architecture des composants STM32F75xxx et STM32F74xxx">
+					<img src="img/mcu_arch.jpg" alt="architecture des composants STM32F75xxx et STM32F74xxx">
 					<figcaption>
 						<span class="underline">Figure 1</span> : architecture des
 						composants STM32F75xxx et STM32F74xxx
@@ -125,8 +119,8 @@
 
 				<h2 class="subtitle">2-1. Le CPU</h2>
 				<p>
-					En haut à gauche, on observe l'organe central du composant, le <span
-						class="bold">CPU</span> pour "Central Process Unit". Nous ne
+					En haut à gauche, on observe l'organe central du composant, le <span class="bold">CPU</span> pour
+					"Central Process Unit". Nous ne
 					l'étudierons pas en détail, car un chapitre entier lui sera
 					consacré. L'important à retenir est que sa mission est d'exécuter
 					un programme informatique stocké dans une mémoire.
@@ -140,16 +134,15 @@
 				</p>
 				<ul>
 					<li class="newLine"><span class="gray">✔</span> La première
-						est une mémoire persistante ou <a
-						href="https://fr.wikipedia.org/wiki/M%C3%A9moire_non_volatile"
-						target="_blank"><span class="bold">non-volatile</span></a>
+						est une mémoire persistante ou <a href="https://fr.wikipedia.org/wiki/M%C3%A9moire_non_volatile"
+							target="_blank"><span class="bold">non-volatile</span></a>
 						(mémoire FLASH). C'est généralement ce type de mémoire qu'on
 						utilise pour stocker le programme informatique, car elle n'est pas
 						effacée lorsque l'alimentation disparaît.</li>
 					<li class="newLine"><span class="gray">✔</span> Les autres
 						sont des mémoires non-persistantes ou mémoires <a
-						href="https://fr.wikipedia.org/wiki/M%C3%A9moire_volatile"
-						target="_blank"><span class="bold">volatiles</span></a>. Ces
+							href="https://fr.wikipedia.org/wiki/M%C3%A9moire_volatile" target="_blank"><span
+								class="bold">volatiles</span></a>. Ces
 						mémoires (SRAM1, SRAM2, DTCM RAM et ITCM RAM) sont beaucoup plus
 						rapides que les mémoires FLASH et sont généralement utilisées pour
 						stocker les variables du programme.</li>
@@ -232,8 +225,8 @@
 					périphérique). D'autres bus (DMA1, DMA2, ETHERNET, etc.) relient
 					directement un périphérique vers une mémoire. Les liaisons peuvent
 					être directes (bus DTCM), réalisées par le biais d'une passerelle
-					(AXI to multi-AHB) ou interconnectées par le biais d'une des 2 <span
-						class="bold">matrices</span> d'interconnexion (32bits ou 64bits).
+					(AXI to multi-AHB) ou interconnectées par le biais d'une des 2 <span class="bold">matrices</span>
+					d'interconnexion (32bits ou 64bits).
 				</p>
 				<br>
 
@@ -249,8 +242,8 @@
 				<p>
 					Plusieurs algorithmes d'attribution existent. Celui utilisé par
 					notre composant est un algorithme est de type <a
-						href="https://fr.wikipedia.org/wiki/Round-robin_%28informatique%29"
-						target="_blank"><span class="bold">Round-Robin</span></a>. Il
+						href="https://fr.wikipedia.org/wiki/Round-robin_%28informatique%29" target="_blank"><span
+							class="bold">Round-Robin</span></a>. Il
 					consiste à partager équitablement le bus en l'attribuant à chaque
 					entité le demandant pendant une durée déterminée.
 				</p>
@@ -304,7 +297,7 @@
 				<br>
 
 				<pre class="code">
-						
+
 						<span class="multi-line-comment">/* La variable globale ci-dessous est déclarée dans la mémoire SRAM1 à l'adresse 0x20010000 */</span>
 						<span class="type">uint32_t</span> myVar = <span class="number">0</span>;
 						
@@ -339,7 +332,7 @@
 				</p>
 				<br>
 				<pre class="code">
-						
+
 						<span class="multi-line-comment">/* 1. On charge l'adresse de la variable MyVar dans R0 */</span>
 						<span class="instruction">LDR</span> R0, =0x20010000
 						
@@ -372,8 +365,8 @@
 					Oui, car le processeur ne comprend pas les langages évolués comme
 					le C, mais uniquement un jeu d'instructions restreint. Le nôtre
 					peut d'ailleurs être retrouvé dans le document <a
-						href="https://developer.arm.com/documentation/dui0646/c/?lang=en"
-						target="_blank"><span class="bold">"Arm Cortex-M7
+						href="https://developer.arm.com/documentation/dui0646/c/?lang=en" target="_blank"><span
+							class="bold">"Arm Cortex-M7
 							Devices Generic User Guide (REV. r1P2)"</span></a> au §3. L'objectif ici
 					n'est pas de comprendre l'assembleur, mais plutôt de comprendre
 					comment le CPU interprète un programme informatique.
@@ -430,8 +423,7 @@
 					appréhender les phénomènes rencontrés :</p>
 
 				<figure>
-					<img src="img/mcu_flux_simple.jpg"
-						alt="fetch d'instructions simple (incrémentation)">
+					<img src="img/mcu_flux_simple.jpg" alt="fetch d'instructions simple (incrémentation)">
 					<figcaption>
 						<span class="underline">Figure 2</span> : incrémentation d'une
 						variable dans la mémoire
@@ -450,8 +442,8 @@
 					fetch d'instruction et les accès mémoire. Cependant, notre
 					description est simpliste et correspond à un processeur primitif.
 					De nos jours, ceux-ci sont devenus tellement performants qu'ils
-					spéculent sur les prochaines instructions à exécuter (<span
-						class="bold">prefetch</span>) et sur les prochains accès mémoire à
+					spéculent sur les prochaines instructions à exécuter (<span class="bold">prefetch</span>) et sur les
+					prochains accès mémoire à
 					réaliser. Mais ça, c'est une autre histoire 😉.
 				</p>
 				<br>
@@ -465,8 +457,7 @@
 					comme en témoigne la figure ci-dessous :</p>
 
 				<figure>
-					<img src="img/mcu_flux_complexe.jpg"
-						alt="fetch d'instructions avec périphérique LTDC et DMA">
+					<img src="img/mcu_flux_complexe.jpg" alt="fetch d'instructions avec périphérique LTDC et DMA">
 					<figcaption>
 						<span class="underline">Figure 3</span> : flux de données d'un
 						programme complexe
@@ -552,9 +543,9 @@
 					Avant de clôturer cet article, j'aimerais vous introduire les deux
 					architectures que sont les architectures de types <a
 						href="https://fr.wikipedia.org/wiki/Architecture_de_type_Harvard"><span
-						class="bold">Harvard</span></a> et <a
-						href="https://fr.wikipedia.org/wiki/Architecture_de_von_Neumann"><span
-						class="bold">Von Neumann</span></a>.
+							class="bold">Harvard</span></a> et <a
+						href="https://fr.wikipedia.org/wiki/Architecture_de_von_Neumann"><span class="bold">Von
+							Neumann</span></a>.
 				</p>
 				<br>
 
@@ -574,8 +565,8 @@
 				<div class="answer">
 					<p class="answer-logo">❔</p>
 					<p>
-						Mais du coup, notre architecture elle est plutôt <span
-							class="bold">Harvard</span> ou <span class="bold">Von
+						Mais du coup, notre architecture elle est plutôt <span class="bold">Harvard</span> ou <span
+							class="bold">Von
 							Neumann</span> ?
 					</p>
 				</div>
@@ -583,8 +574,8 @@
 
 				<p>
 					En fait, notre architecture exploite le meilleur des deux mondes.
-					Elle est capable de fetcher les instructions depuis le bus ITCM (<span
-						class="bold">Harvard</span>) mais aussi depuis le bus de données
+					Elle est capable de fetcher les instructions depuis le bus ITCM (<span class="bold">Harvard</span>) mais
+					aussi depuis le bus de données
 					AXIM (<span class="bold">Von Neumann</span>). Il y a cependant
 					quelques restrictions. Le bus ITCM est entièrement dédié au fetch
 					des instructions et la mémoire FLASH ne peut pas être écrite depuis
@@ -594,8 +585,7 @@
 				</p>
 
 				<figure>
-					<img src="img/mcu_fetch.jpg"
-						alt="fetch d'instruction en utilisant le bus AXI.">
+					<img src="img/mcu_fetch.jpg" alt="fetch d'instruction en utilisant le bus AXI.">
 					<figcaption>
 						<span class="underline">Figure 4</span> : le fetch par le bus AXIM
 					</figcaption>
@@ -664,8 +654,8 @@
 								les accès mémoire. Plus le nombre d'accès sera faible plus la
 								vitesse d'exécution d'un programme sera importante.</p>
 							<p>
-								Afin de limiter la récurrence de ces accès, des mémoires <span
-									class="bold">cache</span> sont généralement ajoutées au
+								Afin de limiter la récurrence de ces accès, des mémoires <span class="bold">cache</span> sont
+								généralement ajoutées au
 								processeur. Notre CPU en possède d'ailleurs une de taille 4kB.
 								Ces mémoires sont bien plus performantes que les mémoires
 								standards mais aussi bien plus coûteuses. L'objectif d'un cache
@@ -700,8 +690,8 @@
 								La solution est de commencer à traiter la prochaine instruction
 								à exécuter en parallèle de l'instruction courante et c'est
 								exactement la mission de la <a
-									href="https://fr.wikipedia.org/wiki/Pipeline_(architecture_des_processeurs)"
-									target="_blank"> <span class="bold">pipeline</span></a>
+									href="https://fr.wikipedia.org/wiki/Pipeline_(architecture_des_processeurs)" target="_blank">
+									<span class="bold">pipeline</span></a>
 								d'exécution.
 							</p>
 
@@ -737,8 +727,7 @@
 						consistant à aller chercher une instruction dans une mémoire pour
 						l'exécuter s'appelle le <span class="bold">fetch</span>. Lorsque
 						les prochaines instructions à exécuter sont récupérées afin
-						d'optimiser la vitesse d'exécution, on parlera plutôt de <span
-						class="bold">prefetch</span>.</li>
+						d'optimiser la vitesse d'exécution, on parlera plutôt de <span class="bold">prefetch</span>.</li>
 					<li class="newLine"><span class="gray">✔</span> Les accès
 						mémoire contraignent le plus la vitesse d'exécution du processeur.
 						Des mécanismes d'optimisation (cache) sont donc intégrés au CPU et
@@ -784,5 +773,5 @@
 	</footer>
 
 </body>
-</html>
 
+</html>

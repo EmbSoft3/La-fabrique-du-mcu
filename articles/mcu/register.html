@@ -1,25 +1,22 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="">
-<title>Les registres du MCU</title>
-<link rel="canonical"
-	href="https://lafabriquedumcu.com/articles/mcu/register.html">
-<link href="../../index/css/style.css" rel="stylesheet">
-<link href="../../index/css/template.css" rel="stylesheet">
-<link href="../../index/css/code.css" rel="stylesheet">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link
-	href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
-	rel="stylesheet">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link
-	href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap"
-	rel="stylesheet">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<title>Les registres du MCU</title>
+	<link rel="canonical" href="https://lafabriquedumcu.com/articles/mcu/register.html">
+	<link href="../../index/css/style.css" rel="stylesheet">
+	<link href="../../index/css/template.css" rel="stylesheet">
+	<link href="../../index/css/code.css" rel="stylesheet">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+		rel="stylesheet">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -29,7 +26,7 @@
 		</div>
 		<div class="onglet">
 			<nav>
-				<a href="https://github.com/EmbSoft3 " target="_blank">Github</a>
+				<a href="https://github.com/EmbSoft3" target="_blank">Github</a>
 			</nav>
 		</div>
 	</header>
@@ -40,8 +37,7 @@
 				<!-- Introduction -->
 
 				<p>
-					Schriiiiiiiii ⛓, Schlack ⛓️‍💥, Boaang 🚧, ..., ..., Criiiiiiii<span
-						class="emoji-font">😶</span> !
+					Schriiiiiiiii ⛓, Schlack ⛓️‍💥, Boaang 🚧, ..., ..., Criiiiiiii<span class="emoji-font">😶</span> !
 				</p>
 				<br>
 				<p>
@@ -49,9 +45,9 @@
 					chapitre sur <a href="architecture.html"><span class="bold">
 							l'architecture des MCU</span></a>, mais vous n'avez pas abandonné. On
 					m'avait bien dit que j'avais affaire à la crème de la crème. Allez,
-					rentrez vite, aujourd'hui, nous allons parler <strong><span
-						class="bold">périphérique</span></strong>, <strong><span
-						class="bold">mémoire</span></strong> et <strong><span class="bold">registre</span></strong>.
+					rentrez vite, aujourd'hui, nous allons parler <strong><span class="bold">périphérique</span></strong>,
+					<strong><span class="bold">mémoire</span></strong> et <strong><span
+							class="bold">registre</span></strong>.
 				</p>
 				<br>
 
@@ -76,8 +72,8 @@
 
 				<p>
 					Avant de parler registre, commençons par parler périphérique. Dans
-					le chapitre précédent, nous avons vu qu'un <strong><span
-						class="bold">périphérique</span></strong> était un dispositif électronique
+					le chapitre précédent, nous avons vu qu'un <strong><span class="bold">périphérique</span></strong> était
+					un dispositif électronique
 					que l'on reliait au MCU afin de lui ajouter de nouvelles
 					fonctionnalités. Cette définition est claire, mais soulève une
 					question de la plus haute importance 🤔. Par quel moyen le MCU
@@ -121,7 +117,7 @@
 				<br>
 
 				<pre class="code">
-						
+
 						<span class="multi-line-comment">/* 1. Dans un premier temps, on déclare des pointeurs et on les initialise avec les adresses des registres à configurer. On reviendra sur ces lignes dans la suite de l'article.  */</span>
 						
 						<span class="keyword">uint32_t</span>* GPIOA_MODER = <span
@@ -207,8 +203,7 @@
 					pour le registre GPIOx_MODER :</p>
 
 				<figure>
-					<img src="img/mcu-gpio-moder.jpg"
-						alt="description des registres GPIOx_MODER">
+					<img src="img/mcu-gpio-moder.jpg" alt="description des registres GPIOx_MODER">
 					<figcaption>
 						<span class="underline">Figure 1</span> : description du registre
 						GPIO_MODER.
@@ -230,7 +225,7 @@
 				<br>
 
 				<pre class="code">
-						
+
 						<span class="multi-line-comment">/* 1. PA0 à PA14 en sortie (1), PA15 en mode analogique (3)  */</span>
 						*GPIOA_MODER = <span class="number">0xD5555555</span>;
 						<span class="multi-line-comment">/* Valeur binaire : 1101 0101 0101 0101 0101 0101 0101 0101 */</span>
@@ -262,8 +257,7 @@
 				</p>
 
 				<figure>
-					<img src="img/mcu-gpio-otyper.jpg"
-						alt="description des registres GPIOx_OTYPER">
+					<img src="img/mcu-gpio-otyper.jpg" alt="description des registres GPIOx_OTYPER">
 					<figcaption>
 						<span class="underline">Figure 2</span> : description du registre
 						GPIO_OTYPER.
@@ -274,8 +268,8 @@
 					Contrairement au registre précédent, on remarque que seuls les 16
 					bits de poids faible du registre sont implémentés. Le registre
 					possède toujours 16 champs (un pour chaque broche) mais leur taille
-					est réduite à 1 bit. On observe qu'un niveau 0 active l'étage <span
-						class="italic">PUSH-PULL</span> alors qu'un niveau 1 active
+					est réduite à 1 bit. On observe qu'un niveau 0 active l'étage <span class="italic">PUSH-PULL</span> alors
+					qu'un niveau 1 active
 					l'étage <span class="italic">OPEN-DRAIN</span>. Allez, comme
 					précédemment quelques petits exemples de configuration :
 				</p>
@@ -309,9 +303,8 @@
 					À noter que pour les plus curieux et pour ceux qui se demandent à
 					quoi correspondent les montages PUSH-PULL et OPEN-DRAIN, j'ai
 					rédigé un article expliquant comment sélectionner le driver de
-					sortie d'une broche GPIO. Vous pouvez le retrouver en suivant ce <a
-						href="../../progress/progress.html" target="_blank"><span
-						class="smiley">🌼 </span><span class="bold">magnifique lien</span></a>
+					sortie d'une broche GPIO. Vous pouvez le retrouver en suivant ce <a href="../../progress/progress.html"
+						target="_blank"><span class="smiley">🌼 </span><span class="bold">magnifique lien</span></a>
 					<span class="smiley">🌼</span> !
 				</p>
 				<br>
@@ -325,8 +318,7 @@
 				</p>
 
 				<figure>
-					<img src="img/mcu-gpio-pupdr.jpg"
-						alt="description des registres GPIO_PUPDR">
+					<img src="img/mcu-gpio-pupdr.jpg" alt="description des registres GPIO_PUPDR">
 					<figcaption>
 						<span class="underline">Figure 3</span> : description du registre
 						GPIO_PUPDR.
@@ -348,8 +340,7 @@
 					GPIOA_ODR. Sa description est la suivante :</p>
 
 				<figure>
-					<img src="img/mcu-gpio-odr.jpg"
-						alt="description des registres GPIO_ODR">
+					<img src="img/mcu-gpio-odr.jpg" alt="description des registres GPIO_ODR">
 					<figcaption>
 						<span class="underline">Figure 4</span> : description du registre
 						GPIO_ODR.
@@ -382,8 +373,7 @@
 					peut pas être utilisé. Il faut impérativement utiliser le registre
 					IDR qui est dédié à lecture des entrées numériques :
 				<figure>
-					<img src="img/mcu-gpio-idr.jpg"
-						alt="description des registres GPIO_IDR">
+					<img src="img/mcu-gpio-idr.jpg" alt="description des registres GPIO_IDR">
 					<figcaption>
 						<span class="underline">Figure 5</span> : description du registre
 						GPIO_IDR.
@@ -399,7 +389,7 @@
 				<br>
 
 				<pre class="code">
-						
+
 						<span class="multi-line-comment">/* On réalise une lecture du registre ODR lorsque le port est configuré en sortie et que l'on souhaite positionner un port sans toucher les autres broches GPIO */</span>
 						
 						<span class="multi-line-comment">/* Lecture du port A puis activation de PA0 */</span>
@@ -416,8 +406,8 @@
 				<h2 class="subtitle">1-7. En résumé</h2>
 
 				<p>
-					Bon ! La partie manipulation de registres et <span
-						class="bold-strong">Magic Number</span> est maintenant terminée.
+					Bon ! La partie manipulation de registres et <span class="bold-strong">Magic Number</span> est maintenant
+					terminée.
 					Ce fut une brève introduction, mais celle-ci était nécessaire pour
 					faire découvrir aux néophytes comment ces petits registres
 					fonctionnaient. Qui sait, peut-être qu'une vocation sera naît chez
@@ -453,7 +443,7 @@
 				<br>
 
 				<pre class="code">
-						
+
 						<span class="multi-line-comment">/* Dans un premier temps, on déclare des pointeurs et on les initialise avec les adresse des registres à configurer. On reviendra sur ces lignes dans la suite de l'article.  */</span>
 						
 						<span class="keyword">uint32_t</span>* GPIOA_MODER = <span
@@ -587,8 +577,7 @@
 					notions précédentes :</p>
 
 				<figure>
-					<img src="img/mcu-adressage-memoire.jpg"
-						alt="description de l'espace adressable d'un MCU">
+					<img src="img/mcu-adressage-memoire.jpg" alt="description de l'espace adressable d'un MCU">
 					<figcaption>
 						<span class="underline">Figure 6</span> : description de l'espace
 						adressable et de la largeur de bus d'un MCU
@@ -646,7 +635,7 @@
 				<p>
 					En fait, lorsque l'on parle de microcontrôleurs 8bits, 16bits ou 32bits, on
 					désigne la <span class="bold">largeur du bus de
-					données</span>.
+						données</span>.
 				</p>
 				<br>
 				<p>Un microcontrôleur 8bits travaillera avec un bus de données
@@ -704,8 +693,7 @@
 					informations :</p>
 
 				<figure>
-					<img src="img/mcu_flux_simple.jpg"
-						alt="architecture des composants STM32F75xxx et STM32F74xxx">
+					<img src="img/mcu_flux_simple.jpg" alt="architecture des composants STM32F75xxx et STM32F74xxx">
 					<figcaption>
 						<span class="underline">Figure 6</span> : architecture des
 						composants STM32F75xxx et STM32F74xxx
@@ -762,8 +750,7 @@
 				<p>
 					Je vais maintenant vous présentez la figure allant de paire avec
 					celle-ci. Mes chères lecteurs, voici la cartographie mémoire des
-					processeurs STM32F74x et STM32F75x (âmes sensibles s'abstenir <span
-						class="emoji">🫣</span>) :
+					processeurs STM32F74x et STM32F75x (âmes sensibles s'abstenir <span class="emoji">🫣</span>) :
 				</p>
 
 				<figure>
@@ -776,8 +763,8 @@
 
 				<p>
 					Commençons dès à présent à l'expliquer. Celle-ci se lit de gauche à
-					droite. La colonne de gauche montre que notre MCU possède un <span
-						class="bold">espace adressable</span> de 4GB décomposé en 8
+					droite. La colonne de gauche montre que notre MCU possède un <span class="bold">espace adressable</span>
+					de 4GB décomposé en 8
 					sections de taille 512MB.
 				</p>
 				<br>
@@ -858,8 +845,9 @@
 			<div class="button-article">
 				<a href="architecture.html">
 					<div>
-						<p><</p>
-						<p>L'architecture du MCU</p>
+						<p>
+							<< /p>
+								<p>L'architecture du MCU</p>
 					</div>
 				</a> <a href="../../progress/progress.html">
 					<div>
@@ -880,5 +868,5 @@
 	</footer>
 
 </body>
-</html>
 
+</html>
