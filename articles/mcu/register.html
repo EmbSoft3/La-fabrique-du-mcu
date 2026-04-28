@@ -75,7 +75,7 @@
 					le chapitre précédent, nous avons vu qu'un <strong><span class="bold">périphérique</span></strong> était
 					un dispositif électronique
 					que l'on reliait au MCU afin de lui ajouter de nouvelles
-					fonctionnalités. Cette définition est claire, mais soulève une
+					fonctionnalités (liaison série, I2C, SPI, etc.). Cette définition est claire, mais soulève une
 					question de la plus haute importance 🤔. Par quel moyen le MCU
 					arrive-t-il à piloter ses périphériques ? Ne cherchez pas midi à
 					quatorze heures, la réponse est simple et vous vous en doutez, via
@@ -106,19 +106,19 @@
 					n'est pas chose aisée et je pense que pour bien clarifier leur
 					fonctionnement, l'étude d'un cas concret s'impose. Prenons donc
 					comme exemple le périphérique GPIO. Celui-ci a pour mission de
-					piloter les broches d'entrées-sorties du composant. Pour moi, c'est
-					le périphérique idéal pour commencer à programmer avec les
-					registres.</p>
+					piloter les broches d'entrées-sorties du composant. C'est le
+					périphérique le plus simple, il est donc idéal pour commencer à
+					programmer avec les registres.</p>
 				<br>
 
-				<p>Étudions donc le pseudo-code ci-dessous. Son but est de
-					positionner la broche d'entrée-sortie PA0 (port A broche 0) au
+				<p>Tout d'abord, étudions le pseudo-code ci-dessous. Son but est de
+					positionner la première broche d'entrée-sortie du port A (broche 0) au
 					niveau logique haut :</p>
 				<br>
 
 				<pre class="code">
 
-						<span class="multi-line-comment">/* 1. Dans un premier temps, on déclare des pointeurs et on les initialise avec les adresses des registres à configurer. On reviendra sur ces lignes dans la suite de l'article.  */</span>
+						<span class="multi-line-comment">/* 1. Les registres du périphérique GPIO sont situés à une adresse spécifique. Dans un premier temps, on déclare des pointeurs et on les initialise avec les adresses récupérées dans le manuel de référence. Ne vous inquiétez pas, nous reviendrons sur ces lignes dans la suite de l'article. */</span>
 						
 						<span class="keyword">uint32_t</span>* GPIOA_MODER = <span
 						class="number">0x40020000</span>;
@@ -129,7 +129,7 @@
 						<span class="keyword">uint32_t</span>* GPIOA_ODR = <span
 						class="number">0x40020014</span>;
 										
-						<span class="multi-line-comment">/* 2. Dans un deuxième temps, on configure les broches du port GPIOA. On positionne d'abord la broche PA0 en sortie et les broches PA1 à PA15 en entrée (registre MODER). Ensuite, on active l'étage PUSH-PULL de chaque broche (registre OTYPER) puis on désactive les résistances de tirage (registre PUPDR).  */</span>
+						<span class="multi-line-comment">/* 2. Ensuite, nous configurons les registres via de simples accès mémoire. Nous configurons les broches du port GPIO A : broche PA0 en sortie et broches PA1 à PA15 en entrée (registre MODER), étage PUSH-PULL activé pour chaque broche (registre OTYPER) et désactivation des résistances de tirage (registre PUPDR).  */</span>
 						
 						*GPIOA_MODER = <span class="number">0x00000001</span>; 
 						*GPIOA_OTYPER = <span class="number">0x00000000</span>; 
@@ -197,8 +197,8 @@
 					<var>PUPDR</var>
 					a permis de désactiver les résistances de tirage.
 				</p>
-				<p>Pour déterminer les valeurs à écrire, je suis simplement
-					allez lire la documentation du périphérique GPIO présente dans le
+				<p>Pour déterminer les valeurs à écrire et la signification de chaque bit, je suis simplement
+					allé lire la documentation du périphérique GPIO présente dans le
 					manuel de référence. J'ai d'ailleurs trouvé la description suivante
 					pour le registre GPIOx_MODER :</p>
 
@@ -371,7 +371,7 @@
 				<p>Comme vous vous en doutez, la réponse est non. Lorsque vous
 					souhaitez relire l'état d'une entrée numérique, le registre ODR ne
 					peut pas être utilisé. Il faut impérativement utiliser le registre
-					IDR qui est dédié à lecture des entrées numériques :
+					IDR qui est dédié à lecture des entrées numériques :</p>
 				<figure>
 					<img src="img/mcu-gpio-idr.jpg" alt="description des registres GPIO_IDR">
 					<figcaption>
@@ -410,23 +410,26 @@
 					terminée.
 					Ce fut une brève introduction, mais celle-ci était nécessaire pour
 					faire découvrir aux néophytes comment ces petits registres
-					fonctionnaient. Qui sait, peut-être qu'une vocation sera naît chez
+					fonctionnaient. Qui sait, peut-être qu'une vocation sera née chez
 					quelques-uns même si cela m'étonnerait grandement 😌.
 				</p>
 				<br>
 
 				<p>Avant de passer à la suite, j'aimerais que nous résumions
-					rapidement les points importants. Ne vous en faites pas, celà ne
+					rapidement les points importants. Ne vous en faites pas, cela ne
 					prendra pas longtemps ^^ :</p>
 
 				<ul>
 					<li class="newLine"><span class="gray">✔</span> Point 1 : les
 						registres sont les interfaces de configuration des périphériques.
-						Ils sont configurés en réalisant de simple accès mémoires en
-						lecture et ou en écriture.</li>
+						Ils sont configurés en réalisant de simple accès mémoires en lecture et ou en écriture.</li>
 
-					<li class="newLine"><span class="gray">✔</span> Point 2 : les
-						valeurs à écrire dans les registres sont décrites dans le manuel
+					<li class="newLine"><span class="gray">✔</span> Point 2 : chaque
+						registre possède une adresse mémoire et celle-ci est indiquée dans le manuel
+						de référence du composant.</li>
+
+					<li class="newLine"><span class="gray">✔</span> Point 3 : chaque registre a une signification
+						particulière. Les valeurs à écrire dans chacun des bits sont décrites dans le manuel
 						de référence du composant. Dans la littérature, on désigne souvent
 						ces valeurs sous le terme de <span class="bold-strong">Magic
 							Number</span> car elles semblent tirées du chapeau.</li>
@@ -436,31 +439,27 @@
 				<p>
 					Voilà, c'est tout ! Vous voyez, au final, cette première partie
 					était longue, mais il n'y avait vraiment pas grand-chose à
-					mémoriser. Maintenant, nous pouvons passer à la prochaine partie, <strong>l'adressage
-						du MCU</strong>. Vous vous souvenez tout à l'heure, j'ai déclaré des
-					pointeurs pour y inscrire de mystèrieurses adresses :
+					mémoriser. Maintenant, nous pouvons passer à la prochaine partie que j'ai nommé
+					<strong>l'adressage du MCU</strong>. Vous vous souvenez tout à l'heure, j'ai déclaré des
+					pointeurs pour y inscrire de mystérieuses adresses :
 				</p>
 				<br>
 
 				<pre class="code">
-
-						<span class="multi-line-comment">/* Dans un premier temps, on déclare des pointeurs et on les initialise avec les adresse des registres à configurer. On reviendra sur ces lignes dans la suite de l'article.  */</span>
-						
-						<span class="keyword">uint32_t</span>* GPIOA_MODER = <span
+					<span class="keyword">uint32_t</span>* GPIOA_MODER = <span
 						class="number">0x40020000</span>;
-						<span class="keyword">uint32_t</span>* GPIOA_OTYPER = <span
+					<span class="keyword">uint32_t</span>* GPIOA_OTYPER = <span
 						class="number">0x40020004</span>;	
-						<span class="keyword">uint32_t</span>* GPIOA_PUPDR = <span
+					<span class="keyword">uint32_t</span>* GPIOA_PUPDR = <span
 						class="number">0x4002000C</span>;
-						<span class="keyword">uint32_t</span>* GPIOA_ODR = <span
+					<span class="keyword">uint32_t</span>* GPIOA_ODR = <span
 						class="number">0x40020014</span>;
-
-					</pre>
+				</pre>
 				<br>
 
 
 				<p>Et bien, dans la prochaine partie, nous allons découvrir
-					comment j'ai réussi à déterminer la valeur de ces adresses et d'une
+					comment j'ai réussi à déterminer où ces adresses se trouvent et d'une
 					manière plus générales, comment les périphériques et les mémoires
 					sont organisés dans le MCU. Allez, c'est parti 🚀.</p>
 				<br>
@@ -532,12 +531,12 @@
 				<p>Il faut cependant faire attention à ne confondre l'espace
 					adressable avec la quantité de mémoire intégrée dans le MCU. En
 					effet, un espace adressable de 32bits signifie que notre
-					microcontroleur a la capacité d'adresser jusqu'à 4GB de mémoire.
+					microcontrôleur a la capacité d'adresser jusqu'à 4GB de mémoire.
 					Pour autant, cela ne signifie pas que le MCU est équipé de cette
 					quantité de mémoire.</p>
 				<br>
 
-				<p>En pratique, sur les microcontrôleurs, seul une portion de
+				<p>En pratique, sur les microcontrôleurs, seule une portion de
 					l'espace adressable est implémenté par les mémoires et les
 					périphériques. Le reste est laissé inutilisé.</p>
 				<br>
@@ -572,7 +571,7 @@
 				<h2 class="subtitle">2-3. L'espace adressable et la largeur de
 					bus en image</h2>
 
-				<p>Afin de ne pas vous emmeler les pinceaux, je vous ai créé un
+				<p>Afin de ne pas vous emmêler les pinceaux, je vous ai créé un
 					petit synoptique qui vous aidera à bien différencier les deux
 					notions précédentes :</p>
 
@@ -603,8 +602,8 @@
 
 
 					<li class="newLine"><span class="gray">✔</span> Ensuite, il
-						transfert une adresse sur le bus de communication pour
-						sélectionner le composant avec lesquel il souhaite communiquer
+						transfère une adresse sur le bus de communication pour
+						sélectionner le composant avec lequel il souhaite communiquer
 						(par exemple une mémoire).</li>
 
 					<li class="newLine"><span class="gray">✔</span> Enfin, il
@@ -616,9 +615,10 @@
 					que le protocole ci-dessus est imagé. En réalité, des signaux de
 					commandes interviennent à chaque étape de la transaction. J'ai
 					volontairement simplifié le protocole pour vous permettre de mieux
-					apréhender la communication entre un CPU et ses périphériques.
-				<h2 class="subtitle">2-3. Les technologies de microcontrôleurs
-				</h2>
+					appréhender la communication entre un CPU, ses périphériques et ses mémoires.</p>
+				<br>
+
+				<h2 class="subtitle">2-4. Les technologies de microcontrôleurs </h2>
 
 				<p>Avant de passer à l'organisation des MCU, j'aimerais faire un
 					aparté sur les technologies 8bits, 16bits et 32bits des
@@ -628,62 +628,53 @@
 				<div class="answer">
 					<p class="answer-logo">❔</p>
 					<p>Ah oui c'est une bonne idée ça ! En plus les micros sont
-						souvent classifier comme ça. Mais au fond, ça correspond à quoi ?</p>
+						souvent classifiés comme ça. Mais au fond, ça correspond à quoi ?</p>
 				</div>
 				<br>
 
 				<p>
 					En fait, lorsque l'on parle de microcontrôleurs 8bits, 16bits ou 32bits, on
-					désigne la <span class="bold">largeur du bus de
-						données</span>.
+					parle de la taille des registres internes au CPU.
 				</p>
 				<br>
-				<p>Un microcontrôleur 8bits travaillera avec un bus de données
+				<p>Un microcontrôleur 8bits travaillera généralement avec un bus de données
 					de taille 8bits (lignes D0 à D7), un microcontrôleur 16bits avec un
 					bus de taille 16 bits (lignes D0 à D15) et un microcontrôleur
 					32bits avec un bus de taille 32bits (lignes D0 à D31).</p>
 				<br>
 
-				<p>Il est à noter que d'une manière général, un microcontroleur 32bits sera
-					toujours plus performants que ces antagonistes 16bits et 8bits.
-					Cela est principalement du à la course aux performances s'étant
-					produit du balbutiement des MCU et qui de nos jours continue
-					toujours.</p>
+				<p>Il est à noter que rien n'interdit un microcontrôleur d'utiliser un bus de données plus large que sa
+					taille native. C'est d'ailleurs
+					ce que fait notre bon vieux microcontrôleur STM32F7 en intégrant un superbe bus de données de 64 bits
+					pour sublimer son jeu d'instructions 😍.
+				</p>
 				<br>
 
 				<div class="answer">
 					<p class="answer-logo">❔</p>
-					<p>Ah oui c'est une bonne idée ça ! En plus les micros sont
-						souvent classifier comme ça. Mais au fond, ça correspond à quoi ?</p>
+					<p>OK, ok, on commence à comprendre, néanmoins..., un microcontrôleur ayant une largeur de bus de 8bits,
+						possède t-il forcément un espace adressable de
+						8bits ?</p>
 				</div>
 				<br>
 
-
-				<p>Notez cependant que l'espace adressable d'un microcontrôleur
-					est décoléré de la largeur du bus de données. En effet, un
-					microcontroleur 8bits n'est pas limité à 256 octets d'adresses mais
+				<p>Non. L'espace adressable d'un microcontrôleur
+					est décorrélé de la largeur du bus de données. En effet, un
+					microcontrôleur 8bits n'est pas limité à 256 octets d'adresses mais
 					possède au moins toujours quelques kilo-octets de mémoire. C'est
 					d'ailleurs un bon moyen mémo-technique pour s'en rappeler.</p>
 				<br>
 
-				<p>Enfin pour terminer cet aparté, utiliser un bus de taille
-					restreinte (8bits par exemple) ne veut pas dire qu'il est
-					impossible de travailler avec des données de taille supérieur
-					(16bits ou 32bits par exemple). En fait, cela dépend entiérement du
+				<p>Par ailleurs, j'ajouterais qu'utiliser un bus de données
+					8bits ne veut pas dire qu'il est impossible de travailler avec des données de taille supérieure
+					(16bits ou 32bits par exemple). En fait, cela dépend entièrement du
 					jeu d'instructions. En général, le traitement de données 16bits ou
 					32bits sur un microcontrôleur 8bits sera juste plus long. En effet,
-					là ou un microcontroleur 32bits aurait fetcher un mot de 4 octets
-					en un cylce avec une seule instruction, un microcontroleur 8bits le
-					récupérera en plusieurs cyles avec une ou plusieurs instructions.</p>
+					là ou un microcontrôleur 32bits aurait fetché un mot de 4 octets
+					en un cycle, un microcontrôleur 8bits le récupérera en plusieurs cycles.</p>
 				<br>
 
-
-
-
-
-
-
-				<h2 class="subtitle">2-4. L'organisation du MCU</h2>
+				<h2 class="subtitle">2-5. L'organisation du MCU</h2>
 
 				<p>Dans le chapitre précédent dédié à l'architecture du MCU,
 					nous avons vu qu'un MCU était constitué de plusieurs mémoires et
@@ -695,68 +686,22 @@
 				<figure>
 					<img src="img/mcu_flux_simple.jpg" alt="architecture des composants STM32F75xxx et STM32F74xxx">
 					<figcaption>
-						<span class="underline">Figure 6</span> : architecture des
+						<span class="underline">Figure 7</span> : architecture des
 						composants STM32F75xxx et STM32F74xxx
 					</figcaption>
 				</figure>
 
 				<p>
 					C'est bon, ça vous revient ? Parfait ! Il est maintenant temps de
-					vous introduire deux nouvelles notions : <span class="bold">
-						l'espace adressable</span> et <span class="bold"> la largeur de
-						bus. </span>
-				</p>
-				<br>
-
-
-
-
-
-
-				<div class="answer">
-					<p class="answer-logo">❔</p>
-					<p>Ok, on comprends mieux. Par contre, l'espace adressable n'a
-						rien à voir avec les notions de microcontrôleur 8bits, 16bits ou
-						32 bits ?</p>
-				</div>
-				<br>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-				<p>
-					Je vais maintenant vous présentez la figure allant de paire avec
-					celle-ci. Mes chères lecteurs, voici la cartographie mémoire des
+					vous introduire une nouvelle figure allant de pair avec la
+					précédente. Mes chers lecteurs, voici la cartographie mémoire des
 					processeurs STM32F74x et STM32F75x (âmes sensibles s'abstenir <span class="emoji">🫣</span>) :
 				</p>
 
 				<figure>
 					<img src="img/mcu-memory-map.jpg" alt="Organisation mémoire du MCU">
 					<figcaption>
-						<span class="underline">Figure 7</span> : organisation mémoire des
+						<span class="underline">Figure 8</span> : organisation mémoire des
 						MCU STM32F74xxx et STM32F75xxx.
 					</figcaption>
 				</figure>
@@ -764,78 +709,36 @@
 				<p>
 					Commençons dès à présent à l'expliquer. Celle-ci se lit de gauche à
 					droite. La colonne de gauche montre que notre MCU possède un <span class="bold">espace adressable</span>
-					de 4GB décomposé en 8
-					sections de taille 512MB.
+					de 4GB (de 0x0 à 0xFFFFFFFF) décomposé en 8 sections de taille 512MB :
 				</p>
-				<br>
 
-
-
-				<p>Allez, ceci étant dit, continuons d'analyser notre figure.
-					Mais où est-ce qu'on s'était arrêté déjà 🤔 ? Ah oui ! Ca me
-					revient. Je disais donc que l'espace adressable était décomposé en
-					8 sections de même taille ^^. D'ailleurs, on observe que :
-				<p>
 				<ul>
 					<li class="newLine"><span class="gray">✔</span> Le premier
-						bloc contient les mémoires dédiées au programme. On discerne
+						bloc (block 0) contient les mémoires dédiées au programme. On discerne
 						notamment la mémoire FLASH (accessible par les bus ITCM et AXIM)
 						et la mémoire RAM ITCM (mémoire volatile très rapide permettant
 						d'exécuter un programme). La figure nous précise aussi l'adresse
 						de chacune de ces mémoires.</li>
 					<li class="newLine"><span class="gray">✔</span> Le deuxième
-						bloc contient les mémoires dédiées aux données. On discerne les
-						mémoire SRAM1, SRAM2 et DTCM. Comme précédemment chaque mémoire
+						bloc (block 1) contient les mémoires dédiées aux données. On discerne les
+						mémoires SRAM1, SRAM2 et DTCM. Comme précédemment chaque mémoire
 						possède une adresse distincte.</li>
 					<li class="newLine"><span class="gray">✔</span> Le troisième
-						bloc contient les périphériques des domaines APB1, APB2, AHB1 et
-						AHB2. Le microcontrôleur possédant beaucoup de périphériques, la
-						description de ces blocs est réalisée plus loin dans le manuel de
-						référence. Mais ne vous inquiétez pas, chaque périphérique se
-						verra aussi adresser une adresse unique.</li>
+						bloc (block 2) contient les périphériques des domaines APB1, APB2, AHB1 et
+						AHB2. Ces microcontrôleurs possédant beaucoup de périphériques, le fabricant
+						a décidé de les classer en différents "domaines" possédant des caractéristiques différentes.
+						La description de ces domaines est réalisée plus loin dans le manuel de
+						référence. Mais ne vous inquiétez pas, l'important à retenir est que chaque périphérique se
+						verra aussi adresser une adresse de base unique.</li>
 					<li class="newLine"><span class="gray">✔</span> Les blocs
-						suivants sont dédiés aux périphériques du domaine AHB3 (FMC et
+						suivants (block 3 à 6) sont dédiés aux périphériques du domaine AHB3 (FMC et
 						QSPI). Ce sont en fait des blocs de réserve utilisés lorsque l'on
 						branche des mémoires externe au MCU. On reviendra dessus dans la
 						dernière partie de cet article.</li>
 					<li class="newLine"><span class="gray">✔</span> Enfin, le
-						dernier bloc contient les périphériques internes du CPU (coeur
+						dernier bloc (block 7) contient les périphériques internes du CPU (coeur
 						ARM).</li>
 				</ul>
-
-				<p>D'ailleurs, on observe que . La troisième section (bloc 2)
-					contient les périphériques des domaines APB1, APB2, AHB1 et AHB2.
-					Les sections 4 à 7 (bloc 3 à 6) contiennent les périphériques du
-					domaine AHB3 (FMC) et la dernière section (bloc 7) contient les
-					registres internes du CPU.</p>
-				<br> <br> <br> <br> <br>
-
-
-
-
-				<ul>
-					<li class="newLine"><span class="gray">✔</span> La taille du
-						bus d'adresses (en bits) définie la taille de l'espace adressable
-						(c'est à dire le nombre maximal d'adresse).</li>
-
-					<li class="newLine"><span class="gray">✔</span> La taille du
-						bus de données (en bits) définie la taille maximale des données
-						récupérable à chaque accès.</li>
-
-				</ul>
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 			</div>
@@ -845,13 +748,12 @@
 			<div class="button-article">
 				<a href="architecture.html">
 					<div>
-						<p>
-							<< /p>
-								<p>L'architecture du MCU</p>
+						<p>&lt;</p>
+						<p>L'architecture du MCU</p>
 					</div>
 				</a> <a href="../../progress/progress.html">
 					<div>
-						<p>Les registres du MCU</p>
+						<p>Le cache et les accélérateurs du MCU</p>
 						<p>></p>
 					</div>
 				</a>
