@@ -1,3 +1,4 @@
 User-agent: *
 Disallow: /progress/
-Sitemap: https://lafabriquedumcu.com/sitemap.txt
+
+Sitemap: https://lafabriquedumcu.com/sitemap.xml
