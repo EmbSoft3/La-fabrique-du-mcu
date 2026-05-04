@@ -1,0 +1,40 @@
+# Git files
+.git/
+.github/
+.gitignore
+
+# Development files
+README.md
+LICENSE
+*.md
+.vscode/
+
+# Drafts and work in progress
+drafts/
+wip/
+tmp/
+
+# Node/Python/etc
+node_modules/
+package.json
+package-lock.json
+.env
+venv/
+__pycache__/
+
+# macOS
+.DS_Store
+._*
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Backup files
+*.bak
+*.swp
+*~
+.*.swp
+
+# Deployment config
+.deployignore
