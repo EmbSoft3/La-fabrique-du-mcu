@@ -66,39 +66,97 @@
 
 		<!-- Articles 1 -->
 		<section class="article">
-			<h1>Article 1 - Un système d'exploitation sur MCU ?</h1>
-			<div>
-				<p>
-					Dans cet article, nous étudierons les mécanismes à mettre en oeuvre
-					pour concevoir et déployer un petit système d'exploitation dans un
-					MCU. Nous nous appuierons sur un OS de mon cru dimensionné pour
-					fonctionner sur les familles de microcontrôleur <span class="bold">STM32F75xxx</span>
-					et <span class="bold">STM32F74xxx</span>.
-				</p>
-				<br>
-				<p>A la fin de ce tutoriel, vous connaîtrez les techniques
-					utilisées pour concevoir un noyau multi-tâches, la méthode utilisée
-					pour réaliser des fonctions asynchrones, et même la méthodologie à
-					utiliser pour exécuter un code chargé depuis un média externe comme
-					une carte SD ou une clé USB.</p>
-				<p>Le langage de programmation utilisé sera le C (le langage des
-					champions 🤭) saupoudré d'un soupçon d'assembleur.</p>
-				<br>
-				<p>Dans la mesure où les notions de registres, de dma, de
-					résolution ou de relocalisation de symboles ne vous effraient pas,
-					partons ensemble pour cette nouvelle aventure de programmation 🥳.
-				</p>
+			<!-- Chapitre 1 -->
+			<p class="title">1. Des rappels à la pelle</p>
 
-				<div class="button-article">
-					<div></div>
-					<a href="articles/rtos/mk.html">
-						<div>
-							<p>Un système d'exploitation sur MCU ?</p>
-							<p>></p>
-						</div>
-					</a>
-				</div>
-			</div>
+			<p>Le monde des MCU est vaste et depuis leur création, beaucoup
+				d'architectures ont émergées. Bien qu'arpentant le domaine depuis
+				quelques années déjà, je ne suis pas en mesure de vous fournir un
+				cours totalement exhaustif.</p>
+			<p>
+				C'est pourquoi, nous nous concentrerons sur un MCU en particulier,
+				celui que je connais le mieux, le <a
+					href="https://www.st.com/en/microcontrollers-microprocessors/stm32f746ng.html" target="_blank"
+					rel="noopener noreferrer"><strong>STM32F746NG</strong></a>.
+			</p>
+			<br>
+			<p>Dans l'ensemble des articles ci-dessous, je me baserais
+				principalement sur les documents suivants :</p>
+			<p>
+			<ul>
+				<li><span class="gray">✔</span> le doc <a href="https://developer.arm.com/documentation/dui0646/c/?lang=en"
+						target="_blank" rel="noopener noreferrer">"Arm Cortex-M7
+						Devices Generic User Guide
+						(REV. r1P2)"</a> du coeur.</li>
+				<li><span class="gray">✔</span> le doc <a href="https://developer.arm.com/documentation/ddi0489/f/?lang=en"
+						target="_blank" rel="noopener noreferrer">"Arm Cortex-M7
+						Technical Reference Manual
+						(REV. r1P2)"</a> du coeur.</li>
+				<li><span class="gray">✔</span> le doc <a
+						href="https://www.st.com/en/microcontrollers-microprocessors/stm32f746ng.html#documentation"
+						target="_blank" rel="noopener noreferrer">"Reference manual (RM0385 REV. 8)"</a> du MCU.</li>
+			</ul>
+			</p>
+			<p>Ces 3 documents constituent la bible du composant. Ils sont
+				essentiels à sa mise en oeuvre. Nous les découvrirons ensemble au
+				fil de nos aventures et à la fin de celle-ci, j'espère bien qu'ils
+				n'auront plus aucun secret pour vous 😉.</p>
+			<br>
+			<p>Bon, je crois que tout est dit ! Nous pouvons commencer.
+				Ci-dessous, vous trouverez la liste des articles que j'ai déjà
+				rédigés sur le sujet :</p>
+			<ul>
+				<li><span class="gray">✔</span> Article 1 - <a href="articles/mcu/architecture.html">L'architecture du
+						MCU</a>.
+				</li>
+				<li><span class="gray">✔</span> Article 2 - <a href="articles/mcu/register.html">Les registres du
+						MCU</a>.</li>
+			</ul>
+
+			<p>Et si dessous, vous trouverez la liste des articles prochainement disponibles :</p>
+
+			<ul>
+				<li><span class="gray">✔</span> Article 3 - <a href="articles/progress/progress.html">L'adressage du
+						MCU</a>.</li>
+				<li><span class="gray">✔</span> Article 4 - <a href="articles/progress/progress.html">Le cache et les
+						accélérateurs du MCU</a>.</li>
+				<li><span class="gray">✔</span> Article 5 - <a href="articles/progress/progress.html">La DMA, des transferts
+						sans intervention du CPU</a>.</li>
+				<li><span class="gray">✔</span> Article 6 - <a href="articles/progress/progress.html">La MPU et
+						l'organisation mémoire</a>.</li>
+				<li><span class="gray">✔</span> Article 7 - <a href="articles/progress/progress.html">La FPU, ses avantages
+						et ses inconvénients</a>.</li>
+				<li><span class="gray">✔</span> Article 8 - <a href="articles/progress/progress.html">L'architecture du
+						CPU</a>.</li>
+			</ul>
+
+			<!-- Chapitre 2 -->
+			<h1>2. Un système d'exploitation sur MCU</h1>
+
+			<!--p> Dans cet article, nous étudierons les mécanismes à mettre en oeuvre
+				pour concevoir et déployer un petit système d'exploitation dans un
+				MCU. Nous nous appuierons sur un OS de mon cru dimensionné pour
+				fonctionner sur les familles de microcontrôleur <span class="bold">STM32F75xxx</span>
+				et <span class="bold">STM32F74xxx</span>.
+			</p>
+			<br>
+			<p>A la fin de ce tutoriel, vous connaîtrez les techniques
+				utilisées pour concevoir un noyau multi-tâches, la méthode utilisée
+				pour réaliser des fonctions asynchrones, et même la méthodologie à
+				utiliser pour exécuter un code chargé depuis un média externe comme
+				une carte SD ou une clé USB.</p>
+			<p>Le langage de programmation utilisé sera le C (le langage des
+				champions 🤭) saupoudré d'un soupçon d'assembleur.</p>
+			<br>
+			<p>Dans la mesure où les notions de registres, de dma, de
+				résolution ou de relocalisation de symboles ne vous effraient pas,
+				partons ensemble pour cette nouvelle aventure de programmation 🥳.
+			</p>
+			<br-->
+			<p>Désolé, la suite de cette page n'a pas encore été écrite 😭.
+				Je l'actualiserai prochainement quand les articles de la section
+				précédente seront terminés.</p>
+
 		</section>
 
 	</main>
