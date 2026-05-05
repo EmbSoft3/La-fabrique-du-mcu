@@ -4,7 +4,8 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="description" content="">
+	<meta name="description"
+		content="Cet article présente le fonctionnement des registres des périphériques d'un microcontrôleur et la méthodologie pour les configurer.">
 	<title>Les registres du MCU</title>
 	<link rel="canonical" href="https://lafabriquedumcu.com/articles/mcu/register.html">
 	<link href="../../assets/css/style.css" rel="stylesheet">
@@ -161,8 +162,8 @@
 				<br>
 
 				<p>
-					Néanmoins, contrairement à une opération de lecture et d'écriture dans une mémoire, 
-					l'accès à un registre déclenchera des opérations supplémentaires 
+					Néanmoins, contrairement à une opération de lecture et d'écriture dans une mémoire,
+					l'accès à un registre déclenchera des opérations supplémentaires
 					propres à chaque périphérique. Par exemple, l'activation ou la désactivation du
 					driver de sortie d'une broche GPIO :
 				</p>
@@ -176,15 +177,15 @@
 
 				<p>
 					La figure ci-dessus est un synoptique de broche tiré directement du manuel de référence
-					de notre composant. 
+					de notre composant.
 					Sur celui-ci, on observe que l'électronique de chaque
-					broche est constituée de plusieurs signaux de contrôle permettant 
-					de configurer celle-ci de différentes manières (pull-up/pull-down, push-pull, 
-					open-drain, etc.). Le secret inavoué que l'on ne vous a jamais dit 🤐🗝️ et 
-					qu'en fait, chacun de ces signaux est relié d'une manière ou d'une autre 
-					à un registre et c'est 
+					broche est constituée de plusieurs signaux de contrôle permettant
+					de configurer celle-ci de différentes manières (pull-up/pull-down, push-pull,
+					open-drain, etc.). Le secret inavoué que l'on ne vous a jamais dit 🤐🗝️ et
+					qu'en fait, chacun de ces signaux est relié d'une manière ou d'une autre
+					à un registre et c'est
 					grâce à cette caractéristique que nous pouvons directement paramétrer un
-					périphérique en écrivant des valeurs à des adresses mémoire spécifiques 👍. 
+					périphérique en écrivant des valeurs à des adresses mémoire spécifiques 👍.
 					D'ailleurs, c'est exactement ce que nous avons fait dans le pseudo-code ci-dessus.
 				</p>
 				<br>
@@ -280,7 +281,7 @@
 					</pre>
 				<br>
 				<p>Vous voyez ! La programmation des registres n'est vraiment pas
-					compliquée. Celle-ci se résume surtout à éplucher beaucoup de documentation 
+					compliquée. Celle-ci se résume surtout à éplucher beaucoup de documentation
 					avec minutie puis appliquer les configurations désirées... Mais bref, continuons
 					d'éplucher notre documentation 🤓.</p>
 				<br>
@@ -441,22 +442,27 @@
 						myRegister = ( *GPIOA_IDR ) & <span class="number">0x1</span>;
 					
 					</pre>
-				
+
 				<br>
-				<p> Le code ci-dessus illustre une situation typique de lecture, modification et écriture de registres. Notez aussi l'existence 
-					du registre BSRR qui permet de positionner une broche à l'état HAUT ou BAS sans toucher aux autres broches du port et
-				    tout ça de manière atomique. </p>
-					
+				<p> Le code ci-dessus illustre une situation typique de lecture, modification et écriture de registres.
+					Notez aussi l'existence
+					du registre BSRR qui permet de positionner une broche à l'état HAUT ou BAS sans toucher aux autres
+					broches du port et
+					tout ça de manière atomique. </p>
+
 				<h2>2. Le mini-quiz 👑</h2>
 
-				<p>Bon, je pense que cet article est suffisamment dense et que nous allons nous arrêter ici 🥱. Mais avant de partir, 
-				   je vous ai préparé un autre mini-quiz de mon cru afin de peaufiner vos connaissances sur les registres 👍.
+				<p>Bon, je pense que cet article est suffisamment dense et que nous allons nous arrêter ici 🥱. Mais avant
+					de partir,
+					je vous ai préparé un autre mini-quiz de mon cru afin de peaufiner vos connaissances sur les registres
+					👍.
 				</p>
 				<br>
 
 				<h3>4.1. Question 1</h3>
-				<p>Dans l'exemple de configuration de la broche PA0, j'ai déclaré chacun des pointeurs 
-				   contenant l'adresse des registres avec l'attribut <span class="bold">volatile</span>. Pouvez-me dire ce qu'il se passerait si on l'omettait ?</p>
+				<p>Dans l'exemple de configuration de la broche PA0, j'ai déclaré chacun des pointeurs
+					contenant l'adresse des registres avec l'attribut <span class="bold">volatile</span>. Pouvez-me dire ce
+					qu'il se passerait si on l'omettait ?</p>
 
 				<details>
 					<summary>
@@ -465,12 +471,17 @@
 					<div class="comment">
 						<p class="comment-logo">💬</p>
 						<div class="comment-text ">
-							<p>Si l'on n'utilise pas ce mot clé, notre bon vieux compilateur commencerait à optimiser les accès mémoires en supposant que les valeurs
-							   des registres ne peuvent pas changer entre deux lectures consécutives. On se retrouverait donc dans une situation où la valeur
-							   de notre registre ne serait jamais relu parce que le compilateur a cru que notre variable ne pouvait pas changer de valeur
-							   indépendemment du flux d'exécution de notre programme. Or, pour certain registre (par exemple le registre IDR vue précédemment) 
-							   et même parfois pour de la mémoire (mémoire double accès ou autres), ces valeurs peuvent changer. C'est pourquoi, il est 
-							   important d'utiliser ce mot clé lorsque nous manipulons les registres d'un périphérique. </p>
+							<p>Si l'on n'utilise pas ce mot clé, notre bon vieux compilateur commencerait à optimiser les accès
+								mémoires en supposant que les valeurs
+								des registres ne peuvent pas changer entre deux lectures consécutives. On se retrouverait donc
+								dans une situation où la valeur
+								de notre registre ne serait jamais relu parce que le compilateur a cru que notre variable ne
+								pouvait pas changer de valeur
+								indépendemment du flux d'exécution de notre programme. Or, pour certain registre (par exemple le
+								registre IDR vue précédemment)
+								et même parfois pour de la mémoire (mémoire double accès ou autres), ces valeurs peuvent
+								changer. C'est pourquoi, il est
+								important d'utiliser ce mot clé lorsque nous manipulons les registres d'un périphérique. </p>
 
 						</div>
 
@@ -479,8 +490,9 @@
 				<br>
 
 				<h3>4.2. Question 2</h3>
-				<p>Dans les exemples précédents, nous avons étudié plusieurs registres. Certain était accessibles à la fois en lecture et en écriture (RW)
-				   et d'autre seulement en lecture seule (R). Pouvez-me dire s'il existe d'autres types d'accès ?</p>
+				<p>Dans les exemples précédents, nous avons étudié plusieurs registres. Certain était accessibles à la fois
+					en lecture et en écriture (RW)
+					et d'autre seulement en lecture seule (R). Pouvez-me dire s'il existe d'autres types d'accès ?</p>
 
 				<details>
 					<summary>
@@ -489,16 +501,21 @@
 					<div class="comment">
 						<p class="comment-logo">💬</p>
 						<div class="comment-text ">
-							<p>Oui et il en existe beaucoup d'autre, d'ailleurs,  le paragraphe 1.2 du manuel de référence décrit les types d'accès possibles s
-							   sur les registres du composant : </p>
+							<p>Oui et il en existe beaucoup d'autre, d'ailleurs, le paragraphe 1.2 du manuel de référence
+								décrit les types d'accès possibles s
+								sur les registres du composant : </p>
 							<figure>
-								<img src="../../images/mcu/mcu-convention.jpg" alt="description des types d'accès possibles sur les registres.">
+								<img src="../../images/mcu/mcu-convention.jpg"
+									alt="description des types d'accès possibles sur les registres.">
 								<figcaption>
-									<span class="underline">Figure 8</span> : description des types d'accès possibles sur les registres.
+									<span class="underline">Figure 8</span> : description des types d'accès possibles sur les
+									registres.
 								</figcaption>
 							</figure>
-							<p>On retrouve nos accès Read/Write (RW), et Read-only (R) vues précédemment mais aussi les accès Write-Only (W), Read/Clear by Read 
-							  (rc_r) et read/set by Read (rs_r) qui sont souvent rencontré dans les registres de status et d'interruption. </p>
+							<p>On retrouve nos accès Read/Write (RW), et Read-only (R) vues précédemment mais aussi les accès
+								Write-Only (W), Read/Clear by Read
+								(rc_r) et read/set by Read (rs_r) qui sont souvent rencontré dans les registres de status et
+								d'interruption. </p>
 						</div>
 
 					</div>
@@ -506,8 +523,9 @@
 				<br>
 
 				<h3>4.3. Question 3</h3>
-				<p>Dans notre pseudo-code, nous avons configuré la broche PA0 en sortie à l'aide du registre MODER. Si j'avais souhaité la configurer en
-				   entrée, sauriez-vous me dire si une écriture du registre MODER était nécessaire ?
+				<p>Dans notre pseudo-code, nous avons configuré la broche PA0 en sortie à l'aide du registre MODER. Si
+					j'avais souhaité la configurer en
+					entrée, sauriez-vous me dire si une écriture du registre MODER était nécessaire ?
 				</p>
 
 				<details>
@@ -517,11 +535,14 @@
 					<div class="comment">
 						<p class="comment-logo">💬</p>
 						<div class="comment-text ">
-							<p>La réponse est non. En observant la figure 3, on s'aperçoit que la valeur de reset du registre MODER est 0xA8000000 pour le port A.
-							   Au démarrage du microcontroleur, la broche PA0 est donc configurée en entrée par défaut. Pour ce cas particulier,
-							   on aurait donc pu s'abstenir d'écrire une valeur dans ce registre. </p>
-							<p>A noter que certain registre possède une valeur de reset indéfinie au démarrage. C'est notamment le cas du registre IDR qui contient
-							   l'état physique des broches GPIO.
+							<p>La réponse est non. En observant la figure 3, on s'aperçoit que la valeur de reset du registre
+								MODER est 0xA8000000 pour le port A.
+								Au démarrage du microcontroleur, la broche PA0 est donc configurée en entrée par défaut. Pour ce
+								cas particulier,
+								on aurait donc pu s'abstenir d'écrire une valeur dans ce registre. </p>
+							<p>A noter que certain registre possède une valeur de reset indéfinie au démarrage. C'est notamment
+								le cas du registre IDR qui contient
+								l'état physique des broches GPIO.
 							</p>
 
 						</div>
@@ -531,7 +552,8 @@
 				<br>
 
 				<h3>4.4. Question 4</h3>
-				<p>A votre avis, quel est la méthodologie faut-il adopter lorsque l'on rencontre des difficultés pour faire fonctionner un périphérique ?</p>
+				<p>A votre avis, quel est la méthodologie faut-il adopter lorsque l'on rencontre des difficultés pour faire
+					fonctionner un périphérique ?</p>
 
 				<details>
 					<summary>
@@ -540,25 +562,36 @@
 					<div class="comment">
 						<p class="comment-logo">💬</p>
 						<div class="comment-text ">
-							<p>Comme vous vous en doutez, il n'y a pas de réponse universelle à cette question. Je vous la pose seulement de vous prévenir 
-							   que le monde du bas niveau
-							   est un monde laborieux et qu'il ne sera pas rare de passer des semaines à faire fonctionner un périphérique externe, une
-							   mémoire, de corriger des bugs mystiques ou je ne sais quoi encore... </p>
+							<p>Comme vous vous en doutez, il n'y a pas de réponse universelle à cette question. Je vous la pose
+								seulement de vous prévenir
+								que le monde du bas niveau
+								est un monde laborieux et qu'il ne sera pas rare de passer des semaines à faire fonctionner un
+								périphérique externe, une
+								mémoire, de corriger des bugs mystiques ou je ne sais quoi encore... </p>
 							<p>Dans ces situations, le premier conseil que je vous donnerai
-							   sera de relire votre code, la datasheet du composant et son errata (le document listant tout ce qui ne
-							   fonctionne pas comme prévu dans le composant).</p>
-            			    <p>Le deuxième conseil sera d'aller observer comment d'autres personnes ont codé ou ont réussi à faire fonctionner
-							   le driver sur lequel vous travaillez. Vous pouvez par exemple consulter les forums officiels de ST ou analyser 
-							   leur code en détail.</p>
-							<p>Le troisième conseil sera de visualiser les signaux à l'oscilloscope ou d'utiliser un décodeur de trames. Ces outils
-							   peuvent rapidement vous débloquer en localisant rapidement la source du ou des problèmes. Par exemple, lorsque j'ai développé
-							   la stack USB de <a href="https://github.com/EmbSoft3/Mk" target="_blank" rel="noopener noreferrer"><span class="bold">Mk</span></a>, 
-							   j'ai du acheté un décodeur de trame afin d'analyser les échanges entre les dispositifs USB. 
-							   J'étais dans une impasse et je ne comprenais pas pourquoi l'énumération échouait systématiquement.
-							   En analysant la sortie USB, j'ai pu déterminer rapidement qu'aucune trame valide ne sortait du MCU et que mon problème était
-							   localisé au niveau de la DMA du coeur USB. </p>
-							<p>Enfin le dernier conseil et pas des moindres, continuer à persévérer, 
-							   persévérer et persévérer encore et encore car les grandes choses se construisent petit à petit, brique après brique 🤔.</p>
+								sera de relire votre code, la datasheet du composant et son errata (le document listant tout ce
+								qui ne
+								fonctionne pas comme prévu dans le composant).</p>
+							<p>Le deuxième conseil sera d'aller observer comment d'autres personnes ont codé ou ont réussi à
+								faire fonctionner
+								le driver sur lequel vous travaillez. Vous pouvez par exemple consulter les forums officiels de
+								ST ou analyser
+								leur code en détail.</p>
+							<p>Le troisième conseil sera de visualiser les signaux à l'oscilloscope ou d'utiliser un décodeur
+								de trames. Ces outils
+								peuvent rapidement vous débloquer en localisant rapidement la source du ou des problèmes. Par
+								exemple, lorsque j'ai développé
+								la stack USB de <a href="https://github.com/EmbSoft3/Mk" target="_blank"
+									rel="noopener noreferrer"><span class="bold">Mk</span></a>,
+								j'ai du acheté un décodeur de trame afin d'analyser les échanges entre les dispositifs USB.
+								J'étais dans une impasse et je ne comprenais pas pourquoi l'énumération échouait
+								systématiquement.
+								En analysant la sortie USB, j'ai pu déterminer rapidement qu'aucune trame valide ne sortait du
+								MCU et que mon problème était
+								localisé au niveau de la DMA du coeur USB. </p>
+							<p>Enfin le dernier conseil et pas des moindres, continuer à persévérer,
+								persévérer et persévérer encore et encore car les grandes choses se construisent petit à petit,
+								brique après brique 🤔.</p>
 
 						</div>
 
@@ -568,25 +601,32 @@
 				<h2>3. La prochaine étape</h2>
 
 				<p>
-					Si vous êtes débutant et que vous souhaitez continuer votre apprentissage du bas niveau en bare-metal, je vous conseille de continuer
-					à vous exercer à la programmation des registres et développer des drivers simples sur quelques périphériques d'un microcontrôleur 
-					de votre choix. Beaucoup de tutoriels sont disponibles sur internet et vous pouvez vous concentrer sur des périphériques simple comme
-					l'UART, l'I2C ou encore le SPI. Viendra ensuite les timers, les interruptions, les DMA et ainsi de suite...</p>
+					Si vous êtes débutant et que vous souhaitez continuer votre apprentissage du bas niveau en bare-metal, je
+					vous conseille de continuer
+					à vous exercer à la programmation des registres et développer des drivers simples sur quelques
+					périphériques d'un microcontrôleur
+					de votre choix. Beaucoup de tutoriels sont disponibles sur internet et vous pouvez vous concentrer sur
+					des périphériques simple comme
+					l'UART, l'I2C ou encore le SPI. Viendra ensuite les timers, les interruptions, les DMA et ainsi de
+					suite...</p>
 				<br>
-					
+
 				<div class="comment">
 					<p class="comment-logo">💬</p>
 					<p>
-						C'est en forgeant que l'on devient forgeron et il faut commencer par les périphériques les plus simples afin de mieux pouvoir dompter les
-						plus complexe. Ayez confiance en vous et perséverez ! 
+						C'est en forgeant que l'on devient forgeron et il faut commencer par les périphériques les plus
+						simples afin de mieux pouvoir dompter les
+						plus complexe. Ayez confiance en vous et perséverez !
 					</p>
 				</div>
 				<br>
 
 				<p>
-					Par ailleurs, si vous êtes curieux et que vous souhaitez regarder les bibliothèques logicielles que j'ai développées pour <span class="bold">Mk</span>, 
-					je vous laisse un lien vers mon 
-					<a href="https://github.com/EmbSoft3/Mk/blob/main/Mk/Includes/Mcu/Stm32f74xxx/Peripherals/" target="_blank" rel="noopener noreferrer"><span class="bold">github</span></a>.
+					Par ailleurs, si vous êtes curieux et que vous souhaitez regarder les bibliothèques logicielles que j'ai
+					développées pour <span class="bold">Mk</span>,
+					je vous laisse un lien vers mon
+					<a href="https://github.com/EmbSoft3/Mk/blob/main/Mk/Includes/Mcu/Stm32f74xxx/Peripherals/"
+						target="_blank" rel="noopener noreferrer"><span class="bold">github</span></a>.
 				</p>
 				<br>
 
@@ -619,8 +659,8 @@
 							Number</span> car elles semblent tirées du chapeau.</li>
 
 					<li class="newLine"><span class="gray">✔</span> Point 3 : chaque registre possède une valeur de reset.
-					Celle-ci peut être définie par construction ou non et cela dépend souvent du type d'accès supporté 
-				    par le registre.</li>
+						Celle-ci peut être définie par construction ou non et cela dépend souvent du type d'accès supporté
+						par le registre.</li>
 				</ul>
 
 				<p>
