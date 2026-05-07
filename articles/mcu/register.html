@@ -117,13 +117,13 @@
 				<p>Parmi la multitude de périphériques
 					équipés dans la puce, celui-ci a pour mission de
 					piloter les broches d'entrées-sorties du composant. C'est un
-					périphérique facile à assimiler qui est idéal pour commencer à
-					programmer avec les registres.</p>
+					périphérique facile à assimiler. Il est donc idéal pour commencer la
+					programmation des registres.</p>
 
 				<h2 class="subtitle">1-1. Un premier pas avec les registres</h2>
 
 				<p>Rentrons directement dans le vif du sujet et étudions le pseudo-code ci-dessous. Son but est de
-					positionner une broche d'entrée-sortie (port A - broche 0) au
+					positionner une broche d'entrée-sortie (broche PA0) au
 					niveau logique haut :</p>
 				<br>
 
@@ -180,7 +180,7 @@
 					du manuel de référence de notre composant.
 					Sur celui-ci, on observe que l'électronique de chaque
 					broche est constituée de plusieurs signaux de contrôle permettant
-					de configurer celle-ci de différentes manières (pull-up/pull-down, push-pull,
+					de configurer celle-ci (pull-up/pull-down, push-pull,
 					open-drain, etc.).
 				</p>
 				<br>
@@ -194,8 +194,8 @@
 
 				<div class="answer">
 					<p class="answer-logo">❔</p>
-					<p>Merci pour cette magnifique explication Emb ! Mais comment as-tu fait
-						pour déterminer les valeurs à écrire dans ces registres 🤔 ?</p>
+					<p>Merci pour cette magnifique explication <span class="bold">Emb</span> ! Mais nous, ce qui nous
+						intéresse, c'est comment déterminer les valeurs à écrire dans ces registres 🤔 ?</p>
 				</div>
 				<br>
 
@@ -566,7 +566,7 @@
 						<p class="comment-logo">💬</p>
 						<div class="comment-text ">
 							<p>Comme vous vous en doutez, il n'y a pas de réponse universelle à cette question. Je vous la pose
-								seulement pour vous prévenir
+								seulement pour vous avertir
 								que le monde du bas niveau
 								est un monde laborieux et qu'il ne sera pas rare de passer des semaines à faire fonctionner un
 								périphérique externe, une
@@ -594,7 +594,7 @@
 								localisé au niveau de la DMA du coeur USB. </p>
 							<p>Enfin le dernier conseil et pas des moindres, continuer à persévérer,
 								persévérer et persévérer encore et encore. Les grandes choses se construisent petit à petit,
-								brique après brique et chaque nouveau jour ajoute une pierre à l'édifice. 🤔.</p>
+								brique après brique et chaque nouveau jour ajoute une nouvelle pierre à l'édifice. 🤔.</p>
 
 						</div>
 
@@ -606,7 +606,7 @@
 				<p>
 					Si vous êtes débutant et que vous souhaitez continuer votre apprentissage du bas niveau en bare-metal, je
 					vous conseille de continuer
-					à vous exercer à la programmation des registres et développer des drivers simples sur quelques
+					à vous exercer à la programmation des registres et de développer des drivers simples sur quelques
 					périphériques d'un microcontrôleur
 					de votre choix. Beaucoup de tutoriels sont disponibles sur internet et vous pouvez vous concentrer sur
 					des périphériques simple comme
@@ -636,7 +636,7 @@
 				<h2>4. En résumé</h2>
 
 				<p>
-					Bon ! La partie manipulation de registres et <span class="bold-strong">Magic Number</span> est maintenant
+					La partie manipulation de registres et <span class="bold-strong">Magic Number</span> est maintenant
 					terminée.
 					Ce fut une brève introduction, mais celle-ci était nécessaire pour
 					faire découvrir aux néophytes comment ces petits registres
@@ -669,8 +669,8 @@
 				<p>
 					Voilà, c'est tout ! Vous voyez, au final, cette première partie
 					était longue, mais il n'y avait vraiment pas grand-chose à
-					mémoriser. Maintenant, nous pouvons passer à la prochaine partie que j'ai nommé
-					<strong>l'adressage du MCU</strong>. Vous vous souvenez tout à l'heure, j'ai déclaré des
+					mémoriser. Maintenant, nous pouvons passer à notre prochain article que j'ai nommé
+					<strong>l'adressage du MCU</strong>. Vous vous souvenez que, tout à l'heure, j'ai déclaré des
 					pointeurs pour y inscrire de mystérieuses adresses :
 				</p>
 				<br>
@@ -688,8 +688,8 @@
 				<br>
 
 				<p>Et bien, dans la prochaine partie, nous allons découvrir
-					comment j'ai réussi à déterminer où ces adresses se trouvent et d'une
-					manière plus générales, comment les périphériques et les mémoires
+					comment j'ai réussi à déterminer où ces adresses sont localisées et d'une
+					manière plus générale, comment les périphériques et les mémoires
 					sont organisés. Allez, c'est parti 🚀.</p>
 				<br>
 
