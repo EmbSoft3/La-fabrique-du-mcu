@@ -1,17 +1,15 @@
-html
-{
-  	scrollbar-width: thin;			
+html {
+	scrollbar-width: thin;
 }
 
-body 
-{
+body {
 	display: flex;
 	flex-direction: column;
 	margin: auto;
 	background-color: rgb(29, 31, 33);
 	font-family: "Jost", sans-serif;
 	font-optical-sizing: auto;
-	font-weight:300;
+	font-weight: 300;
 	font-style: normal;
 	min-height: 100vh;
 	width: 80vw;
@@ -19,21 +17,18 @@ body
 	overflow: visible;
 }
 
-a
-{
+a {
 	text-decoration: none;
 	color: rgb(43, 188, 138);
 }
 
-strong
-{
+strong {
 	text-decoration: none;
 	color: rgb(215, 207, 192);
 	font-weight: 600;
 }
 
-p
-{
+p {
 	color: rgb(230, 230, 230);
 	font-size: 1.1em;
 	text-align: justify;
@@ -43,16 +38,14 @@ p
 	line-height: 1.3em;
 }
 
-ul
-{
+ul {
 	list-style-type: none;
 	margin-top: 2em;
 	margin-bottom: 2em;
 	padding-left: 1em;
 }
 
-li
-{
+li {
 	color: rgb(230, 230, 230);
 	font-size: 1.1em;
 	text-align: justify;
@@ -62,8 +55,7 @@ li
 	line-height: 1.3em;
 }
 
-li.newLine
-{
+li.newLine {
 	color: rgb(230, 230, 230);
 	font-size: 1.1em;
 	text-align: justify;
@@ -74,20 +66,8 @@ li.newLine
 	line-height: 1.3em;
 }
 
-@media screen and (max-width: 640px) 
-{
-    p {
-		color: rgb(230, 230, 230);
-		font-size: 1.1em;
-		text-align: start;
-		vertical-align: baseline;
-		margin: 0em;
-		margin-top: 0.3em;
-		line-height: 1.3em;
-    }
-    
-    li
-	{
+@media screen and (max-width: 640px) {
+	p {
 		color: rgb(230, 230, 230);
 		font-size: 1.1em;
 		text-align: start;
@@ -96,9 +76,18 @@ li.newLine
 		margin-top: 0.3em;
 		line-height: 1.3em;
 	}
-	
-	li.newLine
-	{
+
+	li {
+		color: rgb(230, 230, 230);
+		font-size: 1.1em;
+		text-align: start;
+		vertical-align: baseline;
+		margin: 0em;
+		margin-top: 0.3em;
+		line-height: 1.3em;
+	}
+
+	li.newLine {
 		color: rgb(230, 230, 230);
 		font-size: 1.1em;
 		text-align: start;
@@ -110,22 +99,22 @@ li.newLine
 	}
 }
 
-br
-{
+br {
 	margin: 0.2em;
 }
 
-h1, h2, .title
-{
+h1,
+h2,
+.title {
 	color: rgb(228, 139, 73);
 	font-size: 1.5em;
-	margin-top: 1.5em;		
+	margin-top: 1.5em;
 	margin-bottom: 1em;
 	font-weight: bold;
 }
 
-h3, .subtitle
-{
+h3,
+.subtitle {
 	color: rgb(209, 197, 188);
 	font-size: 1.4em;
 	font-style: italic;
@@ -133,28 +122,25 @@ h3, .subtitle
 	font-weight: bold;
 }
 
-figure 
-{
-  display: flex;
-  flex-flow: column;
-  padding: 0px;
-  max-width: 100%;
-  margin: auto;
+figure {
+	display: flex;
+	flex-flow: column;
+	padding: 0px;
+	max-width: 100%;
+	margin: auto;
 }
 
-figcaption 
-{
-  color: rgb(175, 175, 175);
-  font: italic smaller sans-serif;
-  padding: 3px;
-  text-align: center;
-  text-decoration: none;
-  font-size: 1em;
-  margin-bottom: 3%;
+figcaption {
+	color: rgb(175, 175, 175);
+	font: italic smaller sans-serif;
+	padding: 3px;
+	text-align: center;
+	text-decoration: none;
+	font-size: 1em;
+	margin-bottom: 3%;
 }
 
-img
-{
+img {
 	max-width: 100%;
 	height: auto;
 	margin-top: 3%;
@@ -165,41 +151,35 @@ img
 	border: medium solid rgb(70, 70, 70);
 }
 
-.italic
-{
-  	font-style: italic;	
+.italic {
+	font-style: italic;
 }
 
-.bold
-{
+.bold {
 	text-decoration: none;
 	color: rgb(43, 188, 138);
 	font-weight: 600;
 }
 
-.bold-strong
-{
+.bold-strong {
 	text-decoration: none;
 	color: rgb(215, 207, 192);
 	font-weight: 600;
 }
 
-.bold-red
-{
+.bold-red {
 	text-decoration: none;
 	color: rgb(215, 207, 192);
 	font-weight: 600;
 }
 
-.bold-white
-{
+.bold-white {
 	text-decoration: none;
 	color: rgb(230, 230, 230);
 	font-weight: 600;
 }
 
-.gray
-{
+.gray {
 	margin-right: 0.5em;
 	text-decoration: none;
 	color: rgb(175, 175, 175);
@@ -207,28 +187,35 @@ img
 	font-weight: bold;
 }
 
-.underline
-{
+.underline {
 	text-decoration: underline;
 }
 
-.bold-orange
-{
+.bold-orange {
 	text-decoration: none;
 	color: rgb(255, 165, 0);
 	font-weight: bold;
 }
 
-details 
-{
+.default-orange {
+	text-decoration: none;
+	color: rgb(255, 165, 0);
+}
+
+.default-green {
+	text-decoration: none;
+	color: rgb(43, 188, 138);
+	font-weight: 600;
+}
+
+details {
 	margin-top: 0;
 	margin-bottom: 0;
 	margin-left: auto;
-	margin-right: auto;	
+	margin-right: auto;
 }
 
-details > summary 
-{
+details>summary {
 	color: rgb(219, 208, 208);
 	font-weight: bold;
 	font-size: 1.1em;
