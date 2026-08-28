@@ -35,7 +35,8 @@
       <section class="mk">
          <div>
             <p>
-               Cette page présente l'API du noyau temps réel <span class="bold-strong">Mk</span>. Ce noyau a été
+               Cette page présente l'architecture et les caractéristiques du noyau temps réel <span
+                  class="bold-strong">Mk</span>. Ce noyau a été
                développé en
                2018 et est dédié aux processeurs ARM Cortex-M7.
             </p>
@@ -576,6 +577,26 @@
                à la fin de l'appel système.
             </p>
 
+            <h2>20. Les callbacks</h2>
+
+            <p><span class="bold-strong">Mk</span> intègre un gestionnaire de rappels permettant de différer
+               l'exécution de fonctions. Celui-ci s'architecture autour de deux tâches (une privilégiée et l'autre non)
+               et d'un champ d'événements.</p>
+            <p>Ces caractéristiques permettent d'attendre l'exécution d'un maximum de 30 fonctions simultanément.</p>
+
+
+         </div>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <div></div>
+            <a href="../progress/progress.html">
+               <div>
+                  <p>Configuration du noyau</p>
+                  <p>></p>
+               </div>
+            </a>
          </div>
       </section>
    </main>
