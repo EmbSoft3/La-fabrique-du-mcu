@@ -11,6 +11,7 @@
    <link href="../../assets/css/style.css" rel="stylesheet">
    <link href="../../assets/css/template.css" rel="stylesheet">
    <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
    <link rel="preconnect" href="https://fonts.googleapis.com">
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
@@ -24,8 +25,9 @@
       </div>
       <div class="onglet">
          <nav>
-            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">Github</a>
             <a href="./api.html">API</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">Github</a>
+            <a href="../contact/contact.html">Contact</a>
          </nav>
       </div>
    </header>
@@ -34,99 +36,34 @@
       <section class="mk">
          <div>
             <p>
-               Cette page présente l'API du noyau temps réel <span class="bold">Mk</span> que j'ai développé en 2018
-               pour les processeurs ARM Cortex-M7.
+               <span class="bold-strong">Mk</span> est un système d'exploitation temps réel (RTOS) ciblant les
+               microcontrôleurs STM32F7 (cœur ARM Cortex-M7). Cette page présente l'ensemble des API développées pour
+               ce système d'exploitation.
             </p>
 
-            <p class="title">1. Présentation</p>
+            <h1>1. Le noyau temps réel Mk</h1>
+            <div class="api-grid">
+               <a href="./architecture.html" class="api-link">✔ Architecture du noyau
+                  <span class="api-description">Cet article présente l'architecture du noyau temps réel <span
+                        class="bold-strong">Mk</span>. Il se
+                     concentre sur les mécanismes d'ordonnancement, les listes de tâches,
+                     les droits, les vecteurs d'interruption et les interactions du noyau avec la <span
+                        class="bold-strong">FPU</span> et la <span class="bold-strong">MPU</span>.
+                  </span>
+               </a>
+            </div>
 
-            <p>
-               Mk est écrit en C et en assembleur. Il ne possède aucune dépendance
-               externe vers une quelconque bibliothèque. Ses principales caractéristiques sont les suivantes :
-            </p>
+            <!--div class="api-grid">
+               <a href="./architecture.html" class="api-link">✔ Architecture du noyau
+                  <span class="api-description">Cet article présente l'architecture du noyau temps réel <span
+                        class="bold-strong">Mk</span>. Il se
+                     concentre sur les mécanismes d'ordonnancement, les listes de tâches,
+                     les droits, les vecteurs d'interruption et les interactions du noyau avec la <span
+                        class="bold-strong">FPU</span> et la <span class="bold-strong">MPU</span>.
+                  </span>
 
-            <p>
-            <ul>
-               <li><span class="gray">✔</span> Noyau préemptif basé sur un scheduler à priorité fixe. Le temps
-                  processeur est réparti de manière équitaible entre les
-                  tâches de même priorité (<strong>Round-Robin</strong>).</li>
-               <li><span class="gray">✔</span> Protection des tâches critiques via un environnement d'exécution sécurisé
-                  (<strong>TEE+MPU</strong>).</li>
-               <li><span class="gray">✔</span> Support des tâches flottantes (<strong>FPU</strong>) et non flottantes.
-               </li>
-               <li><span class="gray">✔</span> Absence d'allocations dynamiques. Allocation mémoire de taille fixe
-                  (<strong>Fixed-size memory pools</strong>).</li>
-               <li><span class="gray">✔</span> Allocation mémoire de taille fixe
-                  (<strong>Fixed-size memory pools</strong>).</li>
-               <li><span class="gray">✔</span> Primitives de synchronisation avancées (<strong>Sémaphore</strong>,
-                  <strong>Mutex</strong>, <strong>Event</strong>,
-                  <strong>MailBox</strong>).
-               </li>
-               <li><span class="gray">✔</span> Système d'exécution différé (<strong>Callback</strong>).</li>
-            </ul>
-            </p>
-
-            <p class="title">2. Architecture du noyau</p>
-            <p>
-               Mk est architecturé autour d'un ordonnanceur et d'un ensemble de fonctions qui réalisent des appels
-               système (SVC).
-               Chaque appel système déclenche une requête SVC afin de réaliser une opération d'ordonnancement ou de
-               synchronisation de manière sécurisée.
-            </p>
-            <br>
-            <p>
-               Les interruptions ne sont jamais désactivées par le noyau.
-               Celles-ci sont néanmoins masquées lorsqu'un appel système est réalisé depuis un vecteur
-               d'interruption.
-            </p>
-            <br>
-            <p>
-               L'ordonnanceur sélectionne la tâche à exécuter en fonction de son état et de sa priorité. L'algorithme
-               utilisé est de type O(1). Il repose sur l'instruction CLZ (Count Leading Zeros) du cœur Cortex-M7 qui
-               permet de retrouver immédiatement le niveau de priorité
-               le plus élevé, sans parcourir de liste.
-            </p>
-            <br>
-            <p>
-               Une tâche peut être flottante (K_MK_TYPE_FLOATING) ou non flottante (K_MK_TYPE_DEFAULT). Une tâche
-               flottante a la possibilité d'utiliser les instruction de la FPU. L'ordonnanceur se charge alors de
-               mémoriser les registres flottants lors de chaque changement de contexte.
-            </p>
-            <p>
-               Une tâche peut aussi être privilégiée (K_MK_TYPE_PRIVILEGED) ou non privilégiée (K_MK_TYPE_DEFAULT).
-            </p>
-            <p>Si une tâche est privilégiée, l'ordonnanceur reset le bit nPRIV du registre CONTROL. La tâche
-               peut alors accéder à toutes les ressources du système sans restriction.
-               A contrario, les droits d'une tâche non privilégiée sont restreints et sont définis par la MPU (Memory
-               Protection Unit) du processeur.
-            </p>
-            <p>
-               Qu'elles soient privilégiées ou non, les tâches doivent toutes utiliser le même pointeur de stack : PSP
-               (Process Stack Pointer).
-               Le pointeur de stack MSP (Main Stack Pointer) est réservé aux interruptions et aux appels système.
-               A noter qu'il est de la responsabilité de l'utilisateur d'initialiser correctement le système pour
-               que le PSP soit le pointeur de stack courant.
-            </p>
-            <br>
-            <p>
-               L'utilisation du PSP par les tâches privilégiées n'entache en rien la sécurité du système car leur
-               contexte d'exécution est protégé par la MPU.
-            </p>
-            <br>
-            <p>
-               Au cours de sa vie, une tâche peut être dans l'un des états suivants :
-            </p>
-
-            <p>
-            <ul>
-               <li><span class="gray">✔</span> Prête (K_MK_STATE_READY).</li>
-               <li><span class="gray">✔</span> Bloquée (K_MK_STATE_BLOCKED).</li>
-               <li><span class="gray">✔</span> Temporisée (K_MK_STATE_DELAYED).</li>
-               <li><span class="gray">✔</span> Suspendue (K_MK_STATE_SUSPENDED).</li>
-               <li><span class="gray">✔</span> Bloqué et temporisé (K_MK_STATE_DELAYED_BLOCKED).</li>
-               <li><span class="gray">✔</span> En cours de suppression (K_MK_STATE_DELETED).</li>
-            </ul>
-            </p>
+               </a>
+            </div-->
 
          </div>
       </section>
@@ -134,7 +71,7 @@
 
    <footer>
       <div>
-         <p>La fabrique du MCU.</p>
+         <p>La Fabrique du MCU.</p>
          <p>Copyright © 2024-2026, All rights reserved.</p>
       </div>
    </footer>

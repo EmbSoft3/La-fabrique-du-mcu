@@ -1,76 +1,66 @@
-
 /* ************************************************************************** */
 /* Sections header */
 
-header
-{
+header {
 	display: flex;
-    flex-wrap: wrap;
+	flex-wrap: wrap;
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
 	padding-top: 2.5%;
 	padding-bottom: 0.5em;
-    border-bottom: 1px dotted rgb(255, 255, 255);
-    font-weight: bold;
+	border-bottom: 1px dotted rgb(255, 255, 255);
+	font-weight: bold;
 }
 
-header .onglet
-{
+header .onglet {
 	display: flex;
 	flex-direction: row;
 	justify-content: flex-end;
 }
 
-header div a
-{
-	color: rgb(255, 255, 255);;
+header div a {
+	color: rgb(255, 255, 255);
+	;
 	font-size: 1.5em;
-	text-decoration: none;	
+	text-decoration: none;
 }
 
-header .onglet a
-{
+header .onglet a {
 	color: rgb(43, 188, 138);
 	font-size: 1.5em;
 	padding-left: 0.3em;
 }
 
-header div span
-{
+header div span {
 	color: rgb(43, 188, 138);
 }
 
-@media screen and (max-width: 640px) 
-{
-	header
-	{
+@media screen and (max-width: 640px) {
+	header {
 		display: flex;
-	    flex-wrap: wrap;
+		flex-wrap: wrap;
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
 		padding-top: 1.5em;
 		padding-bottom: 1em;
-	    border-bottom: 1px dotted rgb(255, 255, 255);
-	    font-weight: bold;
+		border-bottom: 1px dotted rgb(255, 255, 255);
+		font-weight: bold;
 	}
-	
-	header .onglet 
-	{
+
+	header .onglet {
 		padding-top: 0.3em;
 	}
-	
-	header .onglet a
-	{
+
+	header .onglet a {
 		color: rgb(43, 188, 138);
 		font-size: 1.1em;
 		padding-left: 0.35em;
 		padding-right: 0.35em;
 	}
-	
-	header div span
-	{
+
+	header div span {
 		display: none;
 		color: rgb(43, 188, 138);
 	}
@@ -79,16 +69,14 @@ header div span
 /* ************************************************************************** */
 /* Sections main */
 
-main
-{
+main {
 	display: flex;
 	flex-wrap: wrap;
 	flex-direction: column;
 	padding-top: 2%;
 }
 
-main section div 
-{
+main section div {
 	padding-top: 1%;
 	padding-bottom: 1%;
 }
@@ -96,28 +84,26 @@ main section div
 /* ************************************************************************** */
 /* Section next-article */
 
-.button-article
-{
+.button-article {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	margin-top : 40px;
+	margin-top: 40px;
 	font-size: 1.0em;
 }
 
-.button-article div
-{
+.button-article div {
 	display: flex;
 	align-items: center;
-	background-color:  #212326;
+	background-color: #212326;
 	border-radius: 10px;
 }
 
-.button-article p, .button-article a 
-{
+.button-article p,
+.button-article a {
 	color: rgb(230, 230, 230);
-	margin-top : 0em;
+	margin-top: 0em;
 	padding-left: 10px;
 	padding-right: 10px;
 	text-align: center;
@@ -126,19 +112,50 @@ main section div
 }
 
 /* ************************************************************************** */
+.api-grid {
+	display: flex;
+	flex-direction: column;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
 
-.emoji-font
-{
+.api-grid a {
+	display: flex;
+	flex-direction: column;
+	background: #212326;
+	border-radius: 10px;
+	padding: 0.9em 1.3em;
+	margin-bottom: 0.3em;
+	font-size: 1.1em;
+
+}
+
+.api-grid a:hover {
+	background: #2a2d30;
+}
+
+.api-grid .api-description {
+	color: rgb(230, 230, 230);
+	text-align: justify;
+	vertical-align: baseline;
+	margin: 0em;
+	margin-top: 0.3em;
+}
+
+/* ************************************************************************** */
+
+.emoji-font {
 	font-family: "Noto Color Emoji", sans-serif;
-  	font-weight: 400;
-  	font-style: normal;			
+	font-weight: 400;
+	font-style: normal;
 }
 
 /* ************************************************************************** */
 /* Section comment */
 
-.warning, .answer, .comment
-{
+.warning,
+.answer,
+.comment {
 	display: flex;
 	align-items: center;
 	background: #212326;
@@ -147,33 +164,72 @@ main section div
 	border-radius: 10px;
 }
 
-.warning-logo, .answer-logo, .comment-logo
-{
+.warning-logo,
+.answer-logo,
+.comment-logo {
 	font-family: "Noto Color Emoji";
-  	font-weight: 400;
-  	font-style: normal;
-	margin-top : 0em;
+	font-weight: 400;
+	font-style: normal;
+	margin-top: 0em;
 	font-size: 3em;
 	margin-right: 0.5em;
 	/*color: rgb(134, 154, 181);*/
 }
 
-.warning-text, .answer-text, .comment-text
-{
+.warning-text,
+.answer-text,
+.comment-text {
 	display: flex;
 	flex-direction: column;
 }
 
-.comment-text p
-{
+.comment-text p {
 	margin-bottom: 1.0em;
+}
+
+/* ************************************************************************** */
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+	background: #212326;
+	border-radius: 10px;
+	font-size: 0.98em;
+	margin-top: 1.5em;
+}
+
+table th {
+	text-align: left;
+	color: rgb(233, 229, 227);
+	font-weight: 600;
+	padding: 0.7em 1em;
+	border-bottom: 1px dotted rgba(255, 255, 255, 0.35);
+	white-space: nowrap;
+}
+
+table td {
+	color: rgb(230, 230, 230);
+	padding: 0.7em 1em;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	vertical-align: top;
+	line-height: 1.35em;
+}
+
+table caption {
+	caption-side: bottom;
+	text-align: center;
+	padding-top: 0.5em;
+	font-weight: normal;
+	color: rgb(230, 230, 230);
+	padding-top: 1em;
+	padding-bottom: 1em;
+
 }
 
 /* ************************************************************************** */
 /* Section Footer */
 
-footer
-{
+footer {
 	margin-left: auto;
 	margin-right: auto;
 	margin-top: auto;
@@ -181,17 +237,15 @@ footer
 	width: 100%;
 }
 
-footer div
-{
-    display: flex;
+footer div {
+	display: flex;
 	align-items: center;
 	flex-direction: column;
-    padding-top: 240px;
-    font-style: italic;
-    /*border-top: 1px dotted rgb(255, 255, 255);*/
+	padding-top: 240px;
+	font-style: italic;
+	/*border-top: 1px dotted rgb(255, 255, 255);*/
 }
 
-footer div p
-{
+footer div p {
 	text-align: center;
 }

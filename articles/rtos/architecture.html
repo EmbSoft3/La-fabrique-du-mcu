@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Cet article présente l'API du noyau temps réel (RTOS) Mk. Ce chapitre se concentre sur l'architecture, les privilèges, les interruptions et exceptions, la FPU et la MPU.">
+   <title>Architecture du noyau Mk</title>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/api.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./api.html">API</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">Github</a>
+            <a href="../contact/contact.html">Contact</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <p>
+               Cette page présente l'architecture et les caractéristiques du noyau temps réel <span
+                  class="bold-strong">Mk</span>. Ce noyau a été
+               développé en
+               2018 et est dédié aux processeurs ARM Cortex-M7.
+            </p>
+
+            <h1>1. Présentation</h1>
+
+            <p>
+               <span class="bold-strong">Mk</span> est écrit en C et en assembleur ARM Thumb-2. Il ne possède aucune
+               dépendance externe. Ses principales
+               caractéristiques sont les suivantes :
+            </p>
+
+            <ul>
+               <li><span class="gray">✔</span>Noyau préemptif basé sur un <strong>scheduler</strong> à
+                  priorité fixe. Le temps
+                  processeur est réparti de manière équitable entre les tâches de même priorité
+                  (<strong>Round-Robin</strong>).</li>
+               <li><span class="gray">✔</span>Protection des tâches critiques via un environnement d'exécution
+                  sécurisé (<strong>TEE logiciel + MPU</strong>).</li>
+               <li><span class="gray">✔</span>Support des tâches flottantes (<strong>FPU</strong>) et non flottantes.
+               </li>
+               <li><span class="gray">✔</span>Absence d'allocations dynamiques.</li>
+               <li><span class="gray">✔</span>Allocation mémoire de taille fixe
+                  (<strong>Fixed-size memory pools</strong>).</li>
+               <li><span class="gray">✔</span>Primitives de synchronisation avancées (<strong>Sémaphore</strong>,
+                  <strong>Mutex</strong>, <strong>EventField</strong>,
+                  <strong>MailBox</strong>).
+               </li>
+               <li><span class="gray">✔</span>Système d'exécution différé (<strong>Callback</strong>).</li>
+            </ul>
+
+            <h2>2. Architecture du noyau</h2>
+            <p>
+               <span class="bold-strong">Mk</span> est architecturé autour d'un ordonnanceur et d'un ensemble de
+               fonctions qui réalisent des appels
+               système. Chaque appel système déclenche une interruption SVC qui réalise une opération d'ordonnancement
+               ou de synchronisation de manière sécurisée.
+            </p>
+            <p>
+               L'ordonnanceur sélectionne la tâche à exécuter en fonction de son état et de sa priorité.
+            </p>
+            <p> L'algorithme
+               utilisé est de type O(1). Il repose sur l'instruction <strong>CLZ</strong> (Count Leading Zeros) du cœur
+               Cortex-M7.
+               Celui-ci permet de retrouver immédiatement le niveau de priorité le plus élevé, sans parcourir
+               séquentiellement une liste.
+            </p>
+            <h2>3. Interruptions</h2>
+            <p>
+               <span class="bold-strong">Mk</span> implémente les 3 exceptions matérielles suivantes :
+            </p>
+            <table>
+               <!--caption>Tableau 1 - Listes des exceptions utilisée par le noyau</caption-->
+               <thead>
+                  <tr>
+                     <th>Exception</th>
+                     <th>Rôle</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr>
+                     <td><span class="gray">SysTick</span></td>
+                     <td>Incrémente le compteur de tick (32bits) et déclenche l'interruption PendSV</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">PendSV</span></td>
+                     <td>Réalise l'ordonnancement, les changements de contexte et le calcul de la charge CPU.</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">SVC</span></td>
+                     <td>Exécute les appels système réalisés par les tâches.</td>
+                  </tr>
+               </tbody>
+            </table>
+
+            <h2>4. Priorité d'interruption</h2>
+            <p>
+               Le Cortex-M7 définit ses priorités sur 4 bits (0 = la plus forte, 15 = la plus faible). </p>
+            <p>
+               Le noyau configure la priorité des 3 exceptions précédentes avec les valeurs ci-dessous:
+            </p>
+            <br>
+            <pre class="code">
+					<span class="multi-line-comment">/* Fichier mk_scheduler_constants.h */</span>
+					<span class="multi-line-comment">/* ... */</span>
+               <span class="multi-line-comment"></span>
+               <span class="keyword">#define</span> K_MK_SCHEDULER_BASE_PRIORITY <span class="number">15</span> <span class="multi-line-comment">/* SysTick and PendSV */</span>
+               <span class="keyword">#define</span> K_MK_SCHEDULER_SVC_PRIORITY <span class="number">7</span> <span class="multi-line-comment">/* SVC = MASK_PRIORITY - 1 */</span>
+               <span class="keyword">#define</span> K_MK_SCHEDULER_MASK_PRIORITY <span class="number">8</span> <span class="multi-line-comment">/* Seuil de priorité utilisé dans les sections critiques */</span>
+				</pre>
+            <br>
+            <p>
+               Cette configuration garantit que les interruptions de haute priorité (de 0 à <span
+                  class="bold-strong">K_MK_SCHEDULER_SVC_PRIORITY</span>)
+               ne sont jamais masquées par le noyau. Elles s'exécutent donc sans aucune latence supplémentaire.
+            </p>
+            <br>
+            <p>
+               Il résulte des conditions précédentes la règle ci-dessous :
+            </p>
+            <br>
+            <div class="comment">
+               <p>
+               <ul>
+                  <li><span class="gray">✔</span> ISRs de priorité 8 à 15 (<span class="bold-strong">≥
+                        K_MK_SCHEDULER_MASK_PRIORITY</span>) : ces
+                     interruptions peuvent réaliser des appels système .</li>
+                  <li><span class="gray">✔</span> ISRs de priorité 0 à 7 (<span class="bold-strong">&lt;
+                        K_MK_SCHEDULER_MASK_PRIORITY</span>) : ces
+                     interruptions ne sont pas autorisées à réaliser des appels système car il y a un risque de
+                     corrup­tion.</li>
+               </ul>
+               </p>
+            </div>
+
+            <h2>5. Section critique</h2>
+
+            <p>
+               Le noyau ne désactive jamais les interruptions (<strong>PRIMASK</strong>). Celles-ci sont néanmoins
+               masquées (<strong>BASEPRI</strong>)
+               dans les situations suivantes :
+            </p>
+
+            <ul>
+               <li><span class="gray">✔</span> lors de l'exécution d'un appel système.</li>
+               <li><span class="gray">✔</span> lors d'un changement de contexte.</li>
+            </ul>
+
+            <p>
+               La structure stockant les caractéristiques des appels système réalisés dans une ISR étant partagée
+               (<span class="bold-strong">g_mkSVCObject</span>), il est nécessaire de masquer les interruptions pour ne
+               pas la
+               corrompre. Cela rend
+               possible l'utilisation des services du noyau dans un vecteur d'interruption au détriment d'une latence un
+               peu plus élevée pour ces appels système.
+            </p>
+            <p>
+               Pour les tâches, celles-ci stockent cet objet SVC dans leur <strong>TCB</strong>, il n'y a donc aucun
+               partage et aucune
+               section critique n'est à déclarer.
+            </p>
+            <p>
+               Pour les changements de contexte, le noyau masque les interruptions pendant un court moment afin de
+               réaliser les opérations d'ordonnancement et sélectionner la prochaine tâche à exécuter.
+            </p>
+
+            <h2>6. Le registre BASEPRI</h2>
+
+            <p>L'instruction <span class="bold-strong">MSR BASEPRI</span> est un peu particulière du fait qu'elle est
+               sans effet si elle est exécutée par
+               du code non privilégié. La conséquence est que les interruptions ne sont jamais masquées lorsqu'un appel
+               système est déclenché par une tâche non privilégiée.
+            </p>
+
+            <h2>7. Le modèle de privilège </h2>
+
+            <p>
+               Une tâche peut être privilégiée (<span class="bold-strong">K_MK_TYPE_PRIVILEGED</span>) ou non
+               privilégiée (<span class="bold-strong">K_MK_TYPE_DEFAULT</span>).
+            </p>
+            <p>
+               Si une tâche est privilégiée, l'ordonnanceur réinitialise le bit <strong>nPRIV</strong> du registre
+               <strong> CONTROL</strong>. La tâche peut alors
+               accéder à toutes les ressources du système sans restriction. A contrario, les droits d'une tâche non
+               privilégiée sont restreints et sont définis par la <span class="bold-strong">MPU (Memory Protection
+                  Unit)</span> du processeur.
+            </p>
+
+            <p>
+               Qu'elles soient privilégiées ou non, les tâches doivent toutes utiliser le même pointeur de stack :
+               <strong>PSP (Process Stack Pointer)</strong>.
+               Le pointeur de stack <strong>MSP (Main Stack Pointer)</strong> est réservé aux interruptions et
+               aux appels système. À noter qu'il est de la responsabilité de l'utilisateur d'initialiser correctement le
+               système pour que le <span class="bold-strong">PSP</span> soit le pointeur de stack courant.
+            </p>
+
+            <p>
+               L'utilisation du <span class="bold-strong">PSP</span> par les tâches privilégiées n'entache en rien la
+               sécurité du système car leur
+               contexte d'exécution est protégé par la <span class="bold-strong">MPU</span>.
+            </p>
+
+            <h2>8. L'unité à virgule flottante </h2>
+
+            <p>
+               Une tâche peut être flottante (<span class="bold-strong">K_MK_TYPE_FLOATING</span>) ou non flottante
+               (<span class="bold-strong">K_MK_TYPE_DEFAULT</span>). Une tâche
+               flottante a la possibilité d'utiliser les instructions de la <span class="bold-strong">FPU</span>.
+               L'ordonnanceur se charge alors de
+               mémoriser les registres flottants lors de chaque changement de contexte.
+            </p>
+
+            <h2>9. Les états d'une tâche </h2>
+
+            <p>Chaque tâche peut prendre l'un des états suivants :</p>
+
+            <ul>
+               <li><span class="gray">✔</span> Prête (K_MK_STATE_READY).</li>
+               <li><span class="gray">✔</span> Bloquée (K_MK_STATE_BLOCKED).</li>
+               <li><span class="gray">✔</span> Temporisée (K_MK_STATE_DELAYED).</li>
+               <li><span class="gray">✔</span> Suspendue (K_MK_STATE_SUSPENDED).</li>
+               <li><span class="gray">✔</span> Bloquée et temporisée (K_MK_STATE_DELAYED_BLOCKED).</li>
+               <li><span class="gray">✔</span> En cours de suppression (K_MK_STATE_DELETED).</li>
+            </ul>
+
+            <h2>10. Les listes de tâches </h2>
+
+            <p>
+               Chaque liste de type <span class="bold-strong">T_mkList</span> est constituée d'un pointeur de tâches. En
+               fonction du type de liste, ce
+               pointeur pointe vers la tête de liste ou vers un élément arbitraire de celle-ci.
+            </p>
+            <br>
+            <pre class="code">
+               <span class="keyword">typedef</span> volatile struct T_mkList T_mkList;
+               struct T_mkList
+               {
+                  &nbsp;&nbsp;<span class="keyword">T_mkTask*</span> current;  <span class="multi-line-comment">/*!< Pointe sur l'adresse de la tâche courante. */</span>
+               };
+            </pre>
+            <br>
+            <p>
+               Les listes peuvent être circulaires ou non. Toutes les listes sont doublement
+               chaînées via les pointeurs next et previous :
+            </p>
+            <br>
+            <pre class="code">
+               <span class="multi-line-comment">/* TCB d'une tâche */</span>
+               <span class="keyword">typedef</span> volatile struct T_mkTask T_mkTask;
+               struct T_mkTask
+               {
+                  &nbsp;&nbsp;<span class="keyword">T_mkStack</span> stack;                                      
+                  &nbsp;&nbsp;<span class="keyword">T_mkFunction</span> function;                                
+                  &nbsp;&nbsp;<span class="keyword">T_mkAttribute</span> attribute;                              
+                  &nbsp;&nbsp;<span class="keyword">T_mkTask*</span> <span class="default-orange">next</span> [2];                                    
+                  &nbsp;&nbsp;<span class="keyword">T_mkTask*</span> <span class="default-orange">previous</span> [2];                                
+                  &nbsp;&nbsp;<span class="keyword">T_mkTaskLoad</span> load;                                    
+                  &nbsp;&nbsp;<span class="keyword">T_mkTick</span> tick;                                        
+                  &nbsp;&nbsp;<span class="keyword">T_mkSynchro</span> synchro;                                  
+                  &nbsp;&nbsp;<span class="keyword">T_mkPool*</span> pool;                                       
+                  &nbsp;&nbsp;<span class="keyword">T_mkAddr</span> svc;                                         
+                  &nbsp;&nbsp;<span class="keyword">T_mkAddr</span> owner;                                       
+               };
+            </pre>
+            <p>
+               Du fait de cette caractéristique, une même tâche peut apparaître dans 2 listes simultanément : la
+               liste des tâches
+               temporisées (via K_MK_LIST_TASK) et la liste des tâches bloquées d'un objet de synchronisation (via
+               K_MK_LIST_SYNC) en est le cas le plus représentatif.
+            </p>
+
+            <h2>11. La liste des tâches prêtes à être exécutées </h2>
+
+            <p>
+               Le noyau comporte [<span class="bold-strong">K_MK_SCHEDULER_PRIORITY_NUMBER + 1</span>] listes de tâches
+               prêtes à être exécutées (<span class="bold-strong">readyList</span>).
+            </p>
+            <p>
+               L'indice 0 est réservé à la tâche de repos. Les autres indices correspondent
+               au niveau de priorité des tâches.
+            </p>
+            <p>
+               La priorité <span class="bold-strong">K_MK_SCHEDULER_PRIORITY_NUMBER</span> est la priorité la
+               plus élevée. La priorité 1 est la priorité
+               la
+               plus faible (convention inverse des priorités matérielles ARM).
+            </p>
+            <p>
+               Les tâches de même priorité sont ordonnancées suivant un algorithme de type <span
+                  class="bold-strong">Round Robin</span>.
+            </p>
+            <p>
+               Chaque tâche
+               dans une même liste partage obligatoirement la même priorité. À chaque changement de contexte, si la
+               tâche en cours d'exécution n'est pas
+               verrouillée, l'ordonnanceur avance d'une position le pointeur de liste pour sélectionner la prochaine
+               tâche à exécuter dans la liste la plus prioritaire.
+            </p>
+            <p>Les listes de tâches prêtes à être exécutées étant circulaires, l'ordonnanceur ne gère pas le début et la
+               fin de liste.
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-readyList.jpg"
+                  alt="description d'une liste de tâches prêtes à être exécutées">
+               <figcaption>
+                  <span class="underline">Figure 1</span> : description d'une liste de tâches prêtes à être exécutées.
+               </figcaption>
+            </figure>
+
+            <h2>12. Le registre de priorité </h2>
+            <p>
+               Pour ne pas scanner toutes les listes à chaque changement de contexte, le noyau intègre un registre de
+               priorité (<span class="bold-strong">priorityRegister</span>). À chaque fois qu'une tâche est ajoutée dans
+               une des listes de tâches prêtes à être exécutées, le
+               bit correspondant du registre de priorité est positionné à 1.
+            </p>
+            <p>
+               L'instruction <span class="bold-strong">CLZ (Count Leading Zeros)</span> est ensuite utilisée pour
+               déterminer l'indice de
+               la liste la plus prioritaire :
+            </p>
+            <br>
+            <pre class="code">
+            priorityRegister 
+            &nbsp;&nbsp;= 0b...00000101
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ │
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ └── bit 0: readyList[1] non-empty (priority level 1, lowest)
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └──── bit 2: readyList[3] non-empty (priority level 3)
+            </pre>
+            <br>
+            <p>
+               Du fait de la taille du registre, le nombre maximal de priorités supportées par le noyau est 32.
+            </p>
+
+            <h2>13. La liste des tâches temporisées </h2>
+
+            <p>Cette liste est utilisée par les fonctions <span class="bold-strong">mk_task_sleep</span> et <span
+                  class="bold-strong">mk_task_delay</span> et par les objets de
+               synchronisation supportant un timeout.
+            </p>
+            <p>Les tâches sont triées par échéance via la fonction <span class="bold-strong">
+                  mk_list_addTimeout</span>. Le but est que la tête
+               de liste pointe toujours sur la tâche dont le timeout expirera le plus tôt.
+            </p>
+            <p>
+               A chaque tick, l'ordonnanceur compare l'attribut delayList.current->tick.timeout au <span
+                  class="bold-strong">tickRegister</span> pour
+               positionner la
+               ou les tâches dont l'échéance sont terminées dans la liste des tâches prêtes à être exécutées.
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-delayList.jpg"
+                  alt="description de la liste contenant les tâches temporisées">
+               <figcaption>
+                  <span class="underline">Figure 2</span> : description de la liste contenant les tâches temporisées.
+               </figcaption>
+            </figure>
+
+            <h2>14. La liste des tâches suspendues </h2>
+            <p>Cette liste contient les tâches explicitement suspendues par la fonction <span
+                  class="bold-strong">mk_task_suspend</span>. Elles ne
+               peuvent quitter cet état que suite à l'appel de la fonction <span
+                  class="bold-strong">mk_task_resume</span>.
+            </p>
+
+            <h2>15. Les listes de tâches bloquées </h2>
+            <p>
+               Chaque <span class="bold-strong">mutex</span>, <span class="bold-strong">semaphore</span>, <span
+                  class="bold-strong">mailbox</span> ou <span class="bold-strong">champ d'événements</span> possède
+               sa propre liste de tâches qui utilise les
+               pointeurs <span class="bold-strong">K_MK_LIST_SYNC</span> de la tâche <span
+                  class="bold-strong">T_mkTask</span>.
+            </p>
+            <p>
+               Les tâches bloquées en attente d'un objet de
+               synchronisation sont triées par priorité descendante (<span
+                  class="bold-strong">mk_list_addPriority</span>) de manière à toujours
+               sélectionner la tâche la plus prioritaire. Si deux tâches de même priorité attendent le même objet de
+               synchronisation alors la tâche en tête de liste dans la liste se verra attribuer l'objet de
+               synchronisation.
+               A noter qu'une tâche peut à la fois être bloquée et temporisée, c'est-à-dire être en même temps dans
+               deux listes différentes.
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-blockedList.jpg" alt="description de la liste des tâches bloquées d'un objet de
+                  synchronisation.">
+               <figcaption>
+                  <span class="underline">Figure 2</span> : description de la liste des tâches bloquées d'un objet de
+                  synchronisation.
+               </figcaption>
+            </figure>
+
+            <h2>16. Le timer système </h2>
+
+            <p>
+               La période du timer système (<span class="bold-strong">SysTick</span>) est configurée lors de l'appel de
+               <span class="bold-strong">mk_start</span>.
+            </p>
+            <p>
+               À chaque déclenchement du timer, les actions suivantes sont réalisées :
+            </p>
+            <ul>
+               <li><span class="gray">✔</span> Incrémentation du registre <span
+                     class="bold-strong">g_mkScheduler.tickRegister</span>.</li>
+               <li><span class="gray">✔</span> Déclenchement d'un changement de contexte (<span
+                     class="bold-strong">PendSV</span>).</li>
+            </ul>
+            <p>
+               Toutes les autres tâches d'ordonnancement sont effectuées durant le changement de contexte qui est
+               déclenché après le retour du vecteur d'interruption <span class="bold-strong">SysTick</span>.
+            </p>
+
+            <h2>17. Les changements de contexte </h2>
+
+            <p>
+               En plus de la sauvegarde et de la restauration des registres des tâches, l'exception <span
+                  class="bold-strong">PendSV</span> effectue les
+               opérations suivantes :
+            </p>
+
+            <ul>
+               <li><span class="gray">✔</span> Détermination du temps de charge CPU de la tâche en cours d'exécution.
+               </li>
+               <li><span class="gray">✔</span> Vérification de la cohérence des données du noyau. Si au moins une des
+                  <span class="bold-strong">readyList</span> contient une tâche alors que le bit correspondant dans le
+                  registre
+                  de priorité n'est pas positionné, une erreur critique est levée.
+               </li>
+               <li><span class="gray">✔</span> Retrait des tâches dont l'échéance est arrivée à terme de la liste des
+                  tâches temporisées. Elles sont placées dans leur <span class="bold-strong">readyList</span>
+                  respectives.
+                  Le registre de priorité est actualisé en conséquence. </li>
+               <li><span class="gray">✔</span> Détermination de l'adresse de la liste contenant les tâches de plus forte
+                  priorité avec l'instruction CLZ.</li>
+               <li><span class="gray">✔</span> Détermination de l'adresse de la tâche de plus forte
+                  priorité avec l'instruction CLZ.</li>
+               <li><span class="gray">✔</span> Mise à jour du pointeur de liste pour pointer vers la prochaine tâche à
+                  exécuter (<span class="bold-strong">round-robin</span> de même priorité). Cette action n'est réalisée
+                  que si la tâche courante n'est pas vérrouillée.</li>
+               <li><span class="gray">✔</span> Ecriture du registre de contrôle pour activer ou non les droits
+                  privilégiés.</li>
+               <li><span class="gray">✔</span> Chargement du contexte de la nouvelle tâche.</li>
+            </ul>
+
+            <p>
+               Une tâche est verrouillée à chaque fois qu'un changement de contexte est déclenché explicitement
+               (<span class="bold-strong">yield</span>, <span class="bold-strong">sleep</span>, <span
+                  class="bold-strong">block</span> ...). Cela empêche la mise à jour du pointeur de liste, garantissant
+               ainsi que les tâches de priorité
+               égale s'exécutent pendant au moins un cycle complet avant que l'algorithme ne passe à la tâche suivante.
+            </p>
+            <p>
+               Les tâches de priorité supérieure ne sont pas affectées par ce mécanisme. Le but de l'ordonnanceur étant
+               de toujours exécuter la tâche de plus haute priorité.
+            </p>
+
+            <h2>18. L'héritage de priorité </h2>
+
+            <p>
+               L'héritage de priorité s'applique uniquement aux <span class="bold-strong">mutex</span>. Son but est de
+               résoudre les inversions de priorité.
+            </p>
+            <p>
+               Si une
+               tâche prioritaire <span class="bold-strong">T_H</span> est bloquée sur un mutex détenu par une tâche
+               moins prioritaire <span class="bold-strong">T_L</span>, alors <span class="bold-strong">T_L</span> reçoit
+               temporairement la priorité de <span class="bold-strong">T_H</span>.
+
+               Chaque tâche possède deux champs de priorité distincts : <span class="bold-strong">currentPriority</span>
+               et <span class="bold-strong">priority</span>.
+            </p>
+            <p>
+               L'ordonnanceur utilise toujours la priorité <span class="bold-strong">currentPriority</span> pour
+               toutes les opérations réalisées sur les listes.
+            </p>
+
+            <h2>19. Les appels système</h2>
+
+            <p>
+               Chaque fonction du noyau qui modifie l'état d'un objet de synchronisation ou d'une tâche réalise
+               un appel système. Ceux-ci sont réalisés de la manière suivante :
+            </p>
+
+            <ul>
+               <li><span class="gray">✔</span> Création et configuration d'une structure
+                  contenant les caractéristiques de l'appel système <span class="bold-strong">T_mkSVCObject</span>.
+               </li>
+               <li><span class="gray">✔</span> Exécution de la fonction <span class="bold-strong">mk_svc_set</span>.
+                  Cette fonction
+                  stocke l'objet instancié dans la donnée partagée <span class="bold-strong">g_mkSVCObject</span>
+                  ou dans le TCB de la tâche en cours d'exécution
+                  en fonction du contexte d'exécution (ISR ou non). Cette fonction détecte si
+                  l'appel provient d'une routine d'interruption ou non.
+               </li>
+               <li><span class="gray">✔</span> Déclenchement de l'exception SVC (<span
+                     class="bold-strong">_mk_svc_set</span>).
+               </li>
+            </ul>
+
+            <p> L'extrait ci-dessous montre comment un appel système est configuré et déclenché :</p>
+            <br>
+            <pre class="code">
+            <span class="multi-line-comment">/* Extrait de mk_task_sleep() */ </span>
+            <span class="keyword">T_mkSVCObject</span> l_svc;
+
+            <span class="multi-line-comment">/* Configuration de l'objet SVC */ </span>  
+            l_svc.type = K_MK_SYSCALL_SLEEP_FUNCTION;
+            l_svc.data[K_MK_OFFSET_TICK] = (<span class="keyword">T_mkAddr</span>) p_tick;
+            
+            <span class="multi-line-comment">/* Référencement de l'appel système dans le gestionnaire SVC */ </span>  
+            ( <span class="keyword">void</span> ) mk_svc_set ( &l_svc );
+
+            <span class="multi-line-comment">/* Déclenchement de l'appel système */ </span>  
+            _mk_svc_set ( &l_svc );
+            </pre>
+            <br>
+
+            <p>La fonction <span class="bold-strong">mk_scheduler_handle</span> est ensuite appelée depuis le
+               gestionnaire SVC pour traiter l'appel système en fonction de son identifiant :
+            </p>
+
+            <table>
+               <!--caption>Tableau 1 - Listes des exceptions utilisée par le noyau</caption-->
+               <thead>
+                  <tr>
+                     <th>Identifiant</th>
+                     <th>Gestionnaire</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr>
+                     <td><span class="gray">1000–1007</span></td>
+                     <td>Création d'objet (mk_call_create).</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">2000–2006</span></td>
+                     <td>Suppression d'objet (mk_call_delete).</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">3000–3008</span></td>
+                     <td>Manipulation de tâches (mk_call_handleTask).</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">4000–4006</span></td>
+                     <td>Synchronisation de tâches (mk_call_synchronise).</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">5000–5003</span></td>
+                     <td>Déblocage des tâches (mk_call_unblock).</td>
+                  </tr>
+               </tbody>
+            </table>
+            <br>
+            <p>Lorsqu'au moins une liste de tâches est modifiée, un changement de contexte explicite est réalisé
+               à la fin de l'appel système.
+            </p>
+
+            <h2>20. Les callbacks</h2>
+
+            <p><span class="bold-strong">Mk</span> intègre un gestionnaire de rappels permettant de différer
+               l'exécution de fonctions. Celui-ci s'architecture autour de deux tâches (une privilégiée et l'autre non)
+               et d'un champ d'événements.</p>
+            <p>Ces caractéristiques permettent d'attendre l'exécution d'un maximum de 30 fonctions simultanément.</p>
+
+
+         </div>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <div></div>
+            <a href="../progress/progress.html">
+               <div>
+                  <p>Configuration du noyau</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>
