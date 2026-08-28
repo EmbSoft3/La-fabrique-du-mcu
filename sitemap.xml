@@ -13,6 +13,18 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://lafabriquedumcu.com/articles/rtos/api.html</loc>
+    <lastmod>2026-08-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lafabriquedumcu.com/articles/rtos/architecture.html</loc>
+    <lastmod>2026-08-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://lafabriquedumcu.com/articles/mcu/architecture.html</loc>
     <lastmod>2026-05-03</lastmod>
     <changefreq>monthly</changefreq>
