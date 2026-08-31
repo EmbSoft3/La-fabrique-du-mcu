@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Guide officiel pour récupérer le code source et compiler le noyau temps réel (RTOS) Mk. Prérequis, presets CMake et configurations de débogage J-Link.">
+   <title>Téléchargement du noyau Mk</title>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/api.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./api.html">API</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <p>Cette page explique comment récupérer le code source du noyau <span class="bold-strong">Mk</span> et le
+               compiler.</p>
+            <h1>1. Prérequis</h1>
+            <p>La chaîne de compilation repose sur <span class="bold-strong">CMake</span> et <span
+                  class="bold-strong">Ninja</span>. Les outils suivants doivent être installés :</p>
+            <ul>
+               <li><span class="gray">✔</span>GNU Arm Embedded Toolchain (version <span class="bold-strong">10.3</span>
+                  préférée) : <a href="https://gitlab.arm.com/tooling/gnu-toolchains-for-arm" target="_blank"
+                     rel="noopener noreferrer"><span class="bold">arm-none-eabi-gcc</span></a> </li>
+               <li><span class="gray">✔</span><span class="bold-strong">CMake</span> (version 3.20 ou supérieure)</li>
+               <li><span class="gray">✔</span><span class="bold-strong">Ninja</span></li>
+               <li><span class="gray">✔</span><a href="https://www.segger.com/downloads/jlink/" target="_blank"
+                     rel="noopener noreferrer"><span class="bold">J-Link</span></a> (pour la programmation)</li>
+            </ul>
+            <h2>2. Récupérer le code</h2>
+            <p>Clonez le dépôt du noyau depuis <span class="bold-strong">GitHub</span> : </p>
+            <br>
+            <pre class="code">
+					<span class="keyword">git</span> clone https://github.com/EmbSoft3/Mk-kernel.git
+               <span class="keyword">cd</span> Mk-kernel
+				</pre>
+
+            <h2>3. Compiler le noyau</h2>
+            <p>Le projet utilise <span class="bold-strong">CMake</span> avec les <span
+                  class="bold-strong">presets</span> définis dans le fichier <span
+                  class="bold-strong">CMakePresets.json</span>. Les <span class="bold-strong">Presets</span> suivants
+               sont
+               disponibles :</p>
+            <table>
+               <thead>
+                  <tr>
+                     <th>Preset</th>
+                     <th>Type</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr>
+                     <td><span class="gray">release</span></td>
+                     <td>Release (-Ofast)</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">debug</span></td>
+                     <td>Debug (-O0 -g3)</td>
+                  </tr>
+               </tbody>
+            </table>
+            <br>
+            <p>La liste exacte des <span class="bold-strong">Presets</span> peut être obtenue avec la commande :</p>
+            <br>
+            <pre class="code">
+					<span class="keyword">cmake</span> --list-presets
+				</pre>
+            <br>
+            <p>La compilation s'effectue en choisissant l'une des lignes ci-dessous. Par exemple, pour une
+               configuration
+               de debug : </p>
+            <br>
+            <pre class="code">
+					<span class="keyword">cmake</span> --build --preset <span class="bold">debug</span>
+				</pre>
+            <br>
+
+            <h2>4. Résultat de la compilation</h2>
+            <p>La compilation produit deux fichiers dans le dossier de sortie du <span class="bold-strong">preset</span>
+               choisi : </p>
+            <ul>
+               <li><span class="gray">✔</span><span class="bold-strong">Mk.elf</span> : fichier de programmation avec ou
+                  sans symboles. </li>
+               <li><span class="gray">✔</span><span class="bold-strong">Mk.map</span> : fichier d'édition de liens.
+               </li>
+            </ul>
+
+            <h2>5. Programmation et Débogage</h2>
+            <p>Les configurations de débogage pour <span class="bold-strong">VS Code</span> sont incluses dans le
+               fichier
+               <span class="bold-strong">.vscode/launch.json</span>. L'extension <span
+                  class="bold-strong">Cortex-Debug</span> est utilisée :
+            </p>
+            <table>
+               <thead>
+                  <tr>
+                     <th>Configuration</th>
+                     <th>Type</th>
+                     <th>Binaire</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr>
+                     <td><span class="gray">Debug Mk (J-Link)</span></td>
+                     <td>Debug</td>
+                     <td>build/debug/Mk.elf</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">Release Mk (J-Link)</span></td>
+                     <td>Release</td>
+                     <td>build/release/Mk.elf</td>
+                  </tr>
+               </tbody>
+            </table>
+            <br>
+            <p>
+               Toutes les configurations nécessitent une sonde <span class="bold-strong">J-Link</span> (ou un <span
+                  class="bold-strong">ST-Link</span> reflashé avec un firmware <span class="bold-strong">J-Link</span>)
+               : <a href="https://www.segger.com/downloads/jlink/#STLink_Reflash" target="_blank"
+                  rel="noopener noreferrer"><b>ST-Link Reflash Utility</b></a>.
+            </p>
+
+         </div>
+         <br>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <a href="./architecture.html">
+               <div>
+                  <p>&lt;</p>
+                  <p>Préambule</p>
+               </div>
+            </a> <a href="../progress/progress.html">
+               <div>
+                  <p>Initialisation du noyau</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>
