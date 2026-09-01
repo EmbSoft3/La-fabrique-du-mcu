@@ -1,48 +1,52 @@
-.code 
-{
+.code {
 	padding: 10px 15px;
 	margin: 0px;
 	font-size: 1.1em;
 	line-height: 1.5em;
 	border-radius: 10px;
 	font-family: monospace;
-  	background: #212326;
-  	color: #d1d9e1;
-  	white-space: pre-line;
+	background: #212326;
+	color: #d1d9e1;
+	white-space: pre-line;
 }
 
-.code .default
-{
-  	color: #d1d9e1;
+.code .default {
+	color: #d1d9e1;
 }
 
-.code .multi-line-comment
-{
+.code .multi-line-comment {
 	color: #969896;
-  	font-style: italic;		
+	font-style: italic;
 }
 
-.code .type
-{
-	color: #c9c;	
-}
-
-.code .keyword
-{
+.code .type {
 	color: #c9c;
 }
 
-.code .string
-{
+.code .keyword {
+	color: #c9c;
+}
+
+.code .string {
 	color: #8abeb7;
 }
 
-.code .number
-{
+.code .number {
 	color: #f99157;
 }
 
-.code .instruction
-{
+.code .include {
+	color: #f5ad86;
+}
+
+.code .instruction {
 	color: #8abeb7;
+}
+
+.code .function {
+	color: rgb(215, 207, 192);
+}
+
+.code .define {
+	color: rgb(154, 209, 241);
 }
