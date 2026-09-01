@@ -83,45 +83,45 @@
             </p>
             <br>
             <pre class="code">
-            <span class="keyword">#include</span> <span class="include">"mk_kernel_api.h"</span>
+<span class="keyword">#include</span> <span class="include">"mk_kernel_api.h"</span>
 
-            <span class="multi-line-comment">/* ... */</span>
+<span class="multi-line-comment">/* ... */</span>
 
-            <span class="multi-line-comment">/* La stack g_mkProcessStack est déclarée dans */ </span> 
-            <span class="multi-line-comment">/* le fichier mk_system_stack.c  */</span>
+<span class="multi-line-comment">/* La stack g_mkProcessStack est déclarée dans */ </span> 
+<span class="multi-line-comment">/* le fichier mk_system_stack.c  */</span>
 
-            <span class="multi-line-comment">/* Stack de la tâche de repos */</span>
-            <span class="define">K_MK_UNPRIVILEGED_MEMORY</span> <span class="type">uint32_t</span> 
-            &nbsp;&nbsp;   g_mkIdleStack [ K_MK_TASK_IDLE_STACK_SIZE ];
-            
-            <span class="multi-line-comment">/* ... */</span>
+<span class="multi-line-comment">/* Stack de la tâche de repos */</span>
+<span class="define">K_MK_UNPRIVILEGED_MEMORY</span> <span class="type">uint32_t</span> 
+   g_mkIdleStack [ K_MK_TASK_IDLE_STACK_SIZE ];
 
-            <span class="keyword">void</span> <span class="function">mk_main</span> ( <span class="keyword">void</span> )
-            {
-               &nbsp;&nbsp;<span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
-               &nbsp;&nbsp;<span class="keyword">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
-               
-               &nbsp;&nbsp;<span class="multi-line-comment">/* Initialisation du noyau */</span>
-               &nbsp;&nbsp;l_result = <span class="function">mk_init</span> ( 
-               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="define">K_MK_MODE_FLOATING</span>, 
-               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g_mkProcessStack, 
-               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="define">K_MK_PROCESS_STACK_SIZE</span> );
+<span class="multi-line-comment">/* ... */</span>
 
-               &nbsp;&nbsp;<span class="multi-line-comment">/* Initialisation de la tâche de repos */</span>
-               &nbsp;&nbsp;l_result |= <span class="function">mk_createIdle</span> ( 
-               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g_mkIdleStack, 
-               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="define">K_MK_TASK_IDLE_STACK_SIZE</span>, 
-               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mk_task_idle, 
-               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="type">T_mkAddr</span> ) <span class="string">"I"</span> );
+<span class="keyword">void</span> <span class="function">mk_main</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
+   
+   <span class="multi-line-comment">/* Initialisation du noyau */</span>
+   l_result = <span class="function">mk_init</span> ( 
+      <span class="define">K_MK_MODE_FLOATING</span>, 
+      g_mkProcessStack, 
+      <span class="define">K_MK_PROCESS_STACK_SIZE</span> );
 
-               &nbsp;&nbsp;<span class="multi-line-comment">/* Lancement du noyau avec un tick de 1ms */</span>
-               &nbsp;&nbsp;l_result |= <span class="function">mk_start</span> ( 27000 );
+   <span class="multi-line-comment">/* Initialisation de la tâche de repos */</span>
+   l_result |= <span class="function">mk_createIdle</span> ( 
+      g_mkIdleStack, 
+      <span class="define">K_MK_TASK_IDLE_STACK_SIZE</span>, 
+      mk_task_idle, 
+      ( <span class="type">T_mkAddr</span> ) <span class="string">"I"</span> );
 
-               &nbsp;&nbsp;<span class="multi-line-comment">/* Après l'appel de mk_start(), le noyau est démarré. */ </span>
-               &nbsp;&nbsp;<span class="multi-line-comment">/* le PC ne revient ici que suite à l'appel de la fonction mk_stop(). */</span>
-               
-               &nbsp;&nbsp;<span class="keyword">for</span> ( ;; ) ;
-            }
+   <span class="multi-line-comment">/* Lancement du noyau avec un tick de 1ms */</span>
+   l_result |= <span class="function">mk_start</span> ( 27000 );
+
+   <span class="multi-line-comment">/* Après l'appel de mk_start(), le noyau est démarré. */ </span>
+   <span class="multi-line-comment">/* le PC ne revient ici que suite à l'appel de la fonction mk_stop(). */</span>
+   
+   <span class="keyword">for</span> ( ;; ) ;
+}
 			</pre>
             <br>
             <p>La fonction <span class="bold-strong">mk_init</span> configure l'intégralité des structures du noyau
@@ -147,14 +147,15 @@
 
             <br>
             <pre class="code">
-            <span class="type">void</span> <span class="function">mk_task_idle</span> ( <span class="type">T_mkAddr</span> p_param )
-            {
-               &nbsp;&nbsp;<span class="multi-line-comment">/* Ici p_param contient 'I' */</span>
-               &nbsp;&nbsp;( <span class="type">void</span> ) p_param;
+<span class="type">void</span> <span class="function">mk_task_idle</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Ici p_param contient 'I' */</span>
+   ( <span class="type">void</span> ) p_param;
 
-               &nbsp;&nbsp;<span class="keyword">for</span> ( ;; ) ;
-            }
-         </pre>
+   <span class="multi-line-comment">/* Boucle pour toujours */</span>
+   <span class="keyword">for</span> ( ;; ) ;
+}
+</pre>
             <br>
 
             <p>Enfin, le noyau est lancé avec la fonction <span class="bold-strong">mk_start</span>. Cette fonction
@@ -171,8 +172,8 @@
 
             <br>
             <pre class="code">
-            <span class="type">uint32_t</span> l_tick = <span class="function">mk_getTick</span> ( ); 
-         </pre>
+<span class="type">uint32_t</span> l_tick = <span class="function">mk_getTick</span> ( ); 
+</pre>
             <br>
             <p>Le noyau peut ensuite être arrêté depuis n'importe quelle tâche en utilisant la fonction <span
                   class="bold-strong">mk_stop</span>. La fonction <span class="bold-strong">mk_restart</span>

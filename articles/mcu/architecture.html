@@ -299,17 +299,17 @@
 
 				<pre class="code">
 
-						<span class="multi-line-comment">/* La variable globale ci-dessous est déclarée dans la mémoire SRAM1 à l'adresse 0x20010000 */</span>
-						<span class="type">uint32_t</span> myVar = <span class="number">0</span>;
-						
-						... 
-						
-						<span class="multi-line-comment">/* Actualisation de la valeur de la variable */</span>
-						myVar++;
-						
-						...
+<span class="multi-line-comment">/* La variable globale ci-dessous est déclarée dans la mémoire SRAM1 à l'adresse 0x20010000 */</span>
+<span class="type">uint32_t</span> myVar = <span class="number">0</span>;
 
-					</pre>
+... 
+
+<span class="multi-line-comment">/* Actualisation de la valeur de la variable */</span>
+myVar++;
+
+...
+
+</pre>
 
 				<br>
 				<p>
@@ -334,19 +334,19 @@
 				<br>
 				<pre class="code">
 
-						<span class="multi-line-comment">/* 1. On charge l'adresse de la variable MyVar dans R0 */</span>
-						<span class="instruction">LDR</span> R0, =0x20010000
-						
-						<span class="multi-line-comment">/* 2. On charge la valeur présente à l'adresse de MyVar dans R1 */</span>
-						<span class="instruction">LDR</span> R1, [R0]
-						
-						<span class="multi-line-comment">/* 3. On incrémente d'une unité le registre R1 */</span>
-						<span class="instruction">ADD</span> R1, R1, #0x01
-						
-						<span class="multi-line-comment">/* 4. Enfin, on enregistre la valeur de R1 à l'adresse de MyVar */</span>
-						<span class="instruction">STR</span> R1, [R0]
-						
-					</pre>
+<span class="multi-line-comment">/* 1. On charge l'adresse de la variable MyVar dans R0 */</span>
+<span class="instruction">LDR</span> R0, =0x20010000
+
+<span class="multi-line-comment">/* 2. On charge la valeur présente à l'adresse de MyVar dans R1 */</span>
+<span class="instruction">LDR</span> R1, [R0]
+
+<span class="multi-line-comment">/* 3. On incrémente d'une unité le registre R1 */</span>
+<span class="instruction">ADD</span> R1, R1, #0x01
+
+<span class="multi-line-comment">/* 4. Enfin, on enregistre la valeur de R1 à l'adresse de MyVar */</span>
+<span class="instruction">STR</span> R1, [R0]
+
+</pre>
 				<br>
 
 				<p>A noter que les registres R0 et R1 sont des espaces mémoire à

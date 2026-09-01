@@ -121,13 +121,13 @@
             </p>
             <br>
             <pre class="code">
-					<span class="multi-line-comment">/* Fichier mk_scheduler_constants.h */</span>
-					<span class="multi-line-comment">/* ... */</span>
-               <span class="multi-line-comment"></span>
-               <span class="keyword">#define</span> K_MK_SCHEDULER_BASE_PRIORITY <span class="number">15</span> <span class="multi-line-comment">/* SysTick and PendSV */</span>
-               <span class="keyword">#define</span> K_MK_SCHEDULER_SVC_PRIORITY <span class="number">7</span> <span class="multi-line-comment">/* SVC = MASK_PRIORITY - 1 */</span>
-               <span class="keyword">#define</span> K_MK_SCHEDULER_MASK_PRIORITY <span class="number">8</span> <span class="multi-line-comment">/* Seuil de priorité utilisé dans les sections critiques */</span>
-				</pre>
+<span class="multi-line-comment">/* Fichier mk_scheduler_constants.h */</span>
+<span class="multi-line-comment">/* ... */</span>
+<span class="multi-line-comment"></span>
+<span class="keyword">#define</span> K_MK_SCHEDULER_BASE_PRIORITY <span class="number">15</span> <span class="multi-line-comment">/* SysTick and PendSV */</span>
+<span class="keyword">#define</span> K_MK_SCHEDULER_SVC_PRIORITY <span class="number">7</span> <span class="multi-line-comment">/* SVC = MASK_PRIORITY - 1 */</span>
+<span class="keyword">#define</span> K_MK_SCHEDULER_MASK_PRIORITY <span class="number">8</span> <span class="multi-line-comment">/* Seuil de priorité utilisé dans les sections critiques */</span>
+</pre>
             <br>
             <p>
                Cette configuration garantit que les interruptions de haute priorité (de 0 à <span
@@ -252,12 +252,12 @@
             </p>
             <br>
             <pre class="code">
-               <span class="keyword">typedef</span> volatile struct T_mkList T_mkList;
-               struct T_mkList
-               {
-                  &nbsp;&nbsp;<span class="keyword">T_mkTask*</span> current;  <span class="multi-line-comment">/*!< Pointe sur l'adresse de la tâche courante. */</span>
-               };
-            </pre>
+<span class="keyword">typedef</span> volatile struct T_mkList T_mkList;
+struct T_mkList
+{
+   <span class="keyword">T_mkTask*</span> current;  <span class="multi-line-comment">/*!< Pointe sur l'adresse de la tâche courante. */</span>
+};
+</pre>
             <br>
             <p>
                Les listes peuvent être circulaires ou non. Toutes les listes sont doublement
@@ -265,23 +265,23 @@
             </p>
             <br>
             <pre class="code">
-               <span class="multi-line-comment">/* TCB d'une tâche */</span>
-               <span class="keyword">typedef</span> volatile struct T_mkTask T_mkTask;
-               struct T_mkTask
-               {
-                  &nbsp;&nbsp;<span class="keyword">T_mkStack</span> stack;                                      
-                  &nbsp;&nbsp;<span class="keyword">T_mkFunction</span> function;                                
-                  &nbsp;&nbsp;<span class="keyword">T_mkAttribute</span> attribute;                              
-                  &nbsp;&nbsp;<span class="keyword">T_mkTask*</span> <span class="default-orange">next</span> [2];                                    
-                  &nbsp;&nbsp;<span class="keyword">T_mkTask*</span> <span class="default-orange">previous</span> [2];                                
-                  &nbsp;&nbsp;<span class="keyword">T_mkTaskLoad</span> load;                                    
-                  &nbsp;&nbsp;<span class="keyword">T_mkTick</span> tick;                                        
-                  &nbsp;&nbsp;<span class="keyword">T_mkSynchro</span> synchro;                                  
-                  &nbsp;&nbsp;<span class="keyword">T_mkPool*</span> pool;                                       
-                  &nbsp;&nbsp;<span class="keyword">T_mkAddr</span> svc;                                         
-                  &nbsp;&nbsp;<span class="keyword">T_mkAddr</span> owner;                                       
-               };
-            </pre>
+<span class="multi-line-comment">/* TCB d'une tâche */</span>
+<span class="keyword">typedef</span> volatile struct T_mkTask T_mkTask;
+struct T_mkTask
+{
+   <span class="keyword">T_mkStack</span> stack;                                      
+   <span class="keyword">T_mkFunction</span> function;                                
+   <span class="keyword">T_mkAttribute</span> attribute;                              
+   <span class="keyword">T_mkTask*</span> <span class="default-orange">next</span> [2];                                    
+   <span class="keyword">T_mkTask*</span> <span class="default-orange">previous</span> [2];                                
+   <span class="keyword">T_mkTaskLoad</span> load;                                    
+   <span class="keyword">T_mkTick</span> tick;                                        
+   <span class="keyword">T_mkSynchro</span> synchro;                                  
+   <span class="keyword">T_mkPool*</span> pool;                                       
+   <span class="keyword">T_mkAddr</span> svc;                                         
+   <span class="keyword">T_mkAddr</span> owner;                                       
+};
+</pre>
             <p>
                Du fait de cette caractéristique, une même tâche peut apparaître dans 2 listes simultanément : la
                liste des tâches
@@ -342,12 +342,12 @@
             </p>
             <br>
             <pre class="code">
-            priorityRegister 
-            &nbsp;&nbsp;= 0b...00000101
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ │
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ └── bit 0: readyList[1] non-empty (priority level 1, lowest)
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └──── bit 2: readyList[3] non-empty (priority level 3)
-            </pre>
+priorityRegister 
+   = 0b...00000101
+               │ │
+               │ └── bit 0: readyList[1] non-empty (priority level 1, lowest)
+               └──── bit 2: readyList[3] non-empty (priority level 3)
+</pre>
             <br>
             <p>
                Du fait de la taille du registre, le nombre maximal de priorités supportées par le noyau est 32.
@@ -523,19 +523,19 @@
             <p> L'extrait ci-dessous montre comment un appel système est configuré et déclenché :</p>
             <br>
             <pre class="code">
-            <span class="multi-line-comment">/* Extrait de mk_task_sleep() */ </span>
-            <span class="keyword">T_mkSVCObject</span> l_svc;
+<span class="multi-line-comment">/* Extrait de mk_task_sleep() */ </span>
+<span class="keyword">T_mkSVCObject</span> l_svc;
 
-            <span class="multi-line-comment">/* Configuration de l'objet SVC */ </span>  
-            l_svc.type = K_MK_SYSCALL_SLEEP_FUNCTION;
-            l_svc.data[K_MK_OFFSET_TICK] = (<span class="keyword">T_mkAddr</span>) p_tick;
-            
-            <span class="multi-line-comment">/* Référencement de l'appel système dans le gestionnaire SVC */ </span>  
-            ( <span class="keyword">void</span> ) mk_svc_set ( &l_svc );
+<span class="multi-line-comment">/* Configuration de l'objet SVC */ </span>  
+l_svc.type = K_MK_SYSCALL_SLEEP_FUNCTION;
+l_svc.data[K_MK_OFFSET_TICK] = (<span class="keyword">T_mkAddr</span>) p_tick;
 
-            <span class="multi-line-comment">/* Déclenchement de l'appel système */ </span>  
-            _mk_svc_set ( &l_svc );
-            </pre>
+<span class="multi-line-comment">/* Référencement de l'appel système dans le gestionnaire SVC */ </span>  
+( <span class="keyword">void</span> ) mk_svc_set ( &l_svc );
+
+<span class="multi-line-comment">/* Déclenchement de l'appel système */ </span>  
+_mk_svc_set ( &l_svc );
+</pre>
             <br>
 
             <p>La fonction <span class="bold-strong">mk_scheduler_handle</span> est ensuite appelée depuis le

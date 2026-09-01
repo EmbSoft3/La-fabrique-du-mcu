@@ -1,4 +1,5 @@
 .code {
+	text-align: left;
 	padding: 10px 15px;
 	margin: 0px;
 	font-size: 1.1em;
@@ -7,7 +8,10 @@
 	font-family: monospace;
 	background: #212326;
 	color: #d1d9e1;
-	white-space: pre-line;
+	white-space: pre-wrap;
+	tab-size: 3;
+	overflow-x: auto;
+
 }
 
 .code .default {

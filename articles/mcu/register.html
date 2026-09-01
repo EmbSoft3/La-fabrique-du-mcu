@@ -131,28 +131,28 @@
 
 				<pre class="code">
 
-						<span class="multi-line-comment">/* 1. Les registres du périphérique GPIO sont situés à une adresse spécifique. Dans un premier temps, on déclare des pointeurs et on les initialise avec les adresses récupérées dans le manuel de référence. Ne vous inquiétez pas, nous reviendrons sur ces lignes dans le prochain chapitre. */</span>
-						
-						<span class="keyword">volatile uint32_t</span>* GPIOA_MODER = <span class="keyword">(volatile uint32_t*)</span><span
-						class="number"> 0x40020000</span>;
-						<span class="keyword">volatile uint32_t</span>* GPIOA_OTYPER = <span class="keyword">(volatile uint32_t*)</span><span
-						class="number"> 0x40020004</span>;	
-						<span class="keyword">volatile uint32_t</span>* GPIOA_PUPDR = <span class="keyword">(volatile uint32_t*)</span><span
-						class="number"> 0x4002000C</span>;
-						<span class="keyword">volatile uint32_t</span>* GPIOA_ODR = <span class="keyword">(volatile uint32_t*)</span><span
-						class="number"> 0x40020014</span>;
-										
-						<span class="multi-line-comment">/* 2. Ensuite, nous configurons les registres via de simples accès mémoire. Nous configurons les broches du port GPIO A : broche PA0 en sortie et broches PA1 à PA15 en entrée (registre MODER), étage PUSH-PULL activé pour chaque broche (registre OTYPER) et désactivation des résistances de tirage (registre PUPDR).  */</span>
-						
-						*GPIOA_MODER = <span class="number">0x00000001</span>; 
-						*GPIOA_OTYPER = <span class="number">0x00000000</span>; 
-						*GPIOA_PUPDR = <span class="number">0x00000000</span>; 						
-						
-						<span class="multi-line-comment">/* 3. Enfin, on positionne la broche PA0 au niveau logique haut. */</span>
-						
-						*GPIOA_ODR |= <span class="number">0x1</span>;
-						
-					</pre>
+<span class="multi-line-comment">/* 1. Les registres du périphérique GPIO sont situés à une adresse spécifique. Dans un premier temps, on déclare des pointeurs et on les initialise avec les adresses récupérées dans le manuel de référence. Ne vous inquiétez pas, nous reviendrons sur ces lignes dans le prochain chapitre. */</span>
+
+<span class="keyword">volatile uint32_t</span>* GPIOA_MODER = <span class="keyword">(volatile uint32_t*)</span><span
+class="number"> 0x40020000</span>;
+<span class="keyword">volatile uint32_t</span>* GPIOA_OTYPER = <span class="keyword">(volatile uint32_t*)</span><span
+class="number"> 0x40020004</span>;	
+<span class="keyword">volatile uint32_t</span>* GPIOA_PUPDR = <span class="keyword">(volatile uint32_t*)</span><span
+class="number"> 0x4002000C</span>;
+<span class="keyword">volatile uint32_t</span>* GPIOA_ODR = <span class="keyword">(volatile uint32_t*)</span><span
+class="number"> 0x40020014</span>;
+				
+<span class="multi-line-comment">/* 2. Ensuite, nous configurons les registres via de simples accès mémoire. Nous configurons les broches du port GPIO A : broche PA0 en sortie et broches PA1 à PA15 en entrée (registre MODER), étage PUSH-PULL activé pour chaque broche (registre OTYPER) et désactivation des résistances de tirage (registre PUPDR).  */</span>
+
+*GPIOA_MODER = <span class="number">0x00000001</span>; 
+*GPIOA_OTYPER = <span class="number">0x00000000</span>; 
+*GPIOA_PUPDR = <span class="number">0x00000000</span>; 						
+
+<span class="multi-line-comment">/* 3. Enfin, on positionne la broche PA0 au niveau logique haut. */</span>
+
+*GPIOA_ODR |= <span class="number">0x1</span>;
+
+</pre>
 				<br>
 
 				<p>
@@ -269,20 +269,20 @@
 
 				<pre class="code">
 
-						<span class="multi-line-comment">/* 1. PA0 à PA14 en sortie (1), PA15 en mode analogique (3)  */</span>
-						*GPIOA_MODER = <span class="number">0xD5555555</span>;
-						<span class="multi-line-comment">/* Valeur binaire : 1101 0101 0101 0101 0101 0101 0101 0101 */</span>
+<span class="multi-line-comment">/* 1. PA0 à PA14 en sortie (1), PA15 en mode analogique (3)  */</span>
+*GPIOA_MODER = <span class="number">0xD5555555</span>;
+<span class="multi-line-comment">/* Valeur binaire : 1101 0101 0101 0101 0101 0101 0101 0101 */</span>
 
-						<span class="multi-line-comment">/* 2. PA0 et PA1 en mode auxiliaire (2), PA2 à PA15 en entrée (0)  */</span>
-						*GPIOA_MODER = <span class="number">0x0000000A</span>;
-						<span class="multi-line-comment">/* Valeur binaire : 0000 0000 0000 0000 0000 0000 0000 1010 */</span>
-						
-						<span class="multi-line-comment">/* 3. Un soupçon plus compliqué, PA0 en sortie (1) et PA1 à PA14 non modifiés. */</span>
-						*GPIOA_MODER &= <span class="number">0xFFFFFFFE</span>;
-						*GPIOA_MODER |= <span class="number">0x00000001</span>;	
-						<span class="multi-line-comment">/* On positionne à zéro le premier bit (&=) puis on positionne PA0 en sortie (|=) */</span>			
-						
-					</pre>
+<span class="multi-line-comment">/* 2. PA0 et PA1 en mode auxiliaire (2), PA2 à PA15 en entrée (0)  */</span>
+*GPIOA_MODER = <span class="number">0x0000000A</span>;
+<span class="multi-line-comment">/* Valeur binaire : 0000 0000 0000 0000 0000 0000 0000 1010 */</span>
+
+<span class="multi-line-comment">/* 3. Un soupçon plus compliqué, PA0 en sortie (1) et PA1 à PA14 non modifiés. */</span>
+*GPIOA_MODER &= <span class="number">0xFFFFFFFE</span>;
+*GPIOA_MODER |= <span class="number">0x00000001</span>;	
+<span class="multi-line-comment">/* On positionne à zéro le premier bit (&=) puis on positionne PA0 en sortie (|=) */</span>			
+
+</pre>
 				<br>
 				<p>Vous voyez ! La programmation des registres n'est vraiment pas
 					compliquée. Celle-ci se résume surtout à éplucher beaucoup de documentation
@@ -320,19 +320,19 @@
 				<br>
 
 				<pre class="code">
-						<span class="multi-line-comment">/* PA0 à PA15 en OPEN-DRAIN  */</span>
-						*GPIOA_OTYPER = <span class="number">0x0000FFFF</span>;
-						
-						<span class="multi-line-comment">/* PA0 à PA3 en PUSH-PULL, PA4 à PA15 en OPEN-DRAIN */</span>
-						*GPIOA_OTYPER = <span class="number">0x0000FFF0</span>;
-						
-						<span class="multi-line-comment">/* PA11 en OPEN-DRAIN, le reste en PUSH-PULL. */</span>
-						*GPIOA_OTYPER = <span class="number">0x00000800</span>;
-						
-						<span class="multi-line-comment">/* A noter que sauf mention contraire dans la documentation, les bits non implémentés peuvent être écrits à une valeur arbitraire dans le programme. La solution ci-dessous est donc aussi valide pour positionner PA11 en OPEN-DRAIN. Cependant, par convention tacite, on utilise toujours la valeur zéro. */</span>
-						*GPIOA_OTYPER = <span class="number">0xFFFF0800</span>;
-						
-				</pre>
+<span class="multi-line-comment">/* PA0 à PA15 en OPEN-DRAIN  */</span>
+*GPIOA_OTYPER = <span class="number">0x0000FFFF</span>;
+
+<span class="multi-line-comment">/* PA0 à PA3 en PUSH-PULL, PA4 à PA15 en OPEN-DRAIN */</span>
+*GPIOA_OTYPER = <span class="number">0x0000FFF0</span>;
+
+<span class="multi-line-comment">/* PA11 en OPEN-DRAIN, le reste en PUSH-PULL. */</span>
+*GPIOA_OTYPER = <span class="number">0x00000800</span>;
+
+<span class="multi-line-comment">/* A noter que sauf mention contraire dans la documentation, les bits non implémentés peuvent être écrits à une valeur arbitraire dans le programme. La solution ci-dessous est donc aussi valide pour positionner PA11 en OPEN-DRAIN. Cependant, par convention tacite, on utilise toujours la valeur zéro. */</span>
+*GPIOA_OTYPER = <span class="number">0xFFFF0800</span>;
+
+</pre>
 				<br>
 
 				<p>Bon, à mon avis, la configuration des registres doit
@@ -399,8 +399,8 @@
 				<br>
 
 				<pre class="code">
-						*GPIOA_ODR |= <span class="number">0x1</span>;
-					</pre>
+*GPIOA_ODR |= <span class="number">0x1</span>;
+</pre>
 				<br>
 
 
@@ -434,18 +434,18 @@
 
 				<pre class="code">
 
-						<span class="multi-line-comment">/* On réalise une lecture du registre ODR lorsque le port est configuré en sortie et que l'on souhaite positionner un port sans toucher les autres broches GPIO */</span>
-						
-						<span class="multi-line-comment">/* Lecture du port A puis activation de PA0 */</span>
-						myRegister = *GPIOA_ODR;
-						*GPIOA_ODR = myRegister | <span class="number">0x1</span>;
+<span class="multi-line-comment">/* On réalise une lecture du registre ODR lorsque le port est configuré en sortie et que l'on souhaite positionner un port sans toucher les autres broches GPIO */</span>
 
-						<span class="multi-line-comment">/* On réalise une lecture du registre IDR lorsque le port est configuré en entrée et que l'on souhaite relire l'état d'une broche GPIO */</span>
-						
-						<span class="multi-line-comment">/* Lecture de PA0 */</span>
-						myRegister = ( *GPIOA_IDR ) & <span class="number">0x1</span>;
-					
-					</pre>
+<span class="multi-line-comment">/* Lecture du port A puis activation de PA0 */</span>
+myRegister = *GPIOA_ODR;
+*GPIOA_ODR = myRegister | <span class="number">0x1</span>;
+
+<span class="multi-line-comment">/* On réalise une lecture du registre IDR lorsque le port est configuré en entrée et que l'on souhaite relire l'état d'une broche GPIO */</span>
+
+<span class="multi-line-comment">/* Lecture de PA0 */</span>
+myRegister = ( *GPIOA_IDR ) & <span class="number">0x1</span>;
+
+</pre>
 
 				<br>
 				<p> Le code ci-dessus illustre une situation typique de lecture, modification et écriture de registres.
@@ -678,15 +678,15 @@
 				<br>
 
 				<pre class="code">
-					<span class="keyword">volatile uint32_t</span>* GPIOA_MODER = <span
-						class="number">0x40020000</span>;
-					<span class="keyword">volatile uint32_t</span>* GPIOA_OTYPER = <span
-						class="number">0x40020004</span>;	
-					<span class="keyword">volatile uint32_t</span>* GPIOA_PUPDR = <span
-						class="number">0x4002000C</span>;
-					<span class="keyword">volatile uint32_t</span>* GPIOA_ODR = <span
-						class="number">0x40020014</span>;
-				</pre>
+<span class="keyword">volatile uint32_t</span>* GPIOA_MODER = <span
+	class="number">0x40020000</span>;
+<span class="keyword">volatile uint32_t</span>* GPIOA_OTYPER = <span
+	class="number">0x40020004</span>;	
+<span class="keyword">volatile uint32_t</span>* GPIOA_PUPDR = <span
+	class="number">0x4002000C</span>;
+<span class="keyword">volatile uint32_t</span>* GPIOA_ODR = <span
+	class="number">0x40020014</span>;
+</pre>
 				<br>
 
 				<p>Et bien, dans la prochaine partie, nous allons découvrir
