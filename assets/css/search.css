@@ -1,0 +1,75 @@
+.mk-api-search {
+   position: relative;
+}
+
+.mk-api-search input {
+   width: 100%;
+   box-sizing: border-box;
+   padding: 0.6rem 0.8rem;
+   font-size: 1rem;
+   border: 1px solid #333a45;
+   border-radius: 6px;
+   background: #171a21;
+   color: #e6e6e6;
+}
+
+.mk-api-search input:focus {
+   outline: 1px solid #333a45;
+   outline-offset: 0px;
+}
+
+.mk-api-search_listbox {
+   list-style: none;
+   margin: 0.25rem 0 0;
+   padding: 0.25rem;
+   position: absolute;
+   z-index: 10;
+   width: 100%;
+   box-sizing: border-box;
+   background: #171a21;
+   border: 1px solid #333a45;
+   border-radius: 6px;
+   max-height: 320px;
+   overflow-y: auto;
+}
+
+.mk-api-search_option {
+   padding: 0.5rem 0.6rem;
+   border-radius: 4px;
+   cursor: pointer;
+}
+
+.mk-api-search_option:hover,
+.mk-api-search_option.is-active {
+   background: #232838;
+}
+
+.mk-api-search_option-line {
+   display: flex;
+   justify-content: space-between;
+   gap: 0.75rem;
+}
+
+.mk-api-search_option-name {
+   font-family: "Jost", sans-serif;
+}
+
+.mk-api-search_option-module {
+   font-size: 0.8rem;
+   color: #9aa4b2;
+   white-space: nowrap;
+}
+
+.mk-api-search_option-desc {
+   display: block;
+   font-size: 0.8rem;
+   color: #7f8896;
+   margin-top: 0.15rem;
+}
+
+.mk-api-search_status {
+   font-size: 0.8rem;
+   color: #9aa4b2;
+   margin: 0.4rem 0 0;
+   min-height: 1em;
+}

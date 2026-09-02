@@ -6,12 +6,13 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="description"
       content="Documentation complète de l'API du noyau Mk (Cortex-M7) : fonctionnement, tâches, synchronisation, pools mémoire, MPU, callbacks et plus encore.">
-   <title>API du noyau Mk</title>
+   <title>API - Recherche</title>
    <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/api.html">
    <link href="../../assets/css/style.css" rel="stylesheet">
    <link href="../../assets/css/template.css" rel="stylesheet">
    <link href="../../assets/css/mk.css" rel="stylesheet">
    <link href="../../assets/css/code.css" rel="stylesheet">
+   <link href="../../assets/css/search.css" rel="stylesheet">
    <link rel="preconnect" href="https://fonts.googleapis.com">
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
@@ -25,9 +26,10 @@
       </div>
       <div class="onglet">
          <nav>
-            <a href="./api.html">API</a>
+            <a href="./docs.html">MK</a>
             <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
          </nav>
       </div>
    </header>
@@ -35,36 +37,81 @@
    <main>
       <section class="mk">
          <div>
-            <p>
-               <span class="bold-strong">Mk</span> est un système d'exploitation temps réel (RTOS) ciblant les
-               microcontrôleurs <span class="bold-strong">STM32F7</span> (cœur <span class="bold-strong">ARM
-                  Cortex-M7</span>). Cette page présente
-               l'ensemble des API développées pour
-               ce système d'exploitation.
-            </p>
-
-            <h1>1. Le noyau temps réel Mk</h1>
-            <div class="api-grid">
-               <a href="./architecture.html" class="api-link">✔ Préambule
-                  <span class="api-description">Cet article présente l'architecture et les fonctionnalités du noyau
-                     temps réel <span class="bold-strong">Mk</span>. Il se
-                     concentre sur les mécanismes d'ordonnancement, les listes de tâches,
-                     les droits, les vecteurs d'interruption et les interactions du noyau avec la <span
-                        class="bold-strong">FPU</span> et la <span class="bold-strong">MPU</span>.
-                  </span>
-               </a>
+            <p>Bienvenue dans la documentation de l'API du noyau <span class="bold-strong">Mk</span>. Entrez un nom de
+               fonction
+               ou de module pour ouvrir la documentation correspondante.</p>
+            <br>
+            <div id="mk-api-search" data-index-url="search.fr.json"
+               data-placeholder="Rechercher une fonction ou un module (module, kernel, mk_init...)"
+               data-empty-text="Aucune correspondance trouvée."
+               data-results-text="{count}  résultat(s) affiché(s) / {total}."
+               data-results-truncated-text="{count}  résultat(s) affiché(s) / {total}."
+               data-index-error-text="Index de recherche indisponible pour le moment.">
+               <!--
+               <script type="application/json">
+               {
+                  "functions": 
+                  [
+                     {
+                        "name": "Kernel",
+                        "module": "Module",
+                        "submodule": "",
+                        "description": "Description du module Kernel.",
+                        "anchor": "kernel.html"
+                     },   
+                     {
+                        "name": "mk_init",
+                        "module": "Kernel",
+                        "submodule": "",
+                        "description": "Fonction d'initialisation du noyau.",
+                        "anchor": "kernel.html#mk_init"
+                     },
+                     {
+                        "name": "mk_createIdle",
+                        "module": "Kernel",
+                        "submodule": "",
+                        "description": "Fonction d'initialisation de la tâche de repos.",
+                        "anchor": "kernel.html#mk_createIdle"
+                     },
+                     {
+                        "name": "mk_start",
+                        "module": "Kernel",
+                        "submodule": "",
+                        "description": "Fonction de démarrage du noyau.",
+                        "anchor": "kernel.html#mk_start"
+                     },
+                     {
+                        "name": "mk_stop",
+                        "module": "Kernel",
+                        "submodule": "",
+                        "description": "Fonction d'arrêt du noyau.",
+                        "anchor": "kernel.html#mk_stop"
+                     },
+                     {
+                        "name": "mk_restart",
+                        "module": "Kernel",
+                        "submodule": "",
+                        "description": "Fonction de redémarrage du noyau.",
+                        "anchor": "kernel.html#mk_restart"
+                     },
+                     {
+                        "name": "mk_getTick",
+                        "module": "Kernel",
+                        "submodule": "",
+                        "description": "Fonction permettant de récupérer le nombre de ticks depuis le démarrage.",
+                        "anchor": "kernel.html#mk_getTick"
+                     }
+                  ]
+               }
+            </script>
+            -->
             </div>
-
-            <div class="api-grid">
-               <a href="./download.html" class="api-link">✔ Téléchargement et compilation du noyau
-                  <span class="api-description">Description de la méthodologie à utiliser pour récupérer le code
-                     source du noyau <span class="bold-strong">Mk</span>, installer la chaine de compilation et
-                     exécuter son premier projet.
-                  </span>
-
-               </a>
-            </div>
-
+            <script src="../../assets/js/search.js" defer></script>
+            <script>
+               document.addEventListener('DOMContentLoaded', () => {
+                  MkApiSearch.init(document.getElementById('mk-api-search'));
+               });
+            </script>
          </div>
       </section>
    </main>

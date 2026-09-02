@@ -25,9 +25,10 @@
       </div>
       <div class="onglet">
          <nav>
-            <a href="./api.html">API</a>
+            <a href="./docs.html">MK</a>
             <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
          </nav>
       </div>
    </header>
@@ -53,9 +54,9 @@
             <p>Clonez le dépôt du noyau depuis <span class="bold-strong">GitHub</span> : </p>
             <br>
             <pre class="code">
-					<span class="keyword">git</span> clone https://github.com/EmbSoft3/Mk-kernel.git
-               <span class="keyword">cd</span> Mk-kernel
-				</pre>
+<span class="keyword">git</span> clone https://github.com/EmbSoft3/Mk-kernel.git
+<span class="keyword">cd</span> Mk-kernel
+</pre>
 
             <h2>3. Compiler le noyau</h2>
             <p>Le projet utilise <span class="bold-strong">CMake</span> avec les <span
@@ -85,17 +86,21 @@
             <p>La liste exacte des <span class="bold-strong">Presets</span> peut être obtenue avec la commande :</p>
             <br>
             <pre class="code">
-					<span class="keyword">cmake</span> --list-presets
-				</pre>
+<span class="keyword">cmake</span> --list-presets
+</pre>
             <br>
             <p>La compilation s'effectue en choisissant l'une des lignes ci-dessous. Par exemple, pour une
                configuration
                de debug : </p>
             <br>
             <pre class="code">
-					<span class="keyword">cmake</span> --build --preset <span class="bold">debug</span>
-				</pre>
+<span class="keyword">cmake</span> --build --preset <span class="bold">debug</span>
+</pre>
             <br>
+            <p>Si le chemin du compilateur n'est pas trouvé, la variable d'environnement <span
+                  class="bold-strong">TOOLCHAIN_PATH</span> ou le chemin par
+               défaut présent dans le fichier <span class="bold-strongd">arm-none-eabi-toolchain.cmake</span> peut
+               être modifié.</p>
 
             <h2>4. Résultat de la compilation</h2>
             <p>La compilation produit deux fichiers dans le dossier de sortie du <span class="bold-strong">preset</span>
@@ -153,7 +158,7 @@
                   <p>&lt;</p>
                   <p>Préambule</p>
                </div>
-            </a> <a href="../progress/progress.html">
+            </a> <a href="./kernel.html">
                <div>
                   <p>Initialisation du noyau</p>
                   <p>></p>

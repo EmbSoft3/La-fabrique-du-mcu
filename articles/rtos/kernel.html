@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Initialisation du noyau Mk pour STM32F7 : configuration de la tâche de repos (idle) et du tick système (SysTick).">
+   <title>Initialisation du noyau Mk</title>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/api.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./docs.html">MK</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <p>Le module <span class="bold-strong">kernel</span> contient les fonctions permettant de configurer
+               et initialiser le noyau. Cette page décrit ces fonctions et leur utilisation. </p>
+
+            <h1>1. Synthèse des fonctions</h1>
+            <p>L'ensemble de ces fonctions est déclaré dans le fichier d'en-tête <span
+                  class="bold-strong">mk_kernel.h</span> :</p>
+            <table>
+               <thead>
+                  <tr>
+                     <th>Fonction</th>
+                     <th>Description</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr>
+                     <td><span class="gray">mk_init</span></td>
+                     <td>Cette fonction initialise le noyau.</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">mk_createIdle</span></td>
+                     <td>Cette fonction initialise les attributs de la tâche de repos.</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">mk_start</span></td>
+                     <td>Cette fonction démarre le noyau.</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">mk_stop</span></td>
+                     <td>Cette fonction arrête le noyau puis charge de nouveau le contexte de démarrage. </td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">mk_restart</span></td>
+                     <td>Cette fonction redémarre le noyau.</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">mk_getTick</span></td>
+                     <td>Cette fonction retourne le nombre de ticks écoulés depuis le démarrage du noyau.</td>
+                  </tr>
+               </tbody>
+            </table>
+
+            <h2>2. Utilisation</h2>
+            <p> L'initialisation du noyau s'effectue par l'appel des fonctions <span class="bold-strong">mk_init</span>,
+               <span class="bold-strong">mk_createIdle</span> et <span class="bold-strong">mk_start</span>. L'extrait de
+               code ci-dessous montre l'utilisation de ces fonctions.
+            </p>
+            <br>
+            <pre class="code">
+<span class="keyword">#include</span> <span class="include">"mk_kernel_api.h"</span>
+
+<span class="multi-line-comment">/* ... */</span>
+
+<span class="multi-line-comment">/* La stack g_mkProcessStack est déclarée dans */ </span> 
+<span class="multi-line-comment">/* le fichier mk_system_stack.c  */</span>
+
+<span class="multi-line-comment">/* Stack de la tâche de repos */</span>
+<span class="define">K_MK_UNPRIVILEGED_MEMORY</span> <span class="type">uint32_t</span> 
+   g_mkIdleStack [ K_MK_TASK_IDLE_STACK_SIZE ];
+
+<span class="multi-line-comment">/* ... */</span>
+
+<span class="keyword">void</span> <span class="function">mk_main</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
+   
+   <span class="multi-line-comment">/* Initialisation du noyau */</span>
+   l_result = <span class="function">mk_init</span> ( 
+      <span class="define">K_MK_MODE_FLOATING</span>, 
+      g_mkProcessStack, 
+      <span class="define">K_MK_PROCESS_STACK_SIZE</span> );
+
+   <span class="multi-line-comment">/* Initialisation de la tâche de repos */</span>
+   l_result |= <span class="function">mk_createIdle</span> ( 
+      g_mkIdleStack, 
+      <span class="define">K_MK_TASK_IDLE_STACK_SIZE</span>, 
+      mk_task_idle, 
+      ( <span class="type">T_mkAddr</span> ) <span class="string">"I"</span> );
+
+   <span class="multi-line-comment">/* Lancement du noyau avec un tick de 1 ms */</span>
+   l_result |= <span class="function">mk_start</span> ( 27000 );
+
+   <span class="multi-line-comment">/* Après l'appel de mk_start(), le noyau est démarré. */ </span>
+   <span class="multi-line-comment">/* le compteur de programme (PC) ne revient ici que suite à l'appel de la fonction mk_stop(). */</span>
+   
+   <span class="keyword">for</span> ( ;; ) ;
+}
+			</pre>
+            <br>
+            <p>La fonction <span class="bold-strong">mk_init</span> configure l'intégralité des structures du noyau
+               ainsi
+               que la priorité des 3 exceptions utilisées par celui-ci. Si cette fonction est exécutée avec le paramètre
+               <span class="bold-strong">K_MK_MODE_FLOATING</span>, la <span class="bold-strong">FPU</span> est activée,
+               autorisant ainsi la création de tâches flottantes.
+            </p>
+            <p>Cette fonction reçoit aussi en paramètre l'adresse de fin
+               (stack
+               descendante) et la taille de la stack de démarrage. Le noyau enregistre ces caractéristiques et pourra
+               par
+               la suite revenir au programme principal lors de l'appel de la fonction <span
+                  class="bold-strong">mk_stop</span>.
+            </p>
+            <br>
+            <p>Suite à l'exécution de la fonction <span class="bold-strong">mk_init</span>, l'utilisateur doit préciser
+               au
+               noyau les caractéristiques de la tâche de repos avec la fonction <span
+                  class="bold-strong">mk_createIdle</span>. Il précise l'adresse de la stack, sa taille, sa fonction de
+               démarrage et son argument.
+            </p>
+
+            <br>
+            <pre class="code">
+<span class="type">void</span> <span class="function">mk_task_idle</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Ici p_param contient 'I' */</span>
+   ( <span class="type">void</span> ) p_param;
+
+   <span class="multi-line-comment">/* Boucle pour toujours */</span>
+   <span class="keyword">for</span> ( ;; ) ;
+}
+</pre>
+            <br>
+
+            <p>Enfin, le noyau se lance avec la fonction <span class="bold-strong">mk_start</span>. Cette fonction
+               prend
+               en argument la valeur de comptage représentant un tick. La fréquence du timer système (<span
+                  class="bold-strong">SysTick</span>) étant de <span class="bold-strong">27 MHz</span>, un
+               tick de 1ms est configuré avec la valeur <span class="bold-strong">27000</span> dans l'exemple ci-dessus.
+            </p>
+
+            <p>Une fois le noyau lancé, l'utilisateur peut utiliser la fonction <span
+                  class="bold-strong">mk_getTick</span>
+               pour
+               récupérer le nombre de ticks écoulés depuis le démarrage du noyau.</p>
+
+            <br>
+            <pre class="code">
+<span class="type">uint32_t</span> l_tick = <span class="function">mk_getTick</span> ( ); 
+</pre>
+            <br>
+            <p>Le noyau peut ensuite être arrêté depuis n'importe quelle tâche en utilisant la fonction <span
+                  class="bold-strong">mk_stop</span>. La fonction <span class="bold-strong">mk_restart</span>
+               pourra être appelée depuis le programme principal pour redémarrer le noyau avec une nouvelle valeur de
+               tick.</p>
+            <br>
+            <pre class="code">
+<span class="keyword">void</span> <span class="function">mk_main</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Some code here ... */</span>
+
+   <span class="multi-line-comment">/* Lancement du noyau avec un tick de 1ms */</span>
+   l_result |= <span class="function">mk_start</span> ( 27000 );
+
+   <span class="multi-line-comment">/* Après l'appel de mk_start(), le noyau est démarré. */ </span>
+   <span class="multi-line-comment">/* le PC ne revient ici que suite à l'appel de la fonction mk_stop(). */</span>
+   
+   <span class="multi-line-comment">/* Redémarrage du noyau avec un tick de 10ms. */ </span>
+   l_result |= <span class="function">mk_restart</span>( 270000 );
+
+   <span class="keyword">for</span> ( ;; ) ;
+}
+
+<span class="keyword">void</span> <span class="function">mk_task</span> ( <span class="keyword">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Some code here ... */</span>
+   
+   <span class="multi-line-comment">/* Arrêt du noyau. */ </span>
+   <span class="multi-line-comment">/* Le tickRegister sera réinitialisé après cette fonction. */</span>
+   l_result = <span class="function">mk_stop</span>();
+
+   <span class="keyword">for</span> ( ;; ) ;
+}</pre>
+
+            <h2>3. API</h2>
+
+
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_init">3.1. La fonction mk_init() </span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction initialise le noyau.</p>
+                  <br>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkType</span> <span class="italic">[in]</span>
+                        <p>Mode d'initialisation du noyau. Les valeurs possibles sont les
+                           suivantes :
+                        </p>
+
+                        <ul>
+                           <li><span class="bold-strong">K_MK_MODE_DEFAULT</span> : le noyau est initialisé en mode
+                              classique (sans calcul flottant). L'unité FPU n'est pas initialisée et aucun espace dédié
+                              n'est alloué dans la pile des tâches pour sauvegarder ses registres. </li>
+                           <li><span class="bold-strong">K_MK_MODE_FLOATING</span> : le noyau est initialisé en mode
+                              flottant, l'unité FPU est initialisée et un espace dédié est réservé dans la pile des
+                              tâches pour la
+                              sauvegarde de ses registres. </li>
+                        </ul>
+                     </li>
+                     <li><span class="bold-green">p_mkStack</span> <span class="italic">[in]</span>
+                        <p>Adresse de la pile du programme principal.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkStackSize</span> <span class="italic">[in]</span>
+                        <p>Taille de la pile du programme principal.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le noyau a été initialisé.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le noyau n'a pas été initialisé car au
+                        moins un paramètre est invalide.</li>
+                  </ul>
+               </div>
+            </details>
+
+
+
+         </div>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <a href="./download.html">
+               <div>
+                  <p>&lt;</p>
+                  <p>Téléchargement et compilation</p>
+               </div>
+            </a> <a href="../progress/progress.html">
+               <div>
+                  <p>Configuration, création et manipulation des tâches</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>

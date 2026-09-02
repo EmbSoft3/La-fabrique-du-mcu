@@ -187,6 +187,25 @@ main section div {
 	margin-bottom: 1.0em;
 }
 
+.prototype {
+	text-align: left;
+	padding: 10px 15px;
+	margin: 0px;
+	border-radius: 10px;
+	background: #212326;
+	color: #d1d9e1;
+}
+
+.prototype li {
+	color: rgb(230, 230, 230);
+	font-size: 1.05em;
+
+	vertical-align: baseline;
+	margin: 0em;
+	margin-top: 0.3em;
+	line-height: 1.3em;
+}
+
 /* ************************************************************************** */
 
 table {
