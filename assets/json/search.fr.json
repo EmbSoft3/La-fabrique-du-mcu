@@ -1,0 +1,53 @@
+{
+   "functions": [
+      {
+         "name": "Kernel",
+         "module": "Module",
+         "submodule": "",
+         "description": "Description du module Kernel.",
+         "anchor": "kernel.html"
+      },
+      {
+         "name": "mk_init",
+         "module": "Kernel",
+         "submodule": "",
+         "description": "Fonction d'initialisation du noyau.",
+         "anchor": "kernel.html#mk_init"
+      },
+      {
+         "name": "mk_createIdle",
+         "module": "Kernel",
+         "submodule": "",
+         "description": "Fonction d'initialisation de la tâche de repos.",
+         "anchor": "kernel.html#mk_createIdle"
+      },
+      {
+         "name": "mk_start",
+         "module": "Kernel",
+         "submodule": "",
+         "description": "Fonction de démarrage du noyau.",
+         "anchor": "kernel.html#mk_start"
+      },
+      {
+         "name": "mk_stop",
+         "module": "Kernel",
+         "submodule": "",
+         "description": "Fonction d'arrêt du noyau.",
+         "anchor": "kernel.html#mk_stop"
+      },
+      {
+         "name": "mk_restart",
+         "module": "Kernel",
+         "submodule": "",
+         "description": "Fonction de redémarrage du noyau.",
+         "anchor": "kernel.html#mk_restart"
+      },
+      {
+         "name": "mk_getTick",
+         "module": "Kernel",
+         "submodule": "",
+         "description": "Fonction permettant de récupérer le nombre de ticks depuis le démarrage du noyau.",
+         "anchor": "kernel.html#mk_getTick"
+      }
+   ]
+}

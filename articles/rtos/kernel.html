@@ -25,9 +25,10 @@
       </div>
       <div class="onglet">
          <nav>
-            <a href="./api.html">API</a>
+            <a href="./docs.html">MK</a>
             <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
          </nav>
       </div>
    </header>
@@ -39,7 +40,7 @@
                et initialiser le noyau. Cette page décrit ces fonctions et leur utilisation. </p>
 
             <h1>1. Synthèse des fonctions</h1>
-            <p>L'ensemble de ces fonctions est déclaré dans le fichier d'entête <span
+            <p>L'ensemble de ces fonctions est déclaré dans le fichier d'en-tête <span
                   class="bold-strong">mk_kernel.h</span> :</p>
             <table>
                <thead>
@@ -114,11 +115,11 @@
       mk_task_idle, 
       ( <span class="type">T_mkAddr</span> ) <span class="string">"I"</span> );
 
-   <span class="multi-line-comment">/* Lancement du noyau avec un tick de 1ms */</span>
+   <span class="multi-line-comment">/* Lancement du noyau avec un tick de 1 ms */</span>
    l_result |= <span class="function">mk_start</span> ( 27000 );
 
    <span class="multi-line-comment">/* Après l'appel de mk_start(), le noyau est démarré. */ </span>
-   <span class="multi-line-comment">/* le PC ne revient ici que suite à l'appel de la fonction mk_stop(). */</span>
+   <span class="multi-line-comment">/* le compteur de programme (PC) ne revient ici que suite à l'appel de la fonction mk_stop(). */</span>
    
    <span class="keyword">for</span> ( ;; ) ;
 }
@@ -158,7 +159,7 @@
 </pre>
             <br>
 
-            <p>Enfin, le noyau est lancé avec la fonction <span class="bold-strong">mk_start</span>. Cette fonction
+            <p>Enfin, le noyau se lance avec la fonction <span class="bold-strong">mk_start</span>. Cette fonction
                prend
                en argument la valeur de comptage représentant un tick. La fréquence du timer système (<span
                   class="bold-strong">SysTick</span>) étant de <span class="bold-strong">27 MHz</span>, un
@@ -179,10 +180,80 @@
                   class="bold-strong">mk_stop</span>. La fonction <span class="bold-strong">mk_restart</span>
                pourra être appelée depuis le programme principal pour redémarrer le noyau avec une nouvelle valeur de
                tick.</p>
+            <br>
+            <pre class="code">
+<span class="keyword">void</span> <span class="function">mk_main</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Some code here ... */</span>
+
+   <span class="multi-line-comment">/* Lancement du noyau avec un tick de 1ms */</span>
+   l_result |= <span class="function">mk_start</span> ( 27000 );
+
+   <span class="multi-line-comment">/* Après l'appel de mk_start(), le noyau est démarré. */ </span>
+   <span class="multi-line-comment">/* le PC ne revient ici que suite à l'appel de la fonction mk_stop(). */</span>
+   
+   <span class="multi-line-comment">/* Redémarrage du noyau avec un tick de 10ms. */ </span>
+   l_result |= <span class="function">mk_restart</span>( 270000 );
+
+   <span class="keyword">for</span> ( ;; ) ;
+}
+
+<span class="keyword">void</span> <span class="function">mk_task</span> ( <span class="keyword">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Some code here ... */</span>
+   
+   <span class="multi-line-comment">/* Arrêt du noyau. */ </span>
+   <span class="multi-line-comment">/* Le tickRegister sera réinitialisé après cette fonction. */</span>
+   l_result = <span class="function">mk_stop</span>();
+
+   <span class="keyword">for</span> ( ;; ) ;
+}</pre>
 
             <h2>3. API</h2>
-            <p> La description complète des fonctions de ce module peut être trouvée sur la page suivante : <a
-                  href="./api.html"><b>api-kernel</b></a>.</p>
+
+
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_init">3.1. La fonction mk_init() </span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction initialise le noyau.</p>
+                  <br>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkType</span> <span class="italic">[in]</span>
+                        <p>Mode d'initialisation du noyau. Les valeurs possibles sont les
+                           suivantes :
+                        </p>
+
+                        <ul>
+                           <li><span class="bold-strong">K_MK_MODE_DEFAULT</span> : le noyau est initialisé en mode
+                              classique (sans calcul flottant). L'unité FPU n'est pas initialisée et aucun espace dédié
+                              n'est alloué dans la pile des tâches pour sauvegarder ses registres. </li>
+                           <li><span class="bold-strong">K_MK_MODE_FLOATING</span> : le noyau est initialisé en mode
+                              flottant, l'unité FPU est initialisée et un espace dédié est réservé dans la pile des
+                              tâches pour la
+                              sauvegarde de ses registres. </li>
+                        </ul>
+                     </li>
+                     <li><span class="bold-green">p_mkStack</span> <span class="italic">[in]</span>
+                        <p>Adresse de la pile du programme principal.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkStackSize</span> <span class="italic">[in]</span>
+                        <p>Taille de la pile du programme principal.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le noyau a été initialisé.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le noyau n'a pas été initialisé car au
+                        moins un paramètre est invalide.</li>
+                  </ul>
+               </div>
+            </details>
+
+
+
          </div>
       </section>
 

@@ -185,6 +185,12 @@ img {
 	font-weight: 600;
 }
 
+.bold-green {
+	text-decoration: none;
+	color: rgb(43, 188, 138);
+	font-weight: 600;
+}
+
 .gray {
 	margin-right: 0.5em;
 	text-decoration: none;

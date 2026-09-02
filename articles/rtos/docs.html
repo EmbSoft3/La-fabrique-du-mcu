@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Documentation complète de l'API du noyau Mk (Cortex-M7) : fonctionnement, tâches, synchronisation, pools mémoire, MPU, callbacks et plus encore.">
+   <title>Documentation du noyau Mk</title>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/api.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./docs.html">MK</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <p>
+               <span class="bold-strong">Mk</span> est un système d'exploitation temps réel (RTOS) ciblant les
+               microcontrôleurs <span class="bold-strong">STM32F7</span> (cœur <span class="bold-strong">ARM
+                  Cortex-M7</span>). Cette page présente
+               l'ensemble des API développées pour
+               ce système d'exploitation.
+            </p>
+
+            <h1>1. Le noyau temps réel Mk</h1>
+            <div class="api-grid">
+               <a href="./architecture.html" class="api-link"><b>✔ Préambule</b>
+                  <span class="api-description">Cet article présente l'architecture et les fonctionnalités du noyau
+                     temps réel <span class="bold-strong">Mk</span>. Il se
+                     concentre sur les mécanismes d'ordonnancement, les listes de tâches,
+                     les droits, les vecteurs d'interruption et les interactions du noyau avec la <span
+                        class="bold-strong">FPU</span> et la <span class="bold-strong">MPU</span>.
+                  </span>
+               </a>
+            </div>
+
+            <div class="api-grid">
+               <a href="./download.html" class="api-link"><b>✔ Téléchargement et compilation du noyau</b>
+                  <span class="api-description">Cet article décrit la méthodologie à utiliser pour récupérer le code
+                     source du noyau, installer la chaîne de compilation et
+                     exécuter son premier projet.
+                  </span>
+               </a>
+            </div>
+
+            <div class="api-grid">
+               <a href="./kernel.html" class="api-link"><b>✔ Initialisation du noyau</b>
+                  <span class="api-description">Cet article présente l'initialisation du noyau, la configuration de la
+                     tâche de repos et la configuration du tick système.
+                  </span>
+               </a>
+            </div>
+
+         </div>
+      </section>
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>
