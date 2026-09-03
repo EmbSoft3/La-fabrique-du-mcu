@@ -164,8 +164,17 @@ main section div {
 	border-radius: 10px;
 }
 
+.prototype-comment {
+	display: flex;
+	align-items: center;
+	padding-left: 1em;
+	padding-right: 0em;
+	border-radius: 10px;
+}
+
 .warning-logo,
 .answer-logo,
+.prototype-logo,
 .comment-logo {
 	font-family: "Noto Color Emoji";
 	font-weight: 400;
@@ -178,6 +187,7 @@ main section div {
 
 .warning-text,
 .answer-text,
+.prototype-text,
 .comment-text {
 	display: flex;
 	flex-direction: column;
@@ -185,6 +195,11 @@ main section div {
 
 .comment-text p {
 	margin-bottom: 1.0em;
+}
+
+.prototype-text p,
+.prototype-text ul {
+	margin: 0;
 }
 
 .prototype {
@@ -204,6 +219,19 @@ main section div {
 	margin: 0em;
 	margin-top: 0.3em;
 	line-height: 1.3em;
+}
+
+.prototype-type {
+	text-align: left;
+	padding: 5px 10px;
+	margin: 0px;
+	font-size: 1.05em;
+
+	border-radius: 10px;
+	font-family: monospace;
+
+	color: #d1d9e1;
+
 }
 
 /* ************************************************************************** */
