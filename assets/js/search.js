@@ -226,9 +226,14 @@
 
          this.listbox.hidden = false;
          this.input.setAttribute('aria-expanded', 'true');
-         this.status.textContent = this.totalMatches > this.results.length
-            ? this.i18n.resultsTruncatedText.replace('{count}', this.results.length).replace('{total}', this.totalMatches)
-            : this.i18n.resultsText.replace('{count}', this.results.length);
+
+         const template = this.totalMatches > this.results.length
+            ? this.i18n.resultsTruncatedText
+            : this.i18n.resultsText;
+
+         this.status.textContent = template
+            .replace('{count}', this.results.length)
+            .replace('{total}', this.totalMatches);
       }
 
       _onKeyDown(e) {
