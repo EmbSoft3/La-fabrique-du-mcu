@@ -15,6 +15,7 @@ body {
 	width: 80vw;
 	max-width: 640px;
 	overflow: visible;
+	overflow-wrap: anywhere;
 }
 
 a {
