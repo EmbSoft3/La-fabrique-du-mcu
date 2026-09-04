@@ -245,47 +245,6 @@ main section div {
 }
 
 /* ************************************************************************** */
-
-table {
-	width: 100%;
-	border-collapse: collapse;
-	background: #212326;
-	border-radius: 10px;
-	font-size: 0.98em;
-	margin-top: 1.5em;
-	overflow-wrap: anywhere;
-	/* 1. Verrouille le calcul des largeurs de colonnes */
-}
-
-table th {
-	text-align: left;
-	color: rgb(233, 229, 227);
-	font-weight: 600;
-	padding: 0.7em 1em;
-	border-bottom: 1px dotted rgba(255, 255, 255, 0.35);
-	white-space: nowrap;
-}
-
-table td {
-	color: rgb(230, 230, 230);
-	padding: 0.7em 1em;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-	vertical-align: top;
-	line-height: 1.35em;
-}
-
-table caption {
-	caption-side: bottom;
-	text-align: center;
-	padding-top: 0.5em;
-	font-weight: normal;
-	color: rgb(230, 230, 230);
-	padding-top: 1em;
-	padding-bottom: 1em;
-
-}
-
-/* ************************************************************************** */
 /* Section Footer */
 
 footer {
