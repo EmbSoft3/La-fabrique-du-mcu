@@ -469,6 +469,54 @@
                </div>
             </details>
 
+            <!-- 3.7. La définition K_MK_SCHEDULER_BASE_PRIORITY() -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="K_MK_SCHEDULER_BASE_PRIORITY">3.7. Les définitions</span>
+               </summary>
+               <p>L'utilisateur peut personnaliser la configuration du noyau à l'aide des définitions suivantes :</p>
+               <br>
+               <div class="prototype">
+                  <table class=".table-fixed">
+                     <thead>
+                        <tr>
+                           <th class="th-fixed55">Définition</th>
+                           <th>Description</th>
+                           <th>Valeur</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        <tr>
+                           <td><a href="#K_MK_SCHEDULER_MASK_PRIORITY"><span
+                                    class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MASK_<wbr>PRIORITY</span></a></td>
+                           <td>
+                              Cette constante configure le masque du registre BASEPRI pour les appels système. Elle
+                              masque les interruptions de priorité supérieure ou égale à la valeur définie. Elle doit
+                              être comprise
+                              entre 1 et 15.
+                           </td>
+                           <td class="center">8</td>
+                        </tr>
+                        <tr>
+                           <td><a href="#K_MK_SCHEDULER_SVC_PRIORITY"><span
+                                    class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>SVC_<wbr>PRIORITY</span></a></td>
+                           <td>Cette constante fixe la priorité du vecteur d'interruption SVC (valeur de 0 à 14,
+                              obligatoirement inférieure à K_MK_SCHEDULER_MASK_PRIORITY).</td>
+                           <td class="center">7</td>
+                        </tr>
+                        <tr>
+                           <td><a href="#K_MK_SCHEDULER_PRIORITY_NUMBER"><span
+                                    class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>PRIORITY_<wbr>NUMBER</span></a></td>
+                           <td>Cette constante configure le nombre de priorités gérées par l'ordonnanceur. Sa valeur
+                              peut varier de 1 à 32.
+                           </td>
+                           <td class="center">10</td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </div>
+            </details>
+
          </div>
       </section>
 
@@ -481,7 +529,7 @@
                </div>
             </a> <a href="../progress/progress.html">
                <div>
-                  <p>Configuration du noyau</p>
+                  <p>Manipulation des tâches</p>
                   <p>></p>
                </div>
             </a>
