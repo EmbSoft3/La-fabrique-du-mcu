@@ -8,6 +8,27 @@
          "anchor": "kernel.html"
       },
       {
+         "name": "K_MK_SCHEDULER_MASK_PRIORITY",
+         "module": "Scheduler",
+         "submodule": "",
+         "description": "Configuration du masque de priorité des sections critiques.",
+         "anchor": "kernel.html#K_MK_SCHEDULER"
+      },
+      {
+         "name": "K_MK_SCHEDULER_SVC_PRIORITY",
+         "module": "Scheduler",
+         "submodule": "",
+         "description": "Configuration du masque de priorité de l'interruption SVC.",
+         "anchor": "kernel.html#K_MK_SCHEDULER"
+      },
+      {
+         "name": "K_MK_SCHEDULER_PRIORITY_NUMBER",
+         "module": "Scheduler",
+         "submodule": "",
+         "description": "Configuration du nombre de priorités gérées par l'ordonnanceur.",
+         "anchor": "kernel.html#K_MK_SCHEDULER"
+      },
+      {
          "name": "mk_init",
          "module": "Kernel",
          "submodule": "",
