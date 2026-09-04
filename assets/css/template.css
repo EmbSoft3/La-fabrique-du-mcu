@@ -142,6 +142,16 @@ main section div {
 	margin-top: 0.3em;
 }
 
+@media screen and (max-width: 640px) {
+	.api-grid .api-description {
+		color: rgb(230, 230, 230);
+		text-align: left;
+		vertical-align: baseline;
+		margin: 0em;
+		margin-top: 0.3em;
+	}
+}
+
 /* ************************************************************************** */
 
 .emoji-font {
@@ -243,6 +253,8 @@ table {
 	border-radius: 10px;
 	font-size: 0.98em;
 	margin-top: 1.5em;
+	overflow-wrap: anywhere;
+	/* 1. Verrouille le calcul des largeurs de colonnes */
 }
 
 table th {
