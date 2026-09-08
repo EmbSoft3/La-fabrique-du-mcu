@@ -7,7 +7,7 @@
    <meta name="description"
       content="Documentation complète de l'API du noyau Mk (Cortex-M7) : fonctionnement, tâches, synchronisation, pools mémoire, MPU, callbacks et plus encore.">
    <title>Documentation du noyau Mk</title>
-   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/docs.html">
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/index.html">
    <link href="../../assets/css/style.css" rel="stylesheet">
    <link href="../../assets/css/template.css" rel="stylesheet">
    <link href="../../assets/css/mk.css" rel="stylesheet">
@@ -25,7 +25,7 @@
       </div>
       <div class="onglet">
          <nav>
-            <a href="./docs.html">MK</a>
+            <a href="./index.html">MK</a>
             <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href="../contact/contact.html">Contact</a>
             <a href="./api.html"> 🔍</a>
@@ -48,27 +48,41 @@
             <div class="api-grid">
                <a href="./architecture.html" class="api-link"><b>✔ Préambule</b>
                   <span class="api-description">Cet article présente l'architecture et les fonctionnalités du noyau
-                     temps réel <span class="bold-strong">Mk</span>. Il se
-                     concentre sur les mécanismes d'ordonnancement, les listes de tâches,
-                     les droits, les vecteurs d'interruption et les interactions du noyau avec la <span
-                        class="bold-strong">FPU</span> et la <span class="bold-strong">MPU</span>.
+                     temps réel <span class="bold-strong">Mk</span>. Il présente le fonctionnement de l'ordonnanceur, la
+                     gestion de la mémoire, le modèle de
+                     privilège/isolation via la MPU, le support de la FPU, la gestion des interruptions, les primitives
+                     de synchronisation et le mécanisme d'appels
+                     système par interruption SVC.
                   </span>
                </a>
             </div>
 
             <div class="api-grid">
                <a href="./download.html" class="api-link"><b>✔ Téléchargement et compilation du noyau</b>
-                  <span class="api-description">Cet article décrit la méthodologie à utiliser pour récupérer le code
-                     source du noyau, installer la chaîne de compilation et
-                     exécuter son premier projet.
+                  <span class="api-description">Cet article détaille la méthodologie à utiliser pour prendre en main le
+                     noyau Mk. Il se concentre sur l'installation des logiciels (chaine de compilation GNU Arm, CMake,
+                     Ninja,
+                     J-Link),
+                     la récupération du code source sur GitHub, la compilation sous VS Code,
+                     et la génération des fichiers binaires (.elf, .map).
                   </span>
                </a>
             </div>
 
             <div class="api-grid">
                <a href="./kernel.html" class="api-link"><b>✔ Initialisation du noyau</b>
-                  <span class="api-description">Cet article présente l'initialisation du noyau, la configuration de la
-                     tâche de repos et la configuration du tick système.
+                  <span class="api-description">Cet article présente la séquence d'initialisation du noyau
+                     (modes FPU/flottant et pile principale), la configuration de la tâche de repos, le démarrage et le
+                     réglage du timer système, ainsi que les
+                     mécanismes de lecture du tick système, d'arrêt et de redémarrage du noyau.
+                  </span>
+               </a>
+            </div>
+
+            <div class="api-grid">
+               <a href="./task.html" class="api-link"><b>✔ Création et manipulation des tâches</b>
+                  <span class="api-description">Cet article explique les mécanismes d'initialisation et de manipulation
+                     des tâches du noyau.
                   </span>
                </a>
             </div>
