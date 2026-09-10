@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Apprenez à créer, configurer et gérer le cycle de vie des tâches dans le noyau temps réél Mk : gestion des piles, priorités, privilèges, états et fonctions de l'API.">
+   <title>Création et manipulation des tâches</title>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/task.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./index.html">MK</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <p>Les modules <span class="bold-strong">task</span> et <span class="bold-strong">stack</span> permettent de
+               créer,
+               configurer et piloter les tâches du noyau.
+               Cette page détaille les fonctions de ces modules et leur usage typique.
+            </p>
+
+            <h1>1. Synthèse des fonctions</h1>
+            <p>L'ensemble de ces fonctions sont déclarées dans les fichiers d'en-tête <span
+                  class="bold-strong">mk_task.h</span> et <span class="bold-strong">mk_stack.h</span> :</p>
+            <table>
+               <thead>
+                  <tr>
+                     <th>Fonction</th>
+                     <th>Description</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr>
+                     <td><a href="#mk_stack_create"><span class="gray">mk_<wbr>stack_<wbr>create</span></a></td>
+                     <td>Cette fonction initialise les attributs d'une pile.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_setTaskCtrlBlock"><span
+                              class="gray">mk_<wbr>task_<wbr>setTaskCtrlBlock</span></a>
+                     </td>
+                     <td>Cette fonction initialise les attributs d'une tâche.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_create"><span class="gray">mk_<wbr>task_<wbr>create</span></a></td>
+                     <td>Cette fonction crée une tâche.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_terminate"><span class="gray">mk_<wbr>task_<wbr>terminate</span></a></td>
+                     <td>Cette fonction supprime une tâche.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_yield"><span class="gray">mk_<wbr>task_<wbr>yield</span></a></td>
+                     <td>Cette fonction réalise un changement de contexte.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_sleep"><span class="gray">mk_<wbr>task_<wbr>sleep</span></a></td>
+                     <td>Cette fonction réalise une temporisation.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_delay"><span class="gray">mk_<wbr>task_<wbr>delay</span></a></td>
+                     <td>Cette fonction réalise une temporisation relative.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_suspend"><span class="gray">mk_<wbr>task_<wbr>suspend</span></a></td>
+                     <td>Cette fonction suspend une tâche.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_resume"><span class="gray">mk_<wbr>task_<wbr>resume</span></a></td>
+                     <td>Cette fonction réveille une tâche suspendue.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_priority"><span class="gray">mk_<wbr>task_<wbr>priority</span></a></td>
+                     <td>Cette fonction change la priorité d'une tâche.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_getHandle"><span class="gray">mk_<wbr>task_<wbr>getHandle</span></a></td>
+                     <td>Cette fonction récupère l'adresse d'une tâche.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_get"><span class="gray">mk_<wbr>task_<wbr>get</span></a></td>
+                     <td>Cette fonction récupère l'identifiant, le type, l'état ou la priorité d'une tâche.</td>
+                  </tr>
+                  <tr>
+                     <td><a href="#mk_task_getLoad"><span class="gray">mk_<wbr>task_<wbr>getLoad</span></a></td>
+                     <td>Cette fonction retourne le taux de charge CPU d'une tâche.</td>
+                  </tr>
+               </tbody>
+            </table>
+
+            <h2>2. Utilisation</h2>
+
+            <p>La création d'une tâche s'effectue à partir des fonctions <span
+                  class="bold-strong">mk_stack_create</span>, <span class="bold-strong">mk_task_setTaskCtrlBlock</span>
+               et <span class="bold-strong">mk_task_create</span>. L'exemple ci-dessous présente le code minimal pour
+               créer une tâche de manière statique :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+<span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
+
+<span class="multi-line-comment">/* Déclaration du buffer où sera stocké la pile de la tâche */</span>
+<span class="multi-line-comment">/* Celui-ci peut être dans une zone privilégiée ou non */</span>
+<span class="multi-line-comment">/* Cette partie sera abordée dans le chapitre sur la MPU. */</span>
+<span class="define">K_MK_PRIVILEGED_MEMORY</span> <span class="type">uint32_t</span> l_privilegedStackBuf [ <span class="number">512</span> ];
+
+<span class="multi-line-comment">/* Déclaration d'un pointeur de tâche */</span>
+<span class="type">T_mkTask</span>* l_task;
+
+<span class="multi-line-comment">/* Déclaration d'une structure contenant les informations de la stack */</span>
+<span class="type">T_mkStack</span> l_stack;
+
+<span class="multi-line-comment">/* Déclaration d'une structure contenant les informations de la tâche */</span>
+<span class="type">T_mkTaskCtrlBlock</span> l_taskCtrlBlock;
+
+<span class="multi-line-comment">/* Configuration de la stucture l_stack avec les attributs de la pile */</span>
+<span class="multi-line-comment">/* K_MK_TYPE_DEFAULT - pile classique */</span>
+<span class="multi-line-comment">/* Taille de 512 mots 32bits */</span>
+l_result = <span class="function">mk_stack_create</span> ( &l_stack, <span class="define">K_MK_TYPE_DEFAULT</span>, 
+   l_privilegedStackBuf, <span class="number">512</span> );
+
+<span class="multi-line-comment">/* Configuration de la structure l_taskCtrlBlock avec les attributs */</span>
+<span class="multi-line-comment">/* de la tâche */</span>
+<span class="multi-line-comment">/* Type : tâche privilégiée non flottante */</span>
+<span class="multi-line-comment">/* Identifiant : K_MK_TASK_ID_MY_TASK */</span>
+<span class="multi-line-comment">/* Priorité : 10 */</span>
+<span class="multi-line-comment">/* Propriétaire : NULL */</span>
+l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlBlock, 
+   <span class="define">K_MK_TYPE_PRIVILEGED</span>, <span class="define">K_MK_TASK_ID_MY_TASK</span>, 
+   <span class="number">10</span>, <span class="define">K_MK_NULL</span> );
+
+<span class="multi-line-comment">/* Si aucune erreur ne s'est produite */</span>
+<span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
+{
+   <span class="multi-line-comment">/* Création de la tâche */</span>
+   <span class="multi-line-comment">/* Point d'entrée de la tâche : mk_task_privileged */</span>
+   <span class="multi-line-comment">/* Argument de la fonction : "Hello world !" */</span>
+   l_result = <span class="function">mk_task_create</span> ( &l_task, &l_stack, <span class="type">K_MK_NULL</span>, 
+      &l_taskCtrlBlock, <span class="function">mk_task_privileged</span>, ( <span class="type">T_mkAddr</span> ) <span class="string">"Hello world !"</span> );
+}
+
+</pre>
+            <p>La fonction <span class="bold-strong">mk_stack_create</span> permet de rassembler les attributs de la
+               pile
+               dans une structure de type <span class="bold">T_mkStack</span>. En fonction du type de la pile
+               (<span class="bold-strong">K_MK_TYPE_DEFAULT</span> ou <span
+                  class="bold-strong">K_MK_TYPE_FLOATING</span>),
+               cette fonction vérifie que la taille du buffer spécifié par l'utilisateur est suffisante pour sauvegarder
+               le
+               contexte de la tâche.
+            </p>
+            <br>
+
+            <p>La fonction <span class="bold-strong">mk_task_setTaskCtrlBlock</span> permet de rassembler les attibuts
+               de la tâche
+               dans une structure de type <span class="bold">T_mkTaskCtrlBlock</span>. Elle configure
+               l'identifiant, la priorité, le propriétaire et le type de la tâche :
+            </p>
+            <br>
+            <div class="comment">
+               <p class="comment-logo"></p>
+               <div class="comment-text ">
+                  <p><span class="gray">✔</span> L'identifiant de la tâche est un entier non-signé sur 32bits. Il est
+                     préférable d'utiliser un identifiant unique pour chaque tâche.</p>
+                  <p><span class="gray">✔</span> La priorité de la tâche
+                     évolue de 1 à <span class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>PRIORITY_<wbr>NUMBER</span> (la
+                     plus forte).</p>
+                  <p><span class="gray">✔</span> Le type de la tâche peut être privilégié, flottant ou les deux. Il se
+                     sélectionne en utilisant les
+                     constantes <span class="bold-strong">K_MK_<wbr>TYPE_<wbr>PRIVILEGED</span>, <span
+                        class="bold-strong">K_MK_<wbr>TYPE_<wbr>FLOATING</span> ou <span
+                        class="bold-strong">K_MK_<wbr>TYPE_<wbr>FLOATING_<wbr>PRIVILEGED</span>.</p>
+                  <p><span class="gray">✔</span> Le propriétaire de la tâche contient l'adresse d'une
+                     application ou d'une tâche "mère" ou à défaut la valeur <span class="bold-strong">K_MK_NULL</span>.
+                     Lorsqu'un propriétaire est spécifié, chaque
+                     nouvelle
+                     tâche créée par la tâche "mère" hérite de la valeur de cet argument. Toutes les tâches d'une même
+                     application peuvent alors être identifiées. Pour les tâches enfants, ce paramètre devient
+                     alors sans effet car elles héritent du propriétaire de leur parent.
+                  </p>
+               </div>
+            </div>
+            <br>
+            <p>L'utilisateur exécute ensuite la fonction <span class="bold-strong">mk_task_create</span> avec les
+               caractéristiques précédentes,
+               l'adresse du point d'entrée de la tâche (<span class="bold-strong">mk_task_privileged</span>) et la
+               valeur
+               de son argument. </p>
+            <p>Dans la situation où le noyau a été démaré (<span class="bold-strong">mk_start</span>),
+               la tâche est
+               alors créée et placée dans la liste des tâches prête à être exécutées.
+            </p>
+            <br>
+            <p>La définition d'une tâche et son code minimal est présenté ci-dessous :
+            </p>
+            <br>
+            <pre class="code">
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="keyword">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Dans notre exemple, p_param pointe sur "Hello world !" */</span>
+
+   <span class="keyword">for</span> ( ;; ) ;
+}</pre>
+
+            </pre>
+            <br>
+
+            <p>Les tâches ne doivent jamais terminer leur exécution et doivent vivre à l'intérieur d'une boucle infinie.
+               Dans la situation où une tâche doit être détruite, la fonction <span
+                  class="bold-strong">mk_task_terminate</span> peut être utilisée.
+            </p>
+            <br>
+
+            <p>Les tâches peuvent être créées avant et après le démarrage du noyau : </p>
+            <br>
+            <pre class="code">
+<span class="keyword">void</span> <span class="function">mk_main</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* ... */</span>
+   
+   <span class="multi-line-comment">/* Initialisation du noyau */</span>
+   l_result = <span class="function">mk_init</span> ( 
+      <span class="define">K_MK_MODE_FLOATING</span>, g_mkProcessStack, <span class="define">K_MK_PROCESS_STACK_SIZE</span> );
+
+   <span class="multi-line-comment">/* Initialisation de la tâche de repos */</span>
+   l_result |= <span class="function">mk_createIdle</span> ( 
+      g_mkIdleStack, <span class="define">K_MK_TASK_IDLE_STACK_SIZE</span>, mk_task_idle, ( <span class="type">T_mkAddr</span> ) 
+      <span class="string">"I"</span> );
+
+   <span class="multi-line-comment">/* On créée des tâches depuis le programme principale */</span>
+   l_result |= <span class="function">mk_createTasks</span> ( );
+
+   <span class="multi-line-comment">/* Lancement du noyau avec un tick de 1 ms */</span>
+   l_result |= <span class="function">mk_start</span> ( 27000 );
+   
+   <span class="keyword">for</span> ( ;; ) ;
+}
+
+<span class="multi-line-comment">/* Une tâche quelconque */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="keyword">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* On créée une tâche depuis une autre tâche */</span>
+   l_result = <span class="function">mk_task_create</span> ( &l_task, &l_stack, <span class="type">K_MK_NULL</span>, 
+      &l_taskCtrlBlock, <span class="function">mk_task_newTask</span>, <span class="type">K_MK_NULL</span> );
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+
+</pre>
+            <br>
+            <p>Elles peuvent aussi être créées depuis un vecteur d'interruption. Dans cette situation, il est plus
+               simple
+               d'allouer dynamiquement la pile de la tâche en placant une <span class="bold-strong">pool</span> mémoire
+               en paramètre. </p>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">❔</p>
+               <div class="comment-text ">
+                  <p>Une <span class="bold-strong">pool</span> est un allocateur mémoire qui permet d'allouer
+                     dynamiquement des blocs de taille fixe. De par leur nature, les pools ne sont pas soumises à la
+                     fragmentation mémoire.</p>
+               </div>
+            </div>
+            <br>
+
+            <p>L'exemple ci-dessous montre comment créer une tâche à pile dynamique depuis un vecteur interruption :
+            </p>
+            <br>
+
+            <pre class="code">
+
+<span class="multi-line-comment">/* Déclaration du buffer où sera stocké la tâche */</span>
+<span class="multi-line-comment">/* Celui-ci doit être dans une zone protégée */</span>
+<span class="define">K_MK_UNPRIVILEGED_DMA_MEMORY</span> <span class="type">uint32_t</span> l_unprivilegedStackBuf [ <span class="number">1024</span> ];
+
+<span class="multi-line-comment">/* Déclaration d'un pointeur de pool */</span>
+<span class="type">T_mkPool</span>* g_mkPool;
+
+<span class="multi-line-comment">/* Il est nécessaire d'initialiser un gestionnaire mémoire dans un contexte persistant */</span>
+<span class="keyword">void</span> <span class="function">mk_task</span> ( <span class="keyword">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* Configuration des attributs de la zone mémoire dans une structure */</span>
+   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, l_unprivilegedStackBuf, 1024 );
+
+   <span class="multi-line-comment">/* Création d'un allocateur mémoire constitué de 4 buffers de 256 mots */</span>
+   l_result |= <span class="function">mk_pool_create</span> ( &l_area, &g_mkPool, 
+      <span class="define">K_MK_AREA_UNPROTECTED</span>, <span class="number">256</span>, <span class="number">4</span> );
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+
+<span class="multi-line-comment">/* Un vecteur d'interruption quelconque */</span>
+<span class="keyword">void</span> <span class="function">mk_isr</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* ... */</span>
+   
+   <span class="multi-line-comment">/* Configuration de la structure l_taskCtrlBlock avec les attributs */</span>
+   <span class="multi-line-comment">/* de la tâche */</span>
+   <span class="multi-line-comment">/* Type : tâche non privilégiée flottante */</span>
+   <span class="multi-line-comment">/* Identifiant : K_MK_TASK_ID_MY_TASK */</span>
+   <span class="multi-line-comment">/* Priorité : 1 */</span>
+   <span class="multi-line-comment">/* Propriétaire : NULL */</span>
+   l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlBlock, 
+      <span class="define">K_MK_TYPE_FLOATING</span>, <span class="define">K_MK_TASK_ID_MY_TASK</span>, 
+      <span class="number">1</span>, <span class="define">K_MK_NULL</span> );
+
+   <span class="multi-line-comment">/* Si aucune erreur ne s'est produite */</span>
+   <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
+   {
+      <span class="multi-line-comment">/* Création de la tâche */</span>
+      <span class="multi-line-comment">/* Pour une tâche dynamique, on précise K_MK_NULL pour le paramètre */</span>
+      <span class="multi-line-comment">/* p_mkStack et l'adresse d'un allocateur mémoire pour p_mkPool */</span>
+      <span class="multi-line-comment">/* La pile sera allouée dans l'un des 4 buffers de l'allocateur */</span>
+      l_result = <span class="function">mk_task_create</span> ( &l_task, <span class="type">K_MK_NULL</span>, g_mkPool,
+         &l_taskCtrlBlock, <span class="function">mk_task_unprivileged</span>, 
+         ( <span class="type">T_mkAddr</span> ) <span class="string">"Hello world !"</span> );
+   }
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+</pre>
+            <br>
+            <p>Dans l'exemple ci-dessus, lorsque la tâche créée par l'interruption a terminé son travail,
+               elle peut
+               stopper son exécution en utilisant la fonction <span class="bold-strong">mk_task_terminate</span> :</p>
+            <br>
+
+            <pre class="code">
+<span class="keyword">void</span> <span class="function">mk_task_unprivileged</span> ( <span class="keyword">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* Cette tâche a terminé son travail */</span>
+   <span class="multi-line-comment">/* Elle peut donc s'autodétruire */</span>
+   l_result = <span class="function">mk_task_terminate</span> ( <span class="define">K_MK_NULL</span> );
+
+   <span class="keyword">for</span> ( ;; ) ;
+}</pre>
+            <br>
+            <p>Une tâche peut aussi détruire une autre tâche en combinant les fonctions <span
+                  class="bold-strong">mk_task_getHandle</span> et
+               <span class="bold-strong">mk_task_terminate</span> :
+            </p>
+            <br>
+
+            <pre class="code">
+<span class="keyword">void</span> <span class="function">mk_task</span> ( <span class="keyword">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* Récupération de l'instance de la tâche à détruire */</span> 
+   <span class="multi-line-comment">/* via son identifiant 32 bits */</span>
+   l_result = <span class="function">mk_task_getHandle</span> ( &l_taskToDelete, <span class="define">K_MK_TASK_ID</span> );
+
+   <span class="multi-line-comment">/* Si aucune erreur ne s'est produite */</span>
+   <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
+   {
+      <span class="multi-line-comment">/* On détruit une tâche depuis une autre tâche */</span>
+      l_result = <span class="function">mk_task_terminate</span> ( l_taskToDelete );
+   }
+
+   <span class="multi-line-comment">/* ... */</span>
+}</pre>
+            <br>
+            <p>Avant d'utiliser la fonction <span class="bold-strong">mk_task_terminate</span>, l'utilisateur doit
+               s'assurer que la tâche à détruire a libérée l'ensemble des ressources prises (objet de synchronisation et
+               mémoire). Cette synchronisation s'effectue généralement en utilisant un <span
+                  class="bold-strong">signal</span> couplé à une
+               autodestruction de tâche.</p>
+            <br>
+            <p>Le module <span class="bold-strong">task</span> offre aussi la possibilité de suspendre et reprendre
+               l'exécution d'une tâche. Le couple de fonctions <span class="bold-strong">mk_task_suspend</span> et <span
+                  class="bold-strong">mk_task_resume</span> est prévu pour cet usage :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Code d'une interruption ou d'une tâche quelconque */</span>
+<span class="keyword">void</span> <span class="function">mk_isr_or_task</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* ... */</span>
+   
+   <span class="multi-line-comment">/* Les fonctions mk_task_resume et mk_task_suspend sont */</span>
+   <span class="multi-line-comment">/* toutes les deux utilisables dans un vecteur d'interruption */</span>
+
+   <span class="multi-line-comment">/* Redémarrage de l'exécution d'une tâche */</span>
+   l_result = <span class="function">mk_task_resume</span> ( &l_taskToResume ) ;
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+
+<span class="multi-line-comment">/* Une tâche quelconque */</span>
+<span class="keyword">void</span> <span class="function">mk_task</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Routines d'initialisation de l_taskToResume ... */</span>
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* La tâche s'auto-suspend au démarrage le temps de recevoir un signal */</span>
+   l_result = <span class="function">mk_task_suspend</span> ( K_MK_NULL ) ;
+
+   <span class="keyword">for</span> ( ;; )
+   {
+      <span class="multi-line-comment">/* Suite du code de la tâche... */</span>
+   }
+}
+</pre>
+            <br>
+            <p>Lorsqu'une tâche est suspendue,
+               celle-ci reste dans l'état <span class="bold-strong">K_MK_STATE_SUSPENDED</span> jusqu'au prochain appel
+               explicite de la fonction <span class="bold-strong">mk_task_resume</span>.</p>
+            <br>
+
+            <p>L'appel de la fonction <span class="bold-strong">mk_task_yield</span> permet de déclencher un changement
+               un contexte explicite. Même si le noyau est intrinséquement préemptif, un modèle d'ordonnancement
+               coopératif peut être obtenu en désactivant le timer système et en configurant la priorité de toutes les
+               tâches à la même valeur. </p>
+
+            <pre class="code">
+
+<span class="keyword">void</span> <span class="function">mk_main</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* ... */</span>
+   
+   <span class="multi-line-comment">/* On créé 3 tâches de même priorité dans cette fonction */</span>
+   <span class="multi-line-comment">/* La fonction mk_task_create ajoute séquentiellement les tâches */</span>
+   <span class="multi-line-comment">/* dans la liste des tâches prêtes à être exécutées. */</span>
+   <span class="multi-line-comment">/* La première tâche ajoutée sera la première exécutée. */</span>
+   l_result |= <span class="function">mk_createTasks</span> ( );
+
+   <span class="multi-line-comment">/* Lancement du noyau avec le timer système désactivé */</span>
+   <span class="multi-line-comment">/* (round-robin désactivé). */</span>
+   l_result |= <span class="function">mk_start</span> ( 0 );
+   
+   <span class="keyword">for</span> ( ;; ) ;
+}
+
+<span class="multi-line-comment">/* Première tâche créée */</span>
+<span class="keyword">void</span> <span class="function">mk_task1</span> ( <span class="keyword">T_mkAddr</span> p_mkAddr )
+{
+   <span class="keyword">for</span> ( ;; ) 
+   {
+      <span class="multi-line-comment">/* ... */</span>
+      
+      <span class="multi-line-comment">/* Donne la main à mk_task2 */</span>
+      l_result = <span class="function">mk_task_yield</span> ( );
+   }
+}
+
+<span class="multi-line-comment">/* Deuxième tâche créée */</span>
+<span class="keyword">void</span> <span class="function">mk_task2</span> ( <span class="keyword">T_mkAddr</span> p_mkAddr )
+{
+   <span class="keyword">for</span> ( ;; ) 
+   {
+      <span class="multi-line-comment">/* ... */</span>
+      
+      <span class="multi-line-comment">/* Donne la main à mk_task3 */</span>
+      l_result = <span class="function">mk_task_yield</span> ( );
+   }
+}
+
+<span class="multi-line-comment">/* Troisième tâche créée */</span>
+<span class="keyword">void</span> <span class="function">mk_task3</span> ( <span class="keyword">T_mkAddr</span> p_mkAddr )
+{
+   <span class="keyword">for</span> ( ;; ) 
+   {
+      <span class="multi-line-comment">/* ... */</span>
+      
+      <span class="multi-line-comment">/* Donne la main à mk_task1 */</span>
+      l_result = <span class="function">mk_task_yield</span> ( );
+   }
+}
+</pre>
+            <br>
+            <p>Dans ce mode de fonctionnement, l'ensemble des fonctions utilisant des temporisations ne sont plus
+               utilisables. </p>
+
+
+
+
+
+
+
+
+
+
+            <h2>3. API</h2>
+
+
+
+         </div>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <a href="./kernel.html">
+               <div>
+                  <p>&lt;</p>
+                  <p>Initialisation du noyau</p>
+               </div>
+            </a> <a href="./task.html">
+               <div>
+                  <p>Configuration de la MPU</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>
