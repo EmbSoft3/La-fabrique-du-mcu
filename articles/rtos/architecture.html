@@ -91,7 +91,7 @@
                <span class="bold-strong">Mk</span> implémente les 3 exceptions matérielles suivantes :
             </p>
             <table>
-               <!--caption>Tableau 1 - Listes des exceptions utilisée par le noyau</caption-->
+               <!--caption>Tableau 1 - Liste des exceptions utilisées par le noyau</caption-->
                <thead>
                   <tr>
                      <th>Exception</th>
@@ -101,7 +101,7 @@
                <tbody>
                   <tr>
                      <td><span class="gray">SysTick</span></td>
-                     <td>Incrémente le compteur de tick (32bits) et déclenche l'interruption PendSV</td>
+                     <td>Incrémente le compteur de tick (32 bits) et déclenche l'interruption PendSV</td>
                   </tr>
                   <tr>
                      <td><span class="gray">PendSV</span></td>
@@ -118,7 +118,7 @@
             <p>
                Le Cortex-M7 définit ses priorités sur 4 bits (0 = la plus forte, 15 = la plus faible). </p>
             <p>
-               Le noyau configure la priorité des 3 exceptions précédentes avec les valeurs ci-dessous:
+               Le noyau configure la priorité des 3 exceptions précédentes avec les valeurs ci-dessous :
             </p>
             <br>
             <pre class="code">
@@ -149,7 +149,7 @@
                   <li><span class="gray">✔</span> ISRs de priorité 0 à 7 (<span class="bold-strong">&lt;
                         K_MK_SCHEDULER_MASK_PRIORITY</span>) : ces
                      interruptions ne sont pas autorisées à réaliser des appels système car il y a un risque de
-                     corrup­tion.</li>
+                     corruption.</li>
                </ul>
                </p>
             </div>
@@ -176,9 +176,9 @@
                peu plus élevée pour ces appels système.
             </p>
             <p>
-               Pour les tâches, celles-ci stockent cet objet SVC dans leur <strong>TCB</strong>, il n'y a donc aucun
-               partage et aucune
-               section critique n'est à déclarer.
+               Contrairement aux interruptions, les tâches stockent leur objet SVC dans leur <strong>TCB</strong>, il
+               n'y a donc aucun
+               partage et donc aucune section critique à déclarer.
             </p>
             <p>
                Pour les changements de contexte, le noyau masque les interruptions pendant un court moment afin de
@@ -187,10 +187,10 @@
 
             <h2>6. Le registre BASEPRI</h2>
 
-            <p>L'instruction <span class="bold-strong">MSR BASEPRI</span> est un peu particulière du fait qu'elle est
+            <p>Du fait de l'architecture du cortex-m7, l'instruction <span class="bold-strong">MSR BASEPRI</span> est
                sans effet si elle est exécutée par
-               du code non privilégié. La conséquence est que les interruptions ne sont jamais masquées lorsqu'un appel
-               système est déclenché par une tâche non privilégiée.
+               du code non privilégié. La conséquence est que pour chaque appel système en mode privilégié, les
+               interruptions ne sont jamais masquées par le noyau.
             </p>
 
             <h2>7. Le modèle de privilège </h2>
@@ -204,7 +204,7 @@
                <strong> CONTROL</strong>. La tâche peut alors
                accéder à toutes les ressources du système sans restriction. A contrario, les droits d'une tâche non
                privilégiée sont restreints et sont définis par la <span class="bold-strong">MPU (Memory Protection
-                  Unit)</span> du processeur.
+                  Unit)</span>.
             </p>
 
             <p>
@@ -323,7 +323,7 @@ struct T_mkTask
 
             <figure>
                <img src="../../images/rtos/rtos-readyList.jpg"
-                  alt="description d'une liste de tâches prêtes à être exécutées">
+                  alt="Description d'une liste de tâches prêtes à être exécutées">
                <figcaption>
                   <span class="underline">Figure 1</span> : description d'une liste de tâches prêtes à être exécutées.
                </figcaption>
@@ -333,7 +333,7 @@ struct T_mkTask
             <p>
                Pour ne pas scanner toutes les listes à chaque changement de contexte, le noyau intègre un registre de
                priorité (<span class="bold-strong">priorityRegister</span>). À chaque fois qu'une tâche est ajoutée dans
-               une des listes de tâches prêtes à être exécutées, le
+               une des listes de tâches, le
                bit correspondant du registre de priorité est positionné à 1.
             </p>
             <p>
@@ -452,7 +452,7 @@ priorityRegister
                </li>
                <li><span class="gray">✔</span> Retrait des tâches dont l'échéance est arrivée à terme de la liste des
                   tâches temporisées. Elles sont placées dans leur <span class="bold-strong">readyList</span>
-                  respectives.
+                  respective.
                   Le registre de priorité est actualisé en conséquence. </li>
                <li><span class="gray">✔</span> Détermination de l'adresse de la liste contenant les tâches de plus forte
                   priorité avec l'instruction CLZ.</li>
@@ -471,7 +471,8 @@ priorityRegister
                (<span class="bold-strong">yield</span>, <span class="bold-strong">sleep</span>, <span
                   class="bold-strong">block</span> ...). Cela empêche la mise à jour du pointeur de liste, garantissant
                ainsi que les tâches de priorité
-               égale s'exécutent pendant au moins un cycle complet avant que l'algorithme ne passe à la tâche suivante.
+               égale s'exécutent pendant au moins un cycle complet avant que l'algorithme de <span
+                  class="bold-strong">round-robin</span> ne passe à la tâche suivante.
             </p>
             <p>
                Les tâches de priorité supérieure ne sont pas affectées par ce mécanisme. Le but de l'ordonnanceur étant
@@ -586,7 +587,7 @@ _mk_svc_set ( &l_svc );
             <p><span class="bold-strong">Mk</span> intègre un gestionnaire de rappels permettant de différer
                l'exécution de fonctions. Celui-ci s'architecture autour de deux tâches (une privilégiée et l'autre non)
                et d'un champ d'événements.</p>
-            <p>Ces caractéristiques permettent d'attendre l'exécution d'un maximum de 30 fonctions simultanément.</p>
+            <p>Ces caractéristiques permettent d'attendre l'exécution de 30 fonctions au maximum.</p>
 
 
          </div>
