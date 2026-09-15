@@ -69,6 +69,111 @@
          "submodule": "",
          "description": "Fonction permettant de récupérer le nombre de ticks depuis le démarrage du noyau.",
          "anchor": "kernel.html#mk_getTick"
+      },
+      {
+         "name": "Stack",
+         "module": "Module",
+         "submodule": "",
+         "description": "Description du module Stack.",
+         "anchor": "task.html"
+      },
+      {
+         "name": "mk_stack_create",
+         "module": "Stack",
+         "submodule": "",
+         "description": "Fonction permettant d'initialiser les attributs d'une pile.",
+         "anchor": "task.html#mk_stack_create"
+      },
+      {
+         "name": "Task",
+         "module": "Module",
+         "submodule": "",
+         "description": "Description du module Task.",
+         "anchor": "task.html"
+      },
+      {
+         "name": "mk_task_setTaskCtrlBlock",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant d'initialiser les attributs d'une tâche.",
+         "anchor": "task.html#mk_task_setTaskCtrlBlock"
+      },
+      {
+         "name": "mk_task_create",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant de créer une tâche.",
+         "anchor": "task.html#mk_task_create"
+      },
+      {
+         "name": "mk_task_terminate",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant de supprimer une tâche.",
+         "anchor": "task.html#mk_task_terminate"
+      },
+      {
+         "name": "mk_task_yield",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant de réaliser un changement de contexte.",
+         "anchor": "task.html#mk_task_yield"
+      },
+      {
+         "name": "mk_task_sleep",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant de temporiser une tâche.",
+         "anchor": "task.html#mk_task_sleep"
+      },
+      {
+         "name": "mk_task_delay",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant de temporiser une tâche.",
+         "anchor": "task.html#mk_task_delay"
+      },
+      {
+         "name": "mk_task_suspend",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant de suspendre une tâche.",
+         "anchor": "task.html#mk_task_suspend"
+      },
+      {
+         "name": "mk_task_resume",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant de redémarrer une tâche suspendue.",
+         "anchor": "task.html#mk_task_resume"
+      },
+      {
+         "name": "mk_task_priority",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant de changer la priorité d'une tâche.",
+         "anchor": "task.html#mk_task_priority"
+      },
+      {
+         "name": "mk_task_getHandle",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant de récupérer l'adresse d'une tâche.",
+         "anchor": "task.html#mk_task_getHandle"
+      },
+      {
+         "name": "mk_task_get",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant de récupérer l'identifiant, le type, l'état ou la priorité d'une tâche.",
+         "anchor": "task.html#mk_task_get"
+      },
+      {
+         "name": "mk_task_getLoad",
+         "module": "Task",
+         "submodule": "",
+         "description": "Fonction permettant de récupérer le taux de charge CPU d'une tâche.",
+         "anchor": "task.html#mk_task_getLoad"
       }
    ]
 }

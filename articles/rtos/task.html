@@ -6,7 +6,7 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="description"
       content="Apprenez à créer, configurer et gérer le cycle de vie des tâches dans le noyau temps réél Mk : gestion des piles, priorités, privilèges, états et fonctions de l'API.">
-   <title>Création et manipulation des tâches</title>
+   <title>⚡ Création et manipulation des tâches</title>
    <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/task.html">
    <link href="../../assets/css/style.css" rel="stylesheet">
    <link href="../../assets/css/template.css" rel="stylesheet">
@@ -435,9 +435,7 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
             <br>
 
             <p>L'appel de la fonction <span class="bold-strong">mk_task_yield</span> permet de déclencher un changement
-               de contexte explicite. Même si le noyau est intrinsèquement préemptif, un modèle d'ordonnancement
-               coopératif peut être obtenu en désactivant le timer système et en configurant la priorité de toutes les
-               tâches à la même valeur. </p>
+               de contexte explicite. Elle est surtout dédiée au mode de fonctionnement coopératif : </p>
             <br>
 
             <pre class="code">
@@ -453,7 +451,7 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
    l_result |= <span class="function">mk_createTasks</span> ( );
 
    <span class="multi-line-comment">/* Lancement du noyau avec le timer système désactivé */</span>
-   <span class="multi-line-comment">/* (round-robin désactivé). */</span>
+   <span class="multi-line-comment">/* Mode coopératif - round-robin désactivé. */</span>
    l_result |= <span class="function">mk_start</span> ( 0 );
    
    <span class="keyword">for</span> ( ;; ) ;
@@ -496,8 +494,15 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
 }
 </pre>
             <br>
-            <p>Néanmoins, dans ce mode de fonctionnement, l'ensemble des fonctions utilisant des temporisations n'est
-               plus utilisable. </p>
+            <div class="comment">
+               <p class="comment-logo">❔</p>
+               <div class="comment-text ">
+                  <p>Même si le noyau est intrinsèquement préemptif, un modèle d'ordonnancement
+                     coopératif peut être obtenu en désactivant le timer système et en configurant la priorité de toutes
+                     les tâches à la même valeur. Les services de temporisations deviennent alors inutilisables.</p>
+               </div>
+            </div>
+
             <br>
             <p>Le module <span class="bold-strong">task</span> offre deux services de temporisation. La fonction <span
                   class="bold-strong">mk_task_sleep</span> permet d'endormir une tâche pendant une certaine durée :</p>
@@ -575,17 +580,22 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
             <br>
             <p>Du fait de la complexité du mécanisme d'héritage de priorité, le noyau n'autorise le changement d'une
                priorité que lorsque les conditions ci-dessous sont remplies : </p>
-            <ul>
-               <li><span class="gray">✔</span>la tâche n'est pas en possession d'un objet de synchronisation de type
-                  <span class="bold">T_mkMutex</span>.
-               </li>
-               <li><span class="gray">✔</span>la tâche est dans l'état <span
-                     class="bold-strong">K_MK_<wbr>STATE_<wbr>READY</span>,
-                  <span class="bold-strong">K_MK_<wbr>STATE_<wbr>DELAYED</span> ou <span
-                     class="bold-strong">K_MK_<wbr>STATE_<wbr>SUSPENDED</span>.
-               </li>
-            </ul>
-
+            <br>
+            <div class="comment">
+               <p class="comment-logo"></p>
+               <div class="comment-text ">
+                  <p><span class="gray">✔</span>la tâche n'est pas en possession d'un objet de synchronisation de
+                     type
+                     <span class="bold-strong">T_mkMutex</span>.
+                  </p>
+                  <p><span class="gray">✔</span>la tâche est dans l'état <span
+                        class="bold-strong">K_MK_<wbr>STATE_<wbr>READY</span>,
+                     <span class="bold-strong">K_MK_<wbr>STATE_<wbr>DELAYED</span> ou <span
+                        class="bold-strong">K_MK_<wbr>STATE_<wbr>SUSPENDED</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
             <p>
                Enfin, le module <span class="bold-strong">task</span> offre deux derniers services au travers des
                fonctions
@@ -719,7 +729,7 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
                   <pre class="code">
-<span class="type">T_mkCode</span> mk_task_setTaskCtrlBlock ( <span class="type">T_mkTaskCtrlBlock*</span> p_mkAttribute, 
+<span class="type">T_mkCode</span> mk_task_setTaskCtrlBlock ( <span class="type">T_mkTaskCtrlBlock</span>* p_mkAttribute, 
    <span class="type">uint32_t</span> p_mkType, <span class="type">uint32_t</span> p_mkIdentifier, <span class="type">uint32_t</span> p_mkPriority, 
    <span class="type">T_mkAddr</span> p_mkOwner );
                   </pre>
@@ -731,14 +741,14 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                      <li><span class="bold-green">p_mkType</span> <span class="italic">[in]</span>
                         <p>Type de la tâche à créer. Le type de la tâche peut prendre les valeurs suivantes :</p>
                         <ul>
-                           <li><span class="bold-strong">K_MK_TYPE_DEFAULT</span> : le contexte de la tâche est de
-                              type non flottant, la tâche est de type non privilégié.</li>
-                           <li><span class="bold-strong">K_MK_TYPE_PRIVILEGED</span> : le contexte de la tâche est de
-                              type non flottant, la tâche est de type privilégié.</li>
-                           <li><span class="bold-strong">K_MK_TYPE_FLOATING</span> : le contexte de la tâche est de
-                              type flottant, la tâche est de type non privilégié.</li>
+                           <li><span class="bold-strong">K_MK_TYPE_DEFAULT</span> : le contexte de la tâche est non
+                              flottant, la tâche est de type non privilégié.</li>
+                           <li><span class="bold-strong">K_MK_TYPE_PRIVILEGED</span> : le contexte de la tâche est non
+                              flottant, la tâche est de type privilégié.</li>
+                           <li><span class="bold-strong">K_MK_TYPE_FLOATING</span> : le contexte de la tâche est
+                              flottant, la tâche est de type non privilégié.</li>
                            <li><span class="bold-strong">K_MK_TYPE_FLOATING_PRIVILEGED</span> : le contexte de la
-                              tâche est de type flottant, la tâche est de type privilégié.</li>
+                              tâche est flottant, la tâche est de type privilégié.</li>
                         </ul>
                      </li>
                      <li><span class="bold-green">p_mkIdentifier</span> <span class="italic">[in]</span>
@@ -764,10 +774,6 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                      <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : les attributs n'ont pas été écrits car le
                         paramètre « p_mkAttribute » est invalide.</li>
                   </ul>
-                  <p><span class="underline">Note</span> :</p>
-                  <ul>
-                     <li>Cette fonction peut être exécutée dans un vecteur d'interruption.</li>
-                  </ul>
                </div>
             </details>
 
@@ -777,39 +783,40 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <span class="subtitle" id="mk_task_create">3.3. La fonction mk_task_create()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction crée une nouvelle tâche. Suite à la création, la tâche se situe dans l'état <span
+                  <p>Cette fonction crée une nouvelle tâche. Suite à sa création, la tâche se situe dans l'état <span
                         class="bold-strong">K_MK_STATE_READY</span>.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
                   <pre class="code">
-<span class="type">T_mkCode</span> mk_task_create ( <span class="type">T_mkTask**</span> p_mkHandle, <span class="type">T_mkStack*</span> p_mkStack, <span class="type">T_mkPool*</span> p_mkPool, <span class="type">T_mkTaskCtrlBlock*</span> p_mkAttribute, <span class="type">T_mkAddress</span> p_mkFunction, <span class="type">T_mkAddr</span> p_mkArg );
+<span class="type">T_mkCode</span> mk_task_create ( <span class="type">T_mkTask</span>** p_mkHandle, <span class="type">T_mkStack</span>* p_mkStack, 
+   <span class="type">T_mkPool</span>* p_mkPool, <span class="type">T_mkTaskCtrlBlock</span>* p_mkAttribute, 
+   <span class="type">T_mkAddress</span> p_mkFunction, <span class="type">T_mkAddr</span> p_mkArg );
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
                      <li><span class="bold-green">p_mkHandle</span> <span class="italic">[out]</span>
-                        <p>Adresse d'un pointeur de tâche de type <span class="bold-strong">T_mkTask</span>. Si cette
-                           fonction est appelée depuis un vecteur d'interruption, ce paramètre doit prendre la valeur
+                        <p>Adresse d'un pointeur de tâche de type <span class="bold-strong">T_mkTask*</span>. Si cette
+                           fonction est appelée depuis un vecteur d'interruption, ce paramètre doit être
                            <span class="bold-strong">K_MK_NULL</span>.
                         </p><br>
                      </li>
                      <li><span class="bold-green">p_mkStack</span> <span class="italic">[in]</span>
                         <p>Adresse d'une structure de type <span class="bold-strong">T_mkStack</span>. Cette
-                           structure stocke les informations relatives à la création d'une stack statique. Si une
-                           stack dynamique doit être créée alors ce paramètre doit prendre la valeur <span
+                           structure stocke les informations relatives à la création d'une pile statique. Si une
+                           pile dynamique doit être créée alors ce paramètre doit être <span
                               class="bold-strong">K_MK_NULL</span>.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkPool</span> <span class="italic">[in]</span>
-                        <p>Pointeur vers une structure de type <span class="bold-strong">T_mkPool</span>. Cette
-                           structure stocke les informations relatives à un gestionnaire d'allocation dynamique de
-                           taille fixe. Lors de la création d'une stack dynamique, l'espace mémoire dédié à la stack
-                           sera alloué dans ce gestionnaire. Si une stack statique doit être créée alors ce paramètre
-                           doit prendre la valeur <span class="bold-strong">K_MK_NULL</span>.</p><br>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkPool</span>. Cette
+                           structure stocke les informations du gestionnaire d'allocation de
+                           taille fixe qui sera utilisé pour allouer dynamiquement la pile. Si une stack statique doit
+                           être créée alors ce paramètre
+                           doit être <span class="bold-strong">K_MK_NULL</span>.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkAttribute</span> <span class="italic">[in]</span>
-                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkTaskCtrlBlock</span>
-                           initialisée en utilisant la fonction <span
-                              class="bold-strong">mk_task_setTaskCtrlBlock</span>.</p><br>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkTaskCtrlBlock</span>. Cette
+                           structure stocke les attributs de la tâche à créer.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkFunction</span> <span class="italic">[in]</span>
                         <p>Adresse de la fonction de démarrage.</p><br>
@@ -832,10 +839,25 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <p><span class="underline">Note</span> :</p>
                   <ul>
                      <li>Cette fonction peut être exécutée dans un vecteur d'interruption. Le paramètre
-                        « p_mkHandle » doit être nul dans ce cas de figure.</li>
-                     <li>Si au moins une tâche est de type flottant alors le noyau doit être initialisé en mode
-                        flottant en utilisant la fonction <span class="bold-strong">mk_init</span>.</li>
+                        <span class="bold-strong">p_mkHandle</span> doit être nul dans ce cas de figure.
+                     </li>
+                     <li>Si au moins une tâche est de type flottant alors le noyau doit obligatoirement être initialisé
+                        en mode
+                        flottant (fonction <span class="bold-strong">mk_init</span>).</li>
                   </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Cette fonction entre dans une section critique lors de son exécution. Elle masque
+                              temporairement les interruptions de priorité numérique supérieure ou égale à
+                              <span class="bold-strong">K_MK_SCHEDULER_MASK_PRIORITY</span>. Le masque est
+                              automatiquement levé avant d'en sortir.
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
                </div>
             </details>
 
@@ -845,32 +867,40 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <span class="subtitle" id="mk_task_terminate">3.4. La fonction mk_task_terminate()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction supprime une tâche. La mémoire ou les objets alloués par la tâche à détruire ne
-                     sont pas libérés (<span class="bold-strong">T_mkPool</span>, <span
-                        class="bold-strong">T_mkSemaphore</span>).</p>
+                  <p>Cette fonction supprime une tâche. La mémoire ou les objets alloués par cette tâche ne
+                     sont pas libérés.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
                   <pre class="code">
-<span class="type">T_mkCode</span> mk_task_terminate ( <span class="type">T_mkTask*</span> p_mkTask );
+<span class="type">T_mkCode</span> mk_task_terminate ( <span class="type">T_mkTask</span>* p_mkTask );
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
-                     <li><span class="bold-green">p_mkTask</span> <span class="italic">[in,out]</span>
-                        <p>Adresse de la tâche à détruire. Il peut prendre la valeur <span
+                     <li><span class="bold-green">p_mkTask</span> <span class="italic">[in]</span>
+                        <p>Adresse de la tâche à supprimer. Il peut prendre la valeur <span
                               class="bold-strong">K_MK_NULL</span> pour désigner la tâche courante.</p>
                      </li>
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
                      <li><span class="bold-strong">K_MK_OK</span> : la tâche a été supprimée.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la tâche n'a pas été détruite car une
-                        tâche de type non privilégié ne peut pas détruire une tâche privilégiée.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la tâche n'a pas été supprimée car une
+                        tâche de type non privilégié ne peut pas supprimer une tâche privilégiée.</li>
                   </ul>
-                  <p><span class="underline">Note</span> :</p>
-                  <ul>
-                     <li>Cette fonction peut être exécutée dans un vecteur d'interruption.</li>
-                  </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Cette fonction entre dans une section critique lors de son exécution. Elle masque
+                              temporairement les interruptions de priorité numérique supérieure ou égale à
+                              <span class="bold-strong">K_MK_SCHEDULER_MASK_PRIORITY</span>. Le masque est
+                              automatiquement levé avant d'en sortir.
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
                </div>
             </details>
 
@@ -891,12 +921,13 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <ul>
                      <li><span class="bold-strong">K_MK_OK</span> : le changement de contexte a été réalisé.</li>
                      <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le changement de contexte n'a pas été
-                        réalisé car cette fonction est exécutée dans un vecteur d'interruption.</li>
+                        réalisé car cette fonction a été exécutée depuis un vecteur d'interruption.</li>
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
                      <li>Si aucune tâche de priorité identique à la tâche courante n'existe alors la tâche courante
-                        recommence son exécution.</li>
+                        reprend son exécution.</li>
                   </ul>
                </div>
             </details>
@@ -907,9 +938,8 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <span class="subtitle" id="mk_task_sleep">3.6. La fonction mk_task_sleep()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction stoppe l'exécution de la tâche courante pendant au moins la durée
-                     « p_mkTick ». La durée de la temporisation est calibrée en fonction de la durée d'un tick du
-                     noyau.</p>
+                  <p>Cette fonction stoppe l'exécution de la tâche courante pendant une durée définie. Le tick
+                     de réveil est calculé en ajoutant la durée « p_mkTick » au tick courant du noyau.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
@@ -927,9 +957,16 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <ul>
                      <li><span class="bold-strong">K_MK_OK</span> : la temporisation a été réalisée.</li>
                      <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la temporisation n'a pas été réalisée
-                        car la valeur de la temporisation est nulle.</li>
+                        car la valeur du paramètre « p_mkTick » est nulle.</li>
                      <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la temporisation n'a pas été réalisée car
-                        cette fonction est exécutée dans un vecteur d'interruption.</li>
+                        cette fonction a été exécutée depuis un vecteur d'interruption.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Si une tâche plus prioritaire préempte la tâche courante, celle-ci reprendra son exécution
+                        après un délai au moins égal à la durée spécifiée, lorsque les tâches de
+                        priorité supérieure ou égale auront terminé leur exécution.</li>
                   </ul>
                </div>
             </details>
@@ -940,10 +977,17 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <span class="subtitle" id="mk_task_delay">3.7. La fonction mk_task_delay()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction stoppe l'exécution de la tâche courante pendant au moins la durée
-                     « p_mkTick ». La durée de la temporisation est calibrée en fonction de la durée d'un tick du
-                     noyau. Elle est relative au tick de référence mesuré lors de chaque exécution de la fonction.
+                  <p>Cette fonction stoppe l'exécution de la tâche courante pendant une durée relative au tick de
+                     référence. </p>
+                  <p>Le tick de réveil est calculé en ajoutant la durée « p_mkTick » au tick de référence
+                     de la
+                     tâche. Si ce tick de réveil est déjà dépassé au moment de l'appel, la tâche n'est pas temporisée
+                     et son tick de
+                     référence est immédiatement actualisé à la valeur courante du compteur de ticks du noyau.
+                     Dans le cas contraire, la tâche est placée dans la liste des tâches temporisées jusqu'à ce
+                     tick de réveil.
                   </p>
+                  <p> Le tick de référence d'une tâche est initialement nul. </p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
@@ -961,9 +1005,16 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <ul>
                      <li><span class="bold-strong">K_MK_OK</span> : la temporisation a été réalisée.</li>
                      <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la temporisation n'a pas été réalisée
-                        car la valeur de la temporisation est nulle.</li>
+                        car la valeur du paramètre « p_mkTick » est nulle.</li>
                      <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la temporisation n'a pas été réalisée car
-                        cette fonction est exécutée dans un vecteur d'interruption.</li>
+                        cette fonction a été exécutée depuis un vecteur d'interruption.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Si une tâche plus prioritaire préempte la tâche courante, celle-ci reprendra son exécution
+                        après un délai au moins égal à la durée spécifiée, lorsque les tâches de
+                        priorité supérieure ou égale auront terminé leur exécution.</li>
                   </ul>
                </div>
             </details>
@@ -979,11 +1030,11 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
                   <pre class="code">
-<span class="type">T_mkCode</span> mk_task_resume ( <span class="type">T_mkTask*</span> p_mkTask );
+<span class="type">T_mkCode</span> mk_task_resume ( <span class="type">T_mkTask</span>* p_mkTask );
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
-                     <li><span class="bold-green">p_mkTask</span> <span class="italic">[in,out]</span>
+                     <li><span class="bold-green">p_mkTask</span> <span class="italic">[in]</span>
                         <p>Adresse de la tâche à redémarrer.</p>
                      </li>
                   </ul>
@@ -992,14 +1043,28 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                      <li><span class="bold-strong">K_MK_OK</span> : la tâche a été redémarrée.</li>
                      <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la tâche n'a pas été redémarrée car le
                         paramètre est invalide ou car l'état de la tâche à redémarrer n'est pas l'état <span
-                           class="bold-strong">K_MK_STATE_SUSPENDED</span>.</li>
+                           class="bold-strong">K_MK_<wbr>STATE_<wbr>SUSPENDED</span>.</li>
                      <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la tâche n'a pas été redémarrée car une
                         tâche de type non privilégié ne peut pas redémarrer une tâche privilégiée.</li>
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
-                     <li>Cette fonction peut être exécutée dans un vecteur d'interruption.</li>
+                     <li>Une tâche peut être suspendue avec la fonction <a href="#mk_task_suspend"><span
+                              class="bold-strong">mk_task_suspend</span></a>.</li>
                   </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Cette fonction entre dans une section critique lors de son exécution. Elle masque
+                              temporairement les interruptions de priorité numérique supérieure ou égale à
+                              <span class="bold-strong">K_MK_SCHEDULER_MASK_PRIORITY</span>. Le masque est
+                              automatiquement levé avant d'en sortir.
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
                </div>
             </details>
 
@@ -1014,11 +1079,11 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
                   <pre class="code">
-<span class="type">T_mkCode</span> mk_task_suspend ( <span class="type">T_mkTask*</span> p_mkTask );
+<span class="type">T_mkCode</span> mk_task_suspend ( <span class="type">T_mkTask</span>* p_mkTask );
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
-                     <li><span class="bold-green">p_mkTask</span> <span class="italic">[in,out]</span>
+                     <li><span class="bold-green">p_mkTask</span> <span class="italic">[in]</span>
                         <p>Adresse de la tâche à suspendre. Il peut prendre la valeur <span
                               class="bold-strong">K_MK_NULL</span> pour désigner la tâche courante.</p>
                      </li>
@@ -1035,8 +1100,22 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
-                     <li>Cette fonction peut être exécutée dans un vecteur d'interruption.</li>
+                     <li>Une tâche peut être redémarrée avec la fonction <a href="#mk_task_resume"><span
+                              class="bold-strong">mk_task_resume</span></a>.</li>
                   </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Cette fonction entre dans une section critique lors de son exécution. Elle masque
+                              temporairement les interruptions de priorité numérique supérieure ou égale à
+                              <span class="bold-strong">K_MK_SCHEDULER_MASK_PRIORITY</span>. Le masque est
+                              automatiquement levé avant d'en sortir.
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
                </div>
             </details>
 
@@ -1046,12 +1125,7 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <span class="subtitle" id="mk_task_priority">3.10. La fonction mk_task_priority()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction modifie la priorité d'une tâche. La priorité d'une tâche peut être modifiée
-                     seulement si elle se situe dans l'état <span class="bold-strong">K_MK_STATE_READY</span>, <span
-                        class="bold-strong">K_MK_STATE_DELAYED</span> ou <span
-                        class="bold-strong">K_MK_STATE_SUSPENDED</span>. La priorité d'une tâche possédant un objet
-                     de synchronisation de type <span class="bold-strong">T_mkMutex</span> ne peut pas être
-                     modifiée.</p>
+                  <p>Cette fonction modifie la priorité d'une tâche.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
@@ -1060,32 +1134,53 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
-                     <li><span class="bold-green">p_mkTask</span> <span class="italic">[in,out]</span>
+                     <li><span class="bold-green">p_mkTask</span> <span class="italic">[in]</span>
                         <p>Adresse de la tâche dont la priorité doit être modifiée. Il peut prendre la valeur <span
                               class="bold-strong">K_MK_NULL</span> pour désigner la tâche courante.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkPriority</span> <span class="italic">[in]</span>
-                        <p>Nouvelle valeur de priorité. La valeur de priorité peut évoluer de [1 à <span
-                              class="bold-strong">K_MK_SCHEDULER_PRIORITY_NUMBER</span>].</p>
+                        <p>Nouvelle valeur de priorité. La valeur de priorité peut évoluer de 1 à <span
+                              class="bold-strong">K_MK_SCHEDULER_PRIORITY_NUMBER</span> (la plus élevée).</p>
                      </li>
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
                      <li><span class="bold-strong">K_MK_OK</span> : la priorité de la tâche a été modifiée.</li>
                      <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la priorité de la tâche n'a pas été
-                        modifiée car au moins un paramètre est invalide ou car la tâche dont la priorité doit être
-                        modifiée n'est pas dans l'état <span class="bold-strong">K_MK_STATE_READY</span>, <span
-                           class="bold-strong">K_MK_STATE_DELAYED</span> ou <span
-                           class="bold-strong">K_MK_STATE_SUSPENDED</span> ou possède un objet de synchronisation de
-                        type <span class="bold-strong">T_mkMutex</span>.</li>
+                        modifiée car au moins un paramètre est invalide ou la tâche est dans un état invalide.</li>
                      <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la priorité de la tâche n'a pas été
                         modifiée car une tâche de type non privilégié ne peut pas modifier une tâche privilégiée.
                      </li>
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
-                     <li>Cette fonction peut être exécutée dans un vecteur d'interruption.</li>
+                     <li>
+                        La priorité d'une tâche peut être modifiée
+                        si elle se situe dans l'état <span class="bold-strong">K_MK_<wbr>STATE_<wbr>READY</span>,
+                        <span class="bold-strong">K_MK_<wbr>STATE_<wbr>DELAYED</span> ou <span
+                           class="bold-strong">K_MK_<wbr>STATE_<wbr>SUSPENDED</span>.
+                     </li>
+                     <li>
+                        La priorité d'une tâche
+                        possédant un
+                        objet
+                        de synchronisation de type <span class="bold-strong">T_mkMutex</span> ne peut pas être
+                        modifiée.
+                     </li>
                   </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Cette fonction entre dans une section critique lors de son exécution. Elle masque
+                              temporairement les interruptions de priorité numérique supérieure ou égale à
+                              <span class="bold-strong">K_MK_SCHEDULER_MASK_PRIORITY</span>. Le masque est
+                              automatiquement levé avant d'en sortir.
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
                </div>
             </details>
 
@@ -1095,15 +1190,12 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <span class="subtitle" id="mk_task_getHandle">3.11. La fonction mk_task_getHandle()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction récupère l'adresse d'une tâche à partir de son identifiant. L'adresse de la
-                     tâche de repos et de la tâche principale ne peut pas être récupérée à partir de cette fonction.
-                     Si deux tâches possèdent le même identifiant, l'adresse de la première tâche trouvée est
-                     renvoyée.</p>
+                  <p>Cette fonction récupère l'adresse d'une tâche à partir de son identifiant.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
                   <pre class="code">
-<span class="type">T_mkCode</span> mk_task_getHandle ( <span class="type">T_mkTask**</span> p_mkTask, <span class="type">uint32_t</span> p_mkIdentifier );
+<span class="type">T_mkCode</span> mk_task_getHandle ( <span class="type">T_mkTask</span>** p_mkTask, <span class="type">uint32_t</span> p_mkIdentifier );
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
@@ -1116,17 +1208,28 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
-                     <li><span class="bold-strong">K_MK_OK</span> : l'adresse de la tâche correspondant à
-                        l'identifiant en paramètre a été écrite en paramètre.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : l'adresse de la tâche correspondant à
-                        l'identifiant en paramètre n'a pas été écrite en paramètre car le paramètre « p_mkTask » est
+                     <li><span class="bold-strong">K_MK_OK</span> : l'adresse de la tâche a été récupérée.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : l'adresse de la tâche n'a pas été récupérée
+                        car le paramètre « p_mkTask » est
                         invalide.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : l'adresse de la tâche correspondant à
-                        l'identifiant en paramètre n'a pas été écrite en paramètre car cette fonction est exécutée
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : l'adresse de la tâche n'a pas été récupérée
+                        car cette fonction a été exécutée
                         depuis un vecteur d'interruption.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_NOT_AVAILABLE</span> : l'adresse de la tâche
-                        correspondant à l'identifiant en paramètre n'a pas été écrite en paramètre car aucune tâche
+                     <li><span class="bold-strong">K_MK_ERROR_NOT_AVAILABLE</span> : l'adresse de la tâche n'a pas été
+                        récupérée car aucune tâche
                         possédant cet identifiant n'existe.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>
+                        L'adresse de la
+                        tâche de repos et de la tâche principale ne peut pas être récupérée en utilisant cette fonction.
+                     </li>
+                     <li>
+                        Lorsque deux tâches possèdent le même identifiant, l'adresse de la première tâche trouvée est
+                        renvoyée.
+                     </li>
                   </ul>
                </div>
             </details>
@@ -1143,7 +1246,8 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
                   <pre class="code">
-<span class="type">T_mkCode</span> mk_task_get ( <span class="type">T_mkTask*</span> p_mkTask, <span class="type">uint32_t*</span> p_mkAttribute, <span class="type">uint32_t</span> p_mkOffset );
+<span class="type">T_mkCode</span> mk_task_get ( <span class="type">T_mkTask</span>* p_mkTask, <span class="type">uint32_t</span>* p_mkAttribute, 
+   <span class="type">uint32_t</span> p_mkOffset );
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
@@ -1172,7 +1276,11 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                      <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : l'attribut n'a pas été récupéré car au
                         moins un paramètre est invalide.</li>
                      <li><span class="bold-strong">K_MK_ERROR_ISR</span> : l'attribut n'a pas été récupéré car cette
-                        fonction est exécutée depuis un vecteur d'interruption.</li>
+                        fonction a été exécutée depuis un vecteur d'interruption.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
                   </ul>
                </div>
             </details>
@@ -1188,7 +1296,7 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
                   <pre class="code">
-<span class="type">T_mkCode</span> mk_task_getLoad ( <span class="type">T_mkTask*</span> p_mkTask, <span class="type">uint32_t*</span> p_mkTaskLoad );
+<span class="type">T_mkCode</span> mk_task_getLoad ( <span class="type">T_mkTask</span>* p_mkTask, <span class="type">uint32_t</span>* p_mkTaskLoad );
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
@@ -1196,22 +1304,70 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                         <p>Adresse de la tâche dont le taux de charge doit être récupéré.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkTaskLoad</span> <span class="italic">[out]</span>
-                        <p>Valeur du taux de charge CPU de la tâche.</p>
+                        <p>Valeur du taux de charge CPU de la tâche (en pourcentage).</p>
                      </li>
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
-                     <li><span class="bold-strong">K_MK_OK</span> : le taux de charge a été récupéré.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le taux de charge n'a pas été récupéré
+                     <li><span class="bold-strong">K_MK_OK</span> : le taux de charge CPU de la tâche a été récupéré.
+                     </li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le taux de charge CPU de la tâche n'a pas
+                        été récupéré
                         car au moins un paramètre est invalide.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le taux de charge n'a pas été récupéré car
-                        cette fonction est exécutée depuis un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le taux de charge CPU de la tâche n'a pas été
+                        récupéré car
+                        cette fonction a été exécutée depuis un vecteur d'interruption.</li>
                      <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le taux de charge n'a pas été récupéré
                         car une tâche de type non privilégié ne peut pas exécuter cette fonction.</li>
                   </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Cette fonction entre dans une section critique lors de son exécution. Elle masque
+                              temporairement les interruptions de priorité numérique supérieure ou égale à
+                              <span class="bold-strong">K_MK_SCHEDULER_MASK_PRIORITY</span>. Le masque est
+                              automatiquement levé avant d'en sortir.
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
                </div>
             </details>
 
+            <!-- 3.14 Les définitions -->
+            <details open>
+               <summary>
+                  <span class="subtitle">3.14. Les définitions</span>
+               </summary>
+               <p>Le module <span class="bold-strong">task</span> peut être configuré à l'aide des définitions
+                  suivantes :</p>
+               <br>
+
+               <table id="K_MK_SCHEDULER_MAX_NUMBER_OF_TASKS">
+                  <thead>
+                     <tr>
+                        <th>Définition</th>
+                        <th>Description</th>
+                        <th>Valeur</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><a href="#K_MK_SCHEDULER_MAX_NUMBER_OF_TASKS"><span
+                                 class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>TASKS</span></a>
+                        </td>
+                        <td>
+                           Cette constante définit le nombre de tâches pouvant être allouées. Elle ne peut pas être
+                           nulle.
+                        </td>
+                        <td class="center">32</td>
+                     </tr>
+                  </tbody>
+               </table>
+
+            </details>
          </div>
       </section>
 
@@ -1222,7 +1378,7 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                   <p>&lt;</p>
                   <p>Initialisation du noyau</p>
                </div>
-            </a> <a href="./task.html">
+            </a> <a href="../progress/progress.html">
                <div>
                   <p>Configuration de la MPU</p>
                   <p>></p>
