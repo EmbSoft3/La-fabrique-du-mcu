@@ -39,3 +39,19 @@
 	font-display: swap;
 	src: url('../fonts/jost-v20-latin-700italic.woff2') format('woff2');
 }
+
+@font-face {
+	font-family: 'Twemoji';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('../fonts/Twemoji.Mozilla.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Noto Color Emoji';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('../fonts/NotoColorEmoji-Regular.woff2') format('woff2');
+}
