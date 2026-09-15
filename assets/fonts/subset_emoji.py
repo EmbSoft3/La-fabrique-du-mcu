@@ -1,9 +1,9 @@
 from fontTools import subset
 
-source_font_path = r"C:\Users\mrenard\Downloads\Noto_Color_Emoji\NotoColorEmoji-Regular.ttf"   # adapte le nom exact du fichier téléchargé
-destination_font_path = r"C:\Users\mrenard\Downloads\Noto_Color_Emoji\NotoColorEmoji-Regular.woff2"
+source_font_path = "./NotoColorEmoji-Regular.ttf"  
+destination_font_path = "./NotoColorEmoji-Regular.woff2"
 
-# Colle directement les emojis utilisés sur le site (avec leurs variation selectors ✒️)
+# Emojis utilisés sur le site
 emoji_text = "✔⚠️📌🌐❔⚡🔍⚙️🖥️😎🙈😇😱😭😅🫣😉😶😬🤐🤔😶😳🤓😒😮‍💨😌😊😍🥰👍👌🙏🌼🐑🚀🔨🪚🗝️👑↗️↘️⛓⛓️‍💥🚧💥💬"
 
 args = [
@@ -11,7 +11,7 @@ args = [
     f"--output-file={destination_font_path}",
     f"--text={emoji_text}",
     "--flavor=woff2",
-    "--layout-features=*",   # conserve les substitutions nécessaires aux séquences multi-codepoints (ex. ⚠️)
+    "--layout-features=*",  
 ]
 
 subset.main(args)
