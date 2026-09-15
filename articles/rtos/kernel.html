@@ -6,7 +6,7 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="description"
       content="Initialisation, démarrage, arrêt et redémarrage du noyau Mk pour STM32F7 : configuration de la tâche de repos (idle), gestion du tick système (SysTick) et récupération du nombre de ticks écoulés.">
-   <title>Initialisation du noyau Mk</title>
+   <title>⚡ Initialisation du noyau Mk</title>
    <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/kernel.html">
    <link href="../../assets/css/style.css" rel="stylesheet">
    <link href="../../assets/css/template.css" rel="stylesheet">
@@ -255,6 +255,10 @@
                      <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le noyau n'a pas été initialisé car au
                         moins un paramètre est invalide.</li>
                   </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                  </ul>
                </div>
             </details>
 
@@ -297,6 +301,7 @@
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
                      <li>La tâche de repos ne peut être configurée que si le noyau <span class="underline">n'est pas en
                            fonctionnement</span>.</li>
                   </ul>
@@ -333,6 +338,7 @@
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
                      <li>Si cette fonction réussit, le résultat ne sera connu qu'après l'appel de la fonction
                         <span class="bold-strong">mk_stop</span>.
                      </li>
@@ -384,6 +390,7 @@
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
                      <li>Si cette fonction réussit, le résultat ne sera connu qu'après un appel de la fonction <span
                            class="bold-strong">mk_stop()</span>.</li>
                   </ul>
@@ -427,6 +434,7 @@
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
                      <li>Si cette fonction réussit, le résultat ne sera connu qu'après un appel de la fonction <span
                            class="bold-strong">mk_restart()</span>.</li>
                   </ul>
