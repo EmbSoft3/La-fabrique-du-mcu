@@ -830,8 +830,9 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
                      <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la tâche n'a pas été démarrée car au
                         moins un paramètre est invalide.</li>
                      <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : la tâche n'a pas été démarrée car le
-                        nombre de tâches maximales pouvant être allouées est atteint ou car la quantité de mémoire
-                        disponible dans le gestionnaire d'allocation de taille fixe est insuffisante.</li>
+                        nombre de tâches maximales pouvant être allouées est atteint, la quantité de mémoire
+                        disponible dans le gestionnaire d'allocation de taille fixe est insuffisante ou la taille de la
+                        pile est insuffisante.</li>
                      <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la tâche n'a pas été démarrée car une
                         tâche de type non privilégié ne peut pas créer une tâche de type privilégié.</li>
                   </ul>
