@@ -41,19 +41,205 @@
             <p>Le modèle de protection offert par <span class="bold-strong">Mk</span> est simple. Il crée une barrière
                de protection entre le monde
                privilégié et le monde non privilégié. Néanmoins, il
-               n'impose aucune restriction entre les tâches d'un même monde. Une tâche privilégiée peut donc
-               corrompre une autre tâche privilégiée et une tâche non privilégiée peut de même en corrompre une autre.
-               Il n'y a pas d'isolation stricte entre tâches.</p>
+               n'impose aucune restriction entre les tâches d'un même monde (une tâche privilégiée peut donc
+               corrompre une autre tâche privilégiée par exemple).
+               Il n'y a donc pas d'isolation stricte entre tâches.</p>
             <p>Le processeur Cortex-M7 n'implémente pas de <span class="bold-strong">MMU</span>. Les mécanismes de
                protection de <span class="bold-strong">Mk</span> reposent donc sur l'utilisation de la <span
                   class="bold-strong">MPU</span>
-               (Memory Protection Unit), la configuration des tâches
+               (Memory Protection Unit), sur l'attribution de droits aux tâches
                et sur l'organisation mémoire du processeur. </p>
             <p>Cette section explique l'ensemble des mécanismes de protection offerts par <span
                   class="bold-strong">Mk</span> ainsi que la méthodologie à utiliser pour communiquer d'un monde à
                l'autre.
             </p>
-            <h1>1. Principe de l'isolation mémoire</h1>
+            <h1>1. Mécanismes matériels du modèle de protection</h1>
+            <p>L'isolation matérielle offerte par <span class="bold-strong">Mk</span> repose sur les deux mécanismes
+               suivants :</p>
+            <ul>
+               <li><span class="gray">✔</span>La configuration du bit <span class="bold-strong">nPRIV</span> lors de
+                  chaque
+                  changement de contexte pour activer ou non le mode
+                  privilégié.</li>
+               <li><span class="gray">✔</span>La configuration de la <span class="bold-strong">MPU</span> pour définir
+                  les zones mémoires accessibles aux
+                  tâches privilégiées et non
+                  privilégiées.</li>
+            </ul>
+            <p>Une tâche privilégiée peut accéder à l'ensemble du système. A contrario, une tâche non privilégiée est
+               contrainte et ne peut accèder
+               qu'aux zones autorisées par la <span class="bold-strong">MPU</span>. Un accès non autorisé dans une zone
+               protégée
+               déclenche une exception logicielle de type <span class="bold-strong">MemFault</span>.</p>
+
+            <h2>2. Mécanismes logiciels du modèle de protection</h2>
+
+            <p>L'isolation entre les tâches est aussi renforcée par une surveillance logicielle effectuée lors de chaque
+               appel système. Les appels système étant exécutés en mode privilégié, le noyau s'assure qu'une tâche non
+               privilégiée
+               n'essaye pas d'accéder à des ressources qui lui sont interdites. </p>
+            <p>La liste ci-dessous décrit l'ensemble des accès ou des opérations non autorisés pour une
+               tâche de type
+               <span class="underline">non privilégiée</span> :
+            </p>
+            <ul>
+               <li><span class="gray">✔</span>Créer, suspendre, redémarrer, supprimer ou modifier la priorité d'une
+                  tâche
+                  privilégiée.</li>
+               <li><span class="gray">✔</span>Créer un allocateur mémoire ou une boite de messages pointant
+                  vers un espace mémoire privilégié.</li>
+               <li><span class="gray">✔</span>Ecrire dans un espace mémoire privilégié en utilisant une boite de
+                  messages
+                  partagées.</li>
+               <li><span class="gray">✔</span>Supprimer ou manipuler un objet de synchronisation protégé.</li>
+               <li><span class="gray">✔</span>Récupérer le taux de charge CPU.</li>
+            </ul>
+            <p>Lorsqu'une opération interdite est détectée, le noyau annule l'appel système
+               et déclenche le
+               gestionnaire
+               d'erreur <span class="bold-strong">mk_handler_rightFault</span> dont l'implémentation est laissée libre à
+               l'utilisateur.</p>
+
+            <h2>3. Création des tâches privilégiées</h2>
+
+            <p>Une tâche privilégiée est créée en spécifiant l'attribut <span
+                  class="bold-strong">K_MK_TYPE_PRIVILEGED</span> lors de la configuration de la structure
+               <span class="bold-strong">T_mkTaskCtrlBlock</span>.
+            </p>
+            <br>
+            <pre class="code">
+
+<span class="multi-line-comment">/* Déclaration d'un pointeur de tâche */</span>
+<span class="type">T_mkTask</span>* l_task;
+
+<span class="multi-line-comment">/* Déclaration d'une structure contenant les informations de la stack */</span>
+<span class="type">T_mkStack</span> l_stack;
+
+<span class="multi-line-comment">/* Déclaration d'une structure contenant les informations de la tâche */</span>
+<span class="type">T_mkTaskCtrlBlock</span> l_taskCtrlBlock;
+
+<span class="multi-line-comment">/* Déclaration du buffer où sera stockée la pile de la tâche */</span>
+<span class="multi-line-comment">/* Celui-ci est positionné dans une zone privilégiée */</span>
+<span class="define">K_MK_PRIVILEGED_MEMORY</span> <span class="type">uint32_t</span> l_privilegedStackBuf [ <span class="number">512</span> ];
+
+<span class="multi-line-comment">/* Configuration de la structure l_stack avec les attributs de la pile */</span>
+l_result = <span class="function">mk_stack_create</span> ( &l_stack, <span class="define">K_MK_TYPE_DEFAULT</span>, 
+   l_privilegedStackBuf, <span class="number">512</span> );
+
+<span class="multi-line-comment">/* Configuration de la structure l_taskCtrlBlock */</span>
+<span class="multi-line-comment">/* Type : tâche privilégiée non flottante */</span>
+<span class="multi-line-comment">/* Pour une tâche privilégiée flottante : K_MK_TYPE_FLOATING_PRIVILEGED */</span>
+l_result |= <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlBlock,
+   <span class="define-underline">K_MK_TYPE_PRIVILEGED</span>, <span class="define">K_MK_TASK_ID_MY_TASK</span>,
+   <span class="number">10</span>, <span class="define">K_MK_NULL</span> );
+
+<span class="multi-line-comment">/* Création de la tâche */</span>
+<span class="multi-line-comment">/* Point d'entrée de la tâche : mk_task_privileged */</span>
+<span class="multi-line-comment">/* Argument de la fonction : "Hello world !" */</span>
+l_result = <span class="function">mk_task_create</span> ( &l_task, &l_stack, <span
+   class="type">K_MK_NULL</span>,
+   &l_taskCtrlBlock, <span class="function">mk_task_privileged</span>, ( <span class="type">T_mkAddr</span> ) 
+   <span class="string">"Hello world !"</span> );
+
+</pre>
+            <br>
+            <p>Une tâche privilégiée ne peut être créée que depuis une autre tâche privilégiée, un vecteur
+               d'interruption ou depuis le programme
+               principal. Lorsqu'une tâche privilégiée est créée, elle s'exécute avec le bit <span
+                  class="bold-strong">nPRIV</span> positionné à 0, elle peut donc accéder à toutes les ressources
+               privilégiées du
+               système.</p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Les tâches privilégiées utilisent le pointeur de pile <span class="bold-strong">PSP</span>. Leur
+                     contexte
+                     reste protégé par la <span class="bold-strong">MPU</span> vis-à-vis des tâches non
+                     privilégiées.</p>
+               </div>
+            </div>
+
+            <h2>4. Création des tâches non privilégiées</h2>
+
+            <p>Une tâche non privilégiée peut être créée en spécifiant l'attribut <span
+                  class="bold-strong">K_<wbr>MK_<wbr>TYPE_<wbr>DEFAULT</span>. Celle-ci s'exécute avec le bit <span
+                  class="bold-strong">nPRIV</span> positionné à 1, elle ne peut donc accéder qu'aux ressources
+               non privilégiées autorisées par la <span class="bold-strong">MPU</span>.</p>
+            <br>
+            <pre class="code">
+
+<span class="multi-line-comment">/* ... */</span>
+
+<span class="multi-line-comment">/* Configuration de la structure l_taskCtrlBlock */</span>
+<span class="multi-line-comment">/* Type : tâche non privilégiée non flottante */</span>
+<span class="multi-line-comment">/* Pour une tâche non privilégiée flottante : K_MK_TYPE_FLOATING */</span>
+l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlBlock,
+   <span class="define-underline">K_MK_TYPE_DEFAULT</span>, <span class="define">K_MK_TASK_ID_MY_TASK</span>,
+   <span class="number">10</span>, <span class="define">K_MK_NULL</span> );
+
+<span class="multi-line-comment">/* Si aucune erreur ne s'est produite */</span>
+<span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
+{
+   <span class="multi-line-comment">/* Création de la tâche */</span>
+   <span class="multi-line-comment">/* Point d'entrée de la tâche : mk_task_non_privileged */</span>
+   <span class="multi-line-comment">/* Argument de la fonction : "Hello world !" */</span>
+   l_result = <span class="function">mk_task_create</span> ( &l_task, &l_stack, <span
+      class="type">K_MK_NULL</span>,
+      &l_taskCtrlBlock, <span class="function">mk_task_unprivileged</span>, ( <span class="type">T_mkAddr</span> ) 
+      <span class="string">"Hello world !"</span> );
+}
+
+</pre>
+            <br>
+            <p>Une tâche non privilégiée peut être créée par n'importe quel type de tâche, depuis un vecteur
+               d'interruption ou depuis le programme
+               principal.</p>
+
+
+            <h2>5. Fonctionnement de la MPU</h2>
+            <p>La <span class="bold-strong">MPU</span> du processeur cortex-M7 est constituée de 8 régions
+               configurables. Chaque région permet d'appliquer une configuration
+               spécifique à une plage de
+               l'espace mémoire (niveau d'accès privilégié ou non, droits en lecture/écriture,
+               politiques de cache, exécution d'instructions autorisée). Ces 8 régions peuvent elles aussi être
+               découpées en 8
+               sous régions de taille égale pouvant être activée ou non.</p>
+
+            <br>
+            <p>La <span class="bold-strong">MPU</span> est régie par les règles suivantes :</p>
+            <ul>
+               <li><span class="gray">✔</span>La taille d'une région doit être une puissance de 2 (de 32 octets à 4 Go).
+               </li>
+               <li><span class="gray">✔</span>L'adresse de base d'une région doit être alignée sur sa taille.</li>
+               <li><span class="gray">✔</span>Lorsque 2 régions se recouvrent, les règles de la région avec le numéro le
+                  plus élevé s'appliquent.
+               </li>
+            </ul>
+
+            <p>Le noyau configure la <span class="bold-strong">MPU</span> au démarrage du système en exécutant la
+               fonction
+               <span class="bold-strong">mk_system_mpu_init</span>. La configuration est statique et n'est pas
+               modifiée tout au long de l'exécution du système.
+            </p>
+
+            <h2>6. Configuration de la MPU</h2>
+
+            <p>La configuration de la <span class="bold-strong">MPU</span> est propre à chaque microcontrôleur. Celle-ci
+               est paramétrée conformément au fichier d'édition de lien et à l'organisation mémoire du MCU : </p>
+            <p></p>
+
+            <figure>
+               <img src="../../images/mcu/mcu-memory-map.jpg" alt="Organisation mémoire du MCU">
+               <figcaption>
+                  <span class="underline">Figure 1</span> : organisation mémoire des
+                  MCU STM32F74xxx et STM32F75xxx.
+               </figcaption>
+            </figure>
+
+
+
          </div>
       </section>
 

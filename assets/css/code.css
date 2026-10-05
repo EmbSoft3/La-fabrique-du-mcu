@@ -54,3 +54,8 @@
 .code .define {
 	color: rgb(154, 209, 241);
 }
+
+.code .define-underline {
+	color: rgb(154, 209, 241);
+	text-decoration: underline;
+}
