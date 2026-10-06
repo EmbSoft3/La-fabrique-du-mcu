@@ -153,6 +153,14 @@ table {
 	overflow-wrap: anywhere;
 }
 
+table.fixed {
+	table-layout: fixed;
+}
+
+table.fixed th {
+	white-space: normal;
+}
+
 th {
 	text-align: left;
 	color: rgb(233, 229, 227);
