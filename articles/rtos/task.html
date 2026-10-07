@@ -117,49 +117,53 @@
                créer une tâche de manière statique :</p>
             <br>
             <pre class="code">
-<span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
-<span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
 
 <span class="multi-line-comment">/* Déclaration du buffer où sera stockée la pile de la tâche */</span>
 <span class="multi-line-comment">/* Celui-ci peut être dans une zone privilégiée ou non */</span>
 <span class="multi-line-comment">/* Cette partie sera abordée dans le chapitre sur la MPU. */</span>
-<span class="define">K_MK_PRIVILEGED_MEMORY</span> <span class="type">uint32_t</span> l_privilegedStackBuf [ <span class="number">512</span> ];
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_privilegedStackBuf [ <span class="number">512</span> ];
 
-<span class="multi-line-comment">/* Déclaration d'un pointeur de tâche */</span>
-<span class="type">T_mkTask</span>* l_task;
-
-<span class="multi-line-comment">/* Déclaration d'une structure contenant les informations de la stack */</span>
-<span class="type">T_mkStack</span> l_stack;
-
-<span class="multi-line-comment">/* Déclaration d'une structure contenant les informations de la tâche */</span>
-<span class="type">T_mkTaskCtrlBlock</span> l_taskCtrlBlock;
-
-<span class="multi-line-comment">/* Configuration de la structure l_stack avec les attributs de la pile */</span>
-<span class="multi-line-comment">/* K_MK_TYPE_DEFAULT - pile classique */</span>
-<span class="multi-line-comment">/* Taille de 512 mots 32bits */</span>
-l_result = <span class="function">mk_stack_create</span> ( &l_stack, <span class="define">K_MK_TYPE_DEFAULT</span>, 
-   l_privilegedStackBuf, <span class="number">512</span> );
-
-<span class="multi-line-comment">/* Configuration de la structure l_taskCtrlBlock avec les attributs */</span>
-<span class="multi-line-comment">/* de la tâche */</span>
-<span class="multi-line-comment">/* Type : tâche privilégiée non flottante */</span>
-<span class="multi-line-comment">/* Identifiant : K_MK_TASK_ID_MY_TASK */</span>
-<span class="multi-line-comment">/* Priorité : 10 */</span>
-<span class="multi-line-comment">/* Propriétaire : NULL */</span>
-l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlBlock, 
-   <span class="define">K_MK_TYPE_PRIVILEGED</span>, <span class="define">K_MK_TASK_ID_MY_TASK</span>, 
-   <span class="number">10</span>, <span class="define">K_MK_NULL</span> );
-
-<span class="multi-line-comment">/* Si aucune erreur ne s'est produite */</span>
-<span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
+<span class="multi-line-comment">/* Une tâche privilégiée quelconque */</span>
+<span class="keyword">void</span> <span class="function">mk_main</span> ( <span class="keyword">void</span> )
 {
-   <span class="multi-line-comment">/* Création de la tâche */</span>
-   <span class="multi-line-comment">/* Point d'entrée de la tâche : mk_task_privileged */</span>
-   <span class="multi-line-comment">/* Argument de la fonction : "Hello world !" */</span>
-   l_result = <span class="function">mk_task_create</span> ( &l_task, &l_stack, <span class="type">K_MK_NULL</span>, 
-      &l_taskCtrlBlock, <span class="function">mk_task_privileged</span>, ( <span class="type">T_mkAddr</span> ) <span class="string">"Hello world !"</span> );
-}
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
 
+   <span class="multi-line-comment">/* Déclaration d'un pointeur de tâche */</span>
+   <span class="type">T_mkTask</span>* l_task;
+
+   <span class="multi-line-comment">/* Déclaration d'une structure contenant les informations de la stack */</span>
+   <span class="type">T_mkStack</span> l_stack;
+
+   <span class="multi-line-comment">/* Déclaration d'une structure contenant les informations de la tâche */</span>
+   <span class="type">T_mkTaskCtrlBlock</span> l_taskCtrlBlock;
+
+   <span class="multi-line-comment">/* Configuration de la structure l_stack avec les attributs de la pile */</span>
+   <span class="multi-line-comment">/* K_MK_TYPE_DEFAULT - pile classique */</span>
+   <span class="multi-line-comment">/* Taille de 512 mots 32bits */</span>
+   l_result = <span class="function">mk_stack_create</span> ( &l_stack, <span class="define">K_MK_TYPE_DEFAULT</span>, 
+      g_privilegedStackBuf, <span class="number">512</span> );
+
+   <span class="multi-line-comment">/* Configuration de la structure l_taskCtrlBlock avec les attributs */</span>
+   <span class="multi-line-comment">/* de la tâche */</span>
+   <span class="multi-line-comment">/* Type : tâche privilégiée non flottante */</span>
+   <span class="multi-line-comment">/* Identifiant : K_MK_TASK_ID_MY_TASK */</span>
+   <span class="multi-line-comment">/* Priorité : 10 */</span>
+   <span class="multi-line-comment">/* Propriétaire : NULL */</span>
+   l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlBlock, 
+      <span class="define">K_MK_TYPE_PRIVILEGED</span>, <span class="define">K_MK_TASK_ID_MY_TASK</span>, 
+      <span class="number">10</span>, <span class="define">K_MK_NULL</span> );
+
+   <span class="multi-line-comment">/* Si aucune erreur ne s'est produite */</span>
+   <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
+   {
+      <span class="multi-line-comment">/* Création de la tâche */</span>
+      <span class="multi-line-comment">/* Point d'entrée de la tâche : mk_task_privileged */</span>
+      <span class="multi-line-comment">/* Argument de la fonction : "Hello world !" */</span>
+      l_result = <span class="function">mk_task_create</span> ( &l_task, &l_stack, <span class="type">K_MK_NULL</span>, 
+         &l_taskCtrlBlock, <span class="function">mk_task_privileged</span>, ( <span class="type">T_mkAddr</span> ) <span class="string">"Hello world !"</span> );
+   }
+}
 </pre>
             <p>La fonction <span class="bold-strong">mk_stack_create</span> permet de rassembler les attributs de la
                pile
@@ -294,7 +298,7 @@ l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &l_taskCtrlB
 
 <span class="multi-line-comment">/* Déclaration du buffer où sera stockée la tâche */</span>
 <span class="multi-line-comment">/* Celui-ci doit être dans une zone protégée */</span>
-<span class="define">K_MK_UNPRIVILEGED_DMA_MEMORY</span> <span class="type">uint32_t</span> l_unprivilegedStackBuf [ <span class="number">1024</span> ];
+<span class="define">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> l_unprivilegedStackBuf [ <span class="number">1024</span> ];
 
 <span class="multi-line-comment">/* Déclaration d'un pointeur de pool */</span>
 <span class="type">T_mkPool</span>* g_mkPool;
