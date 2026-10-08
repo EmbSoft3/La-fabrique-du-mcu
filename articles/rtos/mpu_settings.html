@@ -6,7 +6,7 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="description"
       content="Configurez la MPU du noyau Mk (Cortex-M7) : régions mémoire, isolation entre modes privilégié et non privilégié, placement des données dans les bonnes zones grâce aux attributs de section.">
-   <title>Configuration de la MPU</title>
+   <title>Le modèle de protection de Mk</title>
    <link rel="icon" type="image/png" href="../../favicon.png">
    <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
    <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/mpu_settings.html">
@@ -296,7 +296,7 @@
             </div>
             <br>
             <p>Cette précaution est nécessaire car les mécanismes de protection de la <span
-                  class="bold-strong">MPU</span> ne filtrent pas les transactions mémoires
+                  class="bold-strong">MPU</span> ne filtrent pas les transactions mémoire
                réalisées par un contrôleur <span class="bold-strong">DMA</span>. La configuration des périphériques
                doit
                donc être réservée exclusivement
@@ -310,7 +310,7 @@
                accès spéculatifs et préserver
                l'ordre des accès. </p>
 
-            <p>La table ci-dessous présente les caractéristiques des différents types de régions du processeur Cortex-M7
+            <p>La table ci-dessous présente les caractéristiques des différents types de mémoire du processeur Cortex-M7
                :</p>
 
             <table class="fixed">
@@ -355,7 +355,7 @@
                entre le CPU
                et les contrôleurs DMA, la région définissant la section <span
                   class="bold-strong">.mk_privileged_dma_memory</span> ne doit pas être
-               cacheable et aucune région de numéro supérieur avec cet attribut ne doit la recouvrir.</p>
+               cacheable et aucune région cacheable de numéro supérieur ne doit la recouvrir.</p>
 
             <p>Dans la <span class="underline">figure 1</span>, ces deux règles sont respectées par la région
                1 qui occupe
@@ -443,7 +443,7 @@
 
             <p>Le modèle de protection proposé par <span class="bold-strong">Mk</span> repose sur une barrière entre le
                monde privilégié et le monde non privilégié. Il est construit autour du bit <span
-                  class="bold-strong">nPriv</span>, de la <span class="bold-strong">MPU</span> et des contrôles
+                  class="bold-strong">nPRIV</span>, de la <span class="bold-strong">MPU</span> et des contrôles
                effectués lors de chaque appel système.
             </p>
             <p>La configuration de la <span class="bold-strong">MPU</span> est propre à chaque cible. Lors d'un portage
@@ -484,9 +484,9 @@
                   <p>&lt;</p>
                   <p>Manipulation des tâches</p>
                </div>
-            </a> <a href="./mpu.html">
+            </a> <a href="../progress/progress.html">
                <div>
-                  <p>Utilisation de la MPU</p>
+                  <p>Protéger son programme</p>
                   <p>></p>
                </div>
             </a>

@@ -5,8 +5,8 @@
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="description"
-      content="Configurez la MPU du noyau Mk (Cortex-M7) : régions mémoire, isolation entre modes privilégié et non privilégié, utilisation des tâches privilégiées et placement des données dans les bonnes zones grâce aux attributs de section.">
-   <title>Utilisation et configuration de la MPU</title>
+      content="Utilisez la MPU du noyau Mk : créer des tâches privilégiées et non privilégiées, placer ses variables dans la bonne section et gérer les MemFault sur Cortex-M7.">
+   <title>Protéger son programme</title>
    <link rel="icon" type="image/png" href="../../favicon.png">
    <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
    <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/mpu.html">
@@ -35,12 +35,18 @@
    <main>
       <section class="mk">
          <div>
+            <h1 class="title-article">Protéger son programme avec Mk</h1>
+            <p>Mk offre un ensemble de mécanismes pour protéger un programme. Cet article présente la méthodologie à
+               utiliser pour déclarer et placer ses variables en mémoire, créer des tâches privilégiées et gérer les
+               erreurs de permissions.</p>
+            <h2>1. Déclarer et protéger ses variables</h2>
 
-            <h2>8. Déclarer et protéger ses variables</h2>
-
-            <p>Par défaut, les variables sont déclarées dans les sections <span class="bold-strong">.bss</span>,
-               <span class="bold-strong">.data</span> et <span class="bold-strong">.rodata</span>. Ces sections sont
-               configurées de la manière suivante :
+            <p>Dans un programme informatique, les variables déclarées sont positionnée par
+               défaut dans
+               les sections <span class="bold-strong">.bss</span>,
+               <span class="bold-strong">.data</span> et <span class="bold-strong">.rodata</span>. <span
+                  class="bold-strong">Mk</span> configure ces
+               sections de la manière suivante dans le fichier d'édition de lien :
             </p>
             <table class="fixed">
                <colgroup>
@@ -72,7 +78,7 @@
                   </tr>
                   <tr>
                      <td><span class="gray">.bss</span></td>
-                     <td>Variables non initialisées</td>
+                     <td>Variables non initialisées privilégiées</td>
                      <td><span class="gray">DTCM_<wbr>RAM</span></td>
                      <td>3</td>
                      <td>RW / Aucun accès</td>
@@ -80,7 +86,7 @@
                   </tr>
                   <tr>
                      <td><span class="gray">.data</span></td>
-                     <td>Variables initialisées</td>
+                     <td>Variables initialisées privilégiées</td>
                      <td><span class="gray">DTCM_<wbr>RAM</span></td>
                      <td>3</td>
                      <td>RW / Aucun accès</td>
@@ -89,7 +95,7 @@
                </tbody>
             </table>
             <br>
-            <p>L'extrait de code ci-dessous déclare une variable dans chacune de ces sections :</p>
+            <p>L'extrait de code ci-dessous montre un exemple de déclaration dans chacune de ces sections :</p>
             <br>
 
             <pre class="code">
@@ -118,12 +124,12 @@
 
             <br>
 
-            <p>Du fait des attributs configurés dans la MPU, les tâches non privilégiées ne peuvent pas accéder à ces
-               variables en lecture
-               ou
-               en écriture. Elles doivent déclarer leurs variables avec un attribut spécifique pour pouvoir accéder à
-               leur
-               section :
+            <p>Du fait des attributs de la <span class="bold-strong">MPU</span> (aucun accès autorisé pour <span
+                  class="bold-strong">.bss</span> et
+               <span class="bold-strong">.data</span>), les tâches non privilégiées ne peuvent
+               pas accéder à ces variables en lecture et en écriture. Elles doivent donc déclarer
+               leurs propres variables avec
+               un attribut spécifique afin de les localiser dans la bonne section :
             </p>
             <table class="fixed">
                <colgroup>
@@ -164,7 +170,7 @@
                </tbody>
             </table>
             <br>
-            <p>L'extrait ci-dessous montre une déclaration de variable dans chaque section non privilégiée :</p>
+            <p>L'extrait de code ci-dessous montre une déclaration dans les sections non privilégiées :</p>
             <br>
             <pre class="code">
 
@@ -189,8 +195,9 @@
 }</pre>
             <br>
 
-            <p>Le noyau offre deux constantes permettant d'allouer un buffer dédié aux transferts DMA ou dans une
-               zone semi-partagée (RW/RO) : </p>
+            <p>En addition, le noyau offre deux macros supplémentaires afin d'allouer un buffer <span
+                  class="bold-strong">DMA</span> ou un bloc mémoire
+               partiellement partagé (RW/RO) : </p>
             <table class="fixed">
                <colgroup>
                   <col style="width: 20%"> <!-- Section -->
@@ -221,7 +228,7 @@
                   </tr>
                   <tr>
                      <td><span class="gray">.mk_<wbr>privileged_<wbr>ro_<wbr>memory</span></td>
-                     <td>Données partagées en lecture</td>
+                     <td>Données privilégiées partagées en lecture</td>
                      <td><span class="gray">SRAM2</span></td>
                      <td>6</td>
                      <td>RW / RO</td>
@@ -231,9 +238,10 @@
                </tbody>
             </table>
             <br>
-            <p>À l'instar des sections de type bss, ces zones mémoire sont initialisées à la valeur nulle par le code
+            <p>À l'instar des sections de type <span class="bold-strong">.bss</span>, ces zones mémoire sont
+               initialisées à la valeur nulle par le code
                de
-               démarrage : </p>
+               démarrage. On les utilise de la manière suivante : </p>
             <br>
             <pre class="code">
 
@@ -246,17 +254,54 @@
 <span class="multi-line-comment">/* Les tâches non privilégiées peuvent seulement lire */</span>
 <span class="define">K_MK_PRIVILEGED_RO_MEMORY</span> <span class="type">uint32_t</span> g_shared;
             </pre>
+            <br>
+            <p>Lors de l'écriture d'un programme, il est important d'avoir conscience des points
+               ci-dessous de la déclaration d'une variable :</p>
 
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Une variable globale ou statique déclarée sans macro est placée dans les sections <span
+                        class="bold-strong">.bss</span> ou
+                     <span class="bold-strong">.data</span>). Elle est donc
+                     inaccessible aux tâches non privilégiées. Une tâche non privilégiée qui la manipule provoque une
+                     exception <span class="bold-strong">MemManage</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
 
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Une variable locale déclarée dans une fonction est placée dans la pile de la tâche qui exécute
+                     cette fonction.
+                  </p>
+               </div>
+            </div>
+            <br>
 
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Les sections <span class="bold-strong">.mk_<wbr>unprivileged_<wbr>bss_<wbr>memory</span>, <span
+                        class="bold-strong">.mk_<wbr>privileged_<wbr>ro_<wbr>memory</span> et
+                     <span class="bold-strong">.mk_<wbr>privileged_<wbr>dma_<wbr>memory</span> sont des sections
+                     initialisées à zéro.
+                     Un initialiseur non nul placé sur
+                     ces déclarations n'a aucun effet.
+                  </p>
+               </div>
+            </div>
+            <br>
 
+            <h2>2. Création des tâches privilégiées</h2>
 
-
-
-            <h2>3. Création des tâches privilégiées</h2>
-
-            <p>Une tâche privilégiée est créée en spécifiant l'attribut <span
-                  class="bold-strong">K_MK_TYPE_PRIVILEGED</span> lors de la configuration de la structure
+            <p>Une tâche privilégiée est créée en utilisant la fonction <span class="bold-strong">mk_task_create</span>
+               et en spécifiant l'attribut <span class="bold-strong">K_MK_TYPE_PRIVILEGED</span> lors de la
+               configuration
+               de la structure
                <span class="bold-strong">T_mkTaskCtrlBlock</span>.
             </p>
             <br>
@@ -264,7 +309,7 @@
 
 <span class="multi-line-comment">/* Déclaration du buffer où sera stockée la pile de la tâche */</span>
 <span class="multi-line-comment">/* Celui-ci est positionné dans une zone privilégiée */</span>
-<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_privilegedStackBuf [ <span class="number">512</span> ];
+<span class="define-underline">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_privilegedStackBuf [ <span class="number">512</span> ];
 
 <span class="multi-line-comment">/* Une tâche privilégiée quelconque */</span>
 <span class="keyword">void</span> <span class="function">mk_task_myPrivilegedTask</span> ( <span class="keyword">T_mkAddr</span> p_param )
@@ -307,7 +352,7 @@
                principal. Lorsqu'une tâche privilégiée est créée, elle s'exécute avec le bit <span
                   class="bold-strong">nPRIV</span> positionné à 0, elle peut donc accéder à toutes les ressources
                du
-               système (sauf restriction imposée par la <span class="bold-strong">MPU</span>).</p>
+               système sauf restriction spéciale imposée par la <span class="bold-strong">MPU</span>.</p>
 
             <br>
             <div class="comment">
@@ -320,11 +365,11 @@
                </div>
             </div>
 
-            <h2>4. Création des tâches non privilégiées</h2>
+            <h2>3. Création des tâches non privilégiées</h2>
 
             <p>Une tâche non privilégiée peut être créée en spécifiant l'attribut <span
-                  class="bold-strong">K_<wbr>MK_<wbr>TYPE_<wbr>DEFAULT</span>. Celle-ci s'exécute avec le bit <span
-                  class="bold-strong">nPRIV</span> positionné à 1, elle ne peut donc accéder qu'aux ressources
+                  class="bold-strong">K_<wbr>MK_<wbr>TYPE_<wbr>DEFAULT</span>. Elle s'exécute avec le bit <span
+                  class="bold-strong">nPRIV</span> positionné à 1 et n'accède qu'aux ressources
                non privilégiées autorisées par la <span class="bold-strong">MPU</span>.</p>
             <br>
             <pre class="code">
@@ -367,19 +412,13 @@
 </pre>
             <br>
             <p>Une tâche non privilégiée peut être créée par n'importe quel type de tâche, depuis un vecteur
-               d'interruption ou depuis le programme
+               d'interruption ou encore depuis le programme
                principal.</p>
 
+            <h2>4. Partager des données</h2>
 
 
-
-
-
-
-            <h2>9. Partager des données</h2>
-
-
-
+            <h2>5. Gérer les erreurs</h2>
 
 
 
@@ -393,7 +432,7 @@
             <a href="./mpu_settings.html">
                <div>
                   <p>&lt;</p>
-                  <p>Configuration de la MPU</p>
+                  <p>Le modèle de protection</p>
                </div>
             </a> <a href="../progress/progress.html">
                <div>
