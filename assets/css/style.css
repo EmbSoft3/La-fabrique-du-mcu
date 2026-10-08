@@ -114,6 +114,15 @@ h2,
 	font-weight: bold;
 }
 
+h1.title-article {
+	color: rgb(72, 192, 153);
+	font-size: 1.7em;
+	margin-top: 1.5em;
+	margin-bottom: 1.5em;
+	font-weight: bold;
+	text-decoration: none;
+}
+
 h3,
 .subtitle {
 	color: rgb(209, 197, 188);
@@ -263,6 +272,10 @@ img {
 
 .underline {
 	text-decoration: underline;
+}
+
+.underline-dotted {
+	text-decoration: underline dotted;
 }
 
 .bold-orange {

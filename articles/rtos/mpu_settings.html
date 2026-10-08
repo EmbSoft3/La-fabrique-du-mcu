@@ -5,11 +5,11 @@
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="description"
-      content="Configurez la MPU du noyau Mk (Cortex-M7) : régions mémoire, isolation entre modes privilégié et non privilégié, utilisation des tâches privilégiées et placement des données dans les bonnes zones grâce aux attributs de section.">
-   <title>Utilisation et configuration de la MPU</title>
+      content="Configurez la MPU du noyau Mk (Cortex-M7) : régions mémoire, isolation entre modes privilégié et non privilégié, placement des données dans les bonnes zones grâce aux attributs de section.">
+   <title>Configuration de la MPU</title>
    <link rel="icon" type="image/png" href="../../favicon.png">
    <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
-   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/mpu.html">
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/mpu_settings.html">
    <link href="../../assets/css/style.css" rel="stylesheet">
    <link href="../../assets/css/template.css" rel="stylesheet">
    <link href="../../assets/css/mk.css" rel="stylesheet">
@@ -35,6 +35,7 @@
    <main>
       <section class="mk">
          <div>
+            <h1 class="title-article">Le modèle de protection de Mk</h1>
             <p>Le noyau <span class="bold-strong">Mk</span> implémente un environnement sécurisé qui isole les tâches
                critiques de l'espace utilisateur non privilégié. L'objectif est de limiter l'impact que pourrait avoir
                une tâche utilisateur ou un code arbitraire malveillant ou défectueux. </p>
@@ -50,9 +51,7 @@
                   class="bold-strong">MPU</span>
                (Memory Protection Unit), sur les droits attribués aux tâches
                et sur l'organisation mémoire du processeur. </p>
-
-            </p>
-            <h1>1. Mécanismes matériels du modèle de protection</h1>
+            <h2>1. Protection matérielle</h2>
             <p>L'isolation matérielle offerte par <span class="bold-strong">Mk</span> repose sur les deux mécanismes
                suivants :</p>
             <ul>
@@ -75,7 +74,7 @@
                protégée
                déclenche une exception matérielle de type <span class="bold-strong">MemManage Fault</span>.</p>
 
-            <h2>2. Mécanismes logiciels du modèle de protection</h2>
+            <h2>2. Protection logicielle</h2>
 
             <p>L'isolation entre les tâches est aussi renforcée par une surveillance logicielle effectuée lors de
                chaque
@@ -111,10 +110,10 @@
                l'utilisateur (adresse et alignement). Cela est rendu possible par l'écosystème de <span
                   class="bold-strong">Mk</span> qui pré-alloue
                l'ensemble de ces objets
-               (tâches, semaphores, ...) de manière statique à la compilation. Le noyau a donc connaissance de
+               (tâches, sémaphores, ...) de manière statique à la compilation. Le noyau a donc connaissance de
                l'emplacement mémoire
                de
-               chaque objet et peut donc réaliser un contrôle de validité à chaque appel système.</p>
+               chaque objet et peut donc réaliser un contrôle de validité lors de chaque appel système.</p>
             <br>
             <p>Lorsqu'une instance non valide est détectée, le noyau annule l'appel système et déclenche le
                gestionnaire
@@ -127,7 +126,7 @@
                configurables (8 sur STM32F7). Chaque région permet d'appliquer une configuration
                spécifique à une plage de
                l'espace mémoire (niveau d'accès privilégié ou non, droits en lecture/écriture,
-               politiques de cache, exécution d'instructions autorisée). Ces 8 régions peuvent elles aussi être
+               politiques de cache, exécution d'instructions autorisée). Ces régions peuvent elles aussi être
                découpées en 8
                sous-régions de taille égale pouvant être activées ou non. Les sous-régions ne sont utilisables que
                pour
@@ -148,7 +147,7 @@
 
             <p>Le noyau configure la <span class="bold-strong">MPU</span> au démarrage du système en exécutant la
                fonction
-               <span class="bold-strong">mk_system_mpu_init</span>. Celle-ci est conservée tout au long de
+               <span class="bold-strong">mk_system_mpu_init</span>. Cette configuration est conservée tout au long de
                l'exécution
                du système (configuration statique).
             </p>
@@ -156,7 +155,7 @@
             <h2>4. Paramétrage de la MPU</h2>
 
             <p>Le paramétrage de la <span class="bold-strong">MPU</span> est <span class="underline">propre à chaque
-                  microcontrôleur</span>. Ce paragraphe décrit la méthodologie à mettre en oeuvre pour paramétrer la
+                  microcontrôleur</span>. Ce paragraphe décrit la méthodologie à mettre en œuvre pour paramétrer la
                <span class="bold-strong">MPU</span> en prenant pour exemple les microcontrôleurs
                STM32F74xxx et STM32F75xxx.
             </p>
@@ -180,7 +179,6 @@
                du <span class="bold-strong">MCU</span> à gauche, les sections définies dans le fichier d'édition de
                liens au centre et la configuration
                des 6 régions de la <span class="bold-strong">MPU</span> utilisées à droite. Les régions sont indexées
-               de
                <span class="bold-strong">K_<wbr>MPU_<wbr>REGION1</span> à <span
                   class="bold-strong">K_<wbr>MPU_<wbr>REGION8</span> (indice matériel 0 à 7). Les deux dernières
                régions
@@ -269,7 +267,7 @@
 
 </pre>
             <br>
-            <p>L'exemple ci-dessus montre la configuration pour la section <span class="bold-strong">.bss </span>. Un
+            <p>L'exemple ci-dessus montre la configuration pour la section <span class="bold-strong">.bss</span>. Un
                procédé identique peut être appliqué aux
                autres sections et régions de la <span class="bold-strong">MPU</span> pour couvrir l'ensemble des
                besoins de l'application.</p>
@@ -298,8 +296,8 @@
             </div>
             <br>
             <p>Cette précaution est nécessaire car les mécanismes de protection de la <span
-                  class="bold-strong">MPU</span> ne filtre pas les transactions mémoires
-               réalisée par un contrôleur <span class="bold-strong">DMA</span>. La configuration des périphériques
+                  class="bold-strong">MPU</span> ne filtrent pas les transactions mémoires
+               réalisées par un contrôleur <span class="bold-strong">DMA</span>. La configuration des périphériques
                doit
                donc être réservée exclusivement
                aux tâches privilégiées.
@@ -311,30 +309,75 @@
                doit posséder l'attribut <span class="bold-strong">device</span> pour interdire les
                accès spéculatifs et préserver
                l'ordre des accès. </p>
+
+            <p>La table ci-dessous présente les caractéristiques des différents types de régions du processeur Cortex-M7
+               :</p>
+
+            <table class="fixed">
+               <colgroup>
+                  <col style="width: 30%"> <!-- Type -->
+                  <col style="width: 20%"> <!-- Cache L1 -->
+                  <col style="width: 25%"> <!-- Accès spéculatifs -->
+                  <col style="width: 25%"> <!-- Ordre des accès -->
+               </colgroup>
+               <thead>
+                  <tr>
+                     <th>Type</th>
+                     <th>Cache L1</th>
+                     <th>Accès spéculatifs</th>
+                     <th>Ordre des accès</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr>
+                     <td><span class="gray">Normal cacheable</span></td>
+                     <td>Oui</td>
+                     <td>Possibles</td>
+                     <td>Réordonnés</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">Normal non cacheable</span></td>
+                     <td>Non</td>
+                     <td>Possibles</td>
+                     <td>Réordonnés</td>
+                  </tr>
+                  <tr>
+                     <td><span class="gray">Device</span></td>
+                     <td>Non</td>
+                     <td>Interdits</td>
+                     <td>Préservé</td>
+                  </tr>
+               </tbody>
+            </table>
+            <br>
+
             <p>De la même manière, pour maintenir la cohérence des données
                entre le CPU
                et les contrôleurs DMA, la région définissant la section <span
                   class="bold-strong">.mk_privileged_dma_memory</span> ne doit pas être
-               cacheable.</p>
-            <p>Dans la <span class="underline">figure 1</span>, c'est deux règles sont respectées par la région
+               cacheable et aucune région de numéro supérieur avec cet attribut ne doit la recouvrir.</p>
+
+            <p>Dans la <span class="underline">figure 1</span>, ces deux règles sont respectées par la région
                1 qui occupe
                l'intégralité de l'espace
                adressable (4 Go) et possède les bons attributs. Cette région couvre le besoin à la fois pour les
                périphériques et la mémoire <span class="bold-strong">DMA</span>. </p>
 
-            <h2>6. Appels système et MSP</h2>
+            <h2>6. Contexte d'interruption et MSP</h2>
 
-            <p>Le noyau exécute l'ensemble de son code depuis des vecteurs d'interruption. Il utilise donc le
-               pointeur
-               de pile principal (<span class="bold-strong">MSP</span>). Les attributs de cette zone mémoire sont
+            <p>Le noyau exécute l'ensemble de son travail dans un contexte d'interruption. Il utilise donc la
+               pile principale (<span class="bold-strong">MSP</span>). Les attributs de cette zone mémoire sont
                dictés par la région 5 de la <span class="bold-strong">MPU</span>. </p>
             <br>
             <div class="warning">
                <p class="warning-logo">⚠️</p>
                <div class="warning-text ">
-                  <p>Dans la situation où la taille de la pile <span class="bold-strong">g_mkMainStack</span> est
-                     modifiée, les attributs de la région 5 doivent être reconfigurés en conséquence (taille
-                     et alignement).</p>
+                  <p>Dans la situation où <span class="underline">l'adresse</span> ou <span class="underline">la
+                        taille</span> de la pile <span class="bold-strong">g_mkMainStack</span> sont
+                     modifiées, les attributs de la région 5 doivent être reconfigurés en conséquence (adresse
+                     <span class="bold-strong">K_STACK_BASE_ADDR</span>, taille
+                     et alignement).
+                  </p>
                </div>
             </div>
 
@@ -371,30 +414,65 @@
             <p>Le noyau <span class="bold-strong">Mk</span> déclare la plupart de ses données internes dans la section
                <span class="bold-strong">.mk_<wbr>privileged_<wbr>ro_<wbr>memory</span> (région 6). Cette section est
                accessible en
-               lecture écriture
+               lecture/écriture
                aux tâches privilégiées mais seulement en lecture aux tâches non privilégiées.
             </p>
             <p>Lorsqu'une tâche demande au noyau de créer une tâche ou un objet de synchronisation, celui-ci fournit à
                la tâche demandeuse l'instance d'une de ces structures de données protégées. La séparation entre les deux
                mondes est donc
-               conservée et le monde non privilégié ne peut pas venir écrire dans une de ces structures de données.
+               conservée et le monde non privilégié ne peut pas venir écrire dans ces structures de données.
             </p>
 
             <p>Néanmoins, il peut arriver qu'une tâche non privilégiée ait la nécessité de communiquer avec une tâche
                privilégiée. Le mécanisme de protection des objets de synchronisation permet de répondre à ce cas de
                figure.</p>
 
-            <br>
+            <p>Lorsqu'une tâche privilégiée ne souhaite pas partager l'utilisation d'un objet de synchronisation avec
+               une
+               tâche non
+               privilégiée, elle précise le paramètre <span
+                  class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span>
+               lors de
+               sa création. Dans ce cas de figure, tout
+               appel système sur cet objet effectué par une tâche non privilégiée sera rejeté.</p>
+            <p>A contrario, lorsqu'un objet doit être partagé, la tâche peut spécifier le paramètre <span
+                  class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span> autorisant ainsi l'utilisation de
+               l'objet de synchronisation par les deux types de tâches.</p>
 
-            <p>Dans cette situation, la tâche créatice de l'objet de synchronisation peut préciser au noyau
-               que
-               l'objet à créer ne doit pas être protégé. L'objet pourra alors être utilisé à la fois par une tâche
-               privilégiée et par une tâche non privilégiée.</p>
+            <h2>9. Conclusion</h2>
 
-            <p>Afin de maintenir la barrière entre les deux mondes, les règles ci-desous s'appliquent : </p>
+            <p>Le modèle de protection proposé par <span class="bold-strong">Mk</span> repose sur une barrière entre le
+               monde privilégié et le monde non privilégié. Il est construit autour du bit <span
+                  class="bold-strong">nPriv</span>, de la <span class="bold-strong">MPU</span> et des contrôles
+               effectués lors de chaque appel système.
+            </p>
+            <p>La configuration de la <span class="bold-strong">MPU</span> est propre à chaque cible. Lors d'un portage
+               sur une nouvelle cible ou lors d'une modification, il est important de respecter les critères ci-dessous
+               : </p>
+            <ul>
+               <li><span class="gray">✔</span>Le fichier d'édition de lien et la fonction <span
+                     class="bold-strong">mk_system_mpu_init</span> doivent être modifiés conjointement car ils partagent
+                  les mêmes adresses de base.</li>
+               <li><span class="gray">✔</span>Les périphériques doivent être en mémoire <span
+                     class="bold-strong">device</span>. Aucune région cacheable ne doit recouvrir la section <span
+                     class="bold-strong">.mk_<wbr>privileged_<wbr>dma_<wbr>memory</span>.</li>
+               <li><span class="gray">✔</span>La zone non privilégiée doit rester contiguë pour que la fonction <span
+                     class="bold-strong">mk_<wbr>memory_<wbr>isPrivilegedArea</span> fonctionne.</li>
+               <li><span class="gray">✔</span>La taille ou l'adresse de la pile principale ne peuvent pas être modifiées
+                  sans reconfigurer la région 5.</li>
+            </ul>
 
 
-            <h2>10. Conclusion</h2>
+            <p>Pour conclure, le modèle de protection proposé par <span class="bold-strong">Mk</span> est simple mais
+               celui-ci n'offre pas d'isolation complète entre tâches contrairement à certains noyaux disponibles sur le
+               marché.</p>
+            <p>À terme,
+               <span class="bold-strong">Mk</span> offrira un niveau
+               de protection équivalent. La configuration de la <span class="bold-strong">MPU</span> ne sera plus
+               statique mais mise à jour dynamiquement lors de chaque
+               changement de contexte. Cette évolution apportera plus de flexibilité, au détriment de la simplicité de
+               configuration.
+            </p>
 
          </div>
       </section>
