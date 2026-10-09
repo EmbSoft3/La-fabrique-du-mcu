@@ -128,7 +128,7 @@
                   class="bold-strong">.bss</span> et
                <span class="bold-strong">.data</span>), les tâches non privilégiées ne peuvent
                pas accéder à ces variables en lecture et en écriture. Elles doivent donc déclarer
-               leurs propres variables avec
+               leurs variables avec
                un attribut spécifique afin de les localiser dans la bonne section :
             </p>
             <table class="fixed">
@@ -255,8 +255,8 @@
 <span class="define">K_MK_PRIVILEGED_RO_MEMORY</span> <span class="type">uint32_t</span> g_shared;
             </pre>
             <br>
-            <p>Lors de l'écriture d'un programme, il est important d'avoir conscience des points
-               ci-dessous de la déclaration d'une variable :</p>
+            <p>Lors de l'écriture d'un programme, il est important d'avoir conscience des régles
+               ci-dessous :</p>
 
             <br>
             <div class="warning">
@@ -264,7 +264,7 @@
                <div class="warning-text ">
                   <p>Une variable globale ou statique déclarée sans macro est placée dans les sections <span
                         class="bold-strong">.bss</span> ou
-                     <span class="bold-strong">.data</span>). Elle est donc
+                     <span class="bold-strong">.data</span>. Elle est donc
                      inaccessible aux tâches non privilégiées. Une tâche non privilégiée qui la manipule provoque une
                      exception <span class="bold-strong">MemManage</span>.
                   </p>
@@ -416,6 +416,127 @@
                principal.</p>
 
             <h2>4. Partager des données</h2>
+
+            <p>Dans l'écosystème <span class="bold-strong">Mk</span>, les boîtes de messages peuvent être utilisées pour
+               partager des données entre
+               les tâches.</p>
+            <p>Lorsqu'une donnée doit transité du monde privilégié au monde non privilégiée, une boite de messages
+               doit être
+               déclarée avec l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span>.</p>
+            <p> Avec cet
+               attribut, le noyau autorise la tâche privilégié à manipuler la boite de messages.</p>
+            <p>L'extrait
+               de code ci-dessous montre un exemple d'utilisation :
+            </p>
+
+            <br>
+            <pre class="code">
+
+<span class="multi-line-comment">/* Déclaration du buffer de la boite de messages */</span>
+<span class="multi-line-comment">/* Celui-ci doit obligatoirement être dans une zone non privilégiée */</span>
+<span class="define">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> l_mailBuf [ <span class="number">512</span> ];
+
+<span class="multi-line-comment">/* Déclaration d'un pointeur de boite de messages */</span>
+<span class="multi-line-comment">/* Celui-ci doit être accessible en lecture à la tâche non privilégiée */</span>
+<span class="define">K_MK_PRIVILEGED_RO_MEMORY</span> <span class="type">T_mkMail</span>* g_mail;
+
+<span class="multi-line-comment">/* Code de la tâche privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
+
+   <span class="multi-line-comment">/* Déclaration d'une structure de type T_mkPoolArea */</span>
+   <span class="multi-line-comment">/* Cette structure est utilisée pour créer la boite de messages */</span>
+   <span class="type">T_mkPoolArea</span> l_area;
+
+   <span class="multi-line-comment">/* Déclaration du message à transmettre à la tâche non privilégiée */</span>
+   <span class="type">uint32_t</span> l_incommingMessage = <span class="number">1</span>;
+
+   <span class="multi-line-comment">/* Suppression warning */</span>
+   ( <span class="keyword">void</span> ) p_param;
+
+   <span class="multi-line-comment">/* Création de la boite de messages */</span>
+   <span class="multi-line-comment">/* On crée 4 messages de 4 octets chacun */</span>
+   <span class="multi-line-comment">/* La boite n'est pas protégée, elle peut être utilisée par une tâche */</span>
+   <span class="multi-line-comment">/* non privilégiée */</span>
+   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, l_mailBuf, <span class="number">512</span> );
+   l_result |= <span class="function">mk_mail_create</span> ( &g_mail, 
+      <span class="define-underline">K_MK_AREA_UNPROTECTED</span>, &l_area, <span class="number">1</span>, <span class="number">4</span> ); 
+
+   <span class="multi-line-comment">/* Boucle pour toujours... */</span>
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* Ecriture d'un message dans la messagerie */</span>
+      l_result |= <span class="function">mk_mail_post</span> ( g_mail, &l_incommingMessage, 
+         <span class="define">K_MK_STATE_READY</span>, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+      <span class="multi-line-comment">/* Temporisation de la tâche */</span>
+      l_result |= <span class="function">mk_task_sleep</span> ( <span class="number">10</span> );            
+   }
+
+   <span class="multi-line-comment">/* Retour */</span>
+   <span class="keyword">return</span>;
+}
+
+<span class="multi-line-comment">/* Code de la tâche non privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_unprivileged</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
+
+   <span class="multi-line-comment">/* Déclaration de la variable où sera stocké le message reçu */</span>
+   <span class="type">uint32_t</span> l_outcommingMessage = <span class="number">0</span>;
+
+   <span class="multi-line-comment">/* Suppression warning */</span>
+   ( <span class="keyword">void</span> ) p_param;
+
+   <span class="multi-line-comment">/* Boucle pour toujours... */</span>
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* Récupération d'un message dans la messagerie */</span>
+      <span class="multi-line-comment">/* La variable l_message passe à 1 */</span>
+      l_result |= <span class="function">mk_mail_pend</span> ( <span class="define">K_MK_NULL</span>, g_mail, 
+         &l_outcommingMessage, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+      <span class="multi-line-comment">/* Temporisation de la tâche */</span>
+      l_result |= <span class="function">mk_task_sleep</span> ( <span class="number">10</span> );            
+   }
+
+   <span class="multi-line-comment">/* Retour */</span>
+   <span class="keyword">return</span>;
+}
+
+            </pre>
+
+
+            <br>
+            <p>Bien que la tâche non privilégiée puisse manipuler la boite, celle-ci reste protégée en écriture. La
+               boite peut être créée depuis les deux types de tâches. Néanmoins, dans le cas d'un partage privilégié/non
+               privilégiée, le buffer de la boite (<span class="bold-strong">l_mailBuf</span>) et le message copié de la
+               boite vers le buffer utilisateur (<span class="bold-strong">l_outcommingMessage</span>) doivent être
+               alloués dans une zone non privilégiée.</p>
+            <br>
+
+            <p>A reformuler : </p>
+            <p>Bien que les boites de messages soit sécurisées, <span class="underline">une erreur de
+                  configuration peut ouvrir une brèche
+                  de sécurité</span>. Lors de sa création, une boite de messages se voit spécifier une taille pour ses
+               messages.
+
+               <br>
+
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Dans la situation où l'utilisateur déclare sa variable <span
+                        class="bold-strong">l_outcommingMessage</span> dans une pile
+                     privilégiée avec une taille inférieure à la taille nominale de la boite alors le noyau viendra
+                     écraser la pile avec des données arbitraire.
+                  </p>
+               </div>
+            </div>
+            <br>
 
 
             <h2>5. Gérer les erreurs</h2>
