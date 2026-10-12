@@ -114,6 +114,10 @@
                      <td><span class="gray">SVC</span></td>
                      <td>Exécute les appels système réalisés par les tâches.</td>
                   </tr>
+                  <tr>
+                     <td><span class="gray">Mem<wbr>Manage</span></td>
+                     <td>Traite les violations d'accès mémoire détectées par la MPU.</td>
+                  </tr>
                </tbody>
             </table>
 
@@ -121,7 +125,7 @@
             <p>
                Le Cortex-M7 définit ses priorités sur 4 bits (0 = la plus forte, 15 = la plus faible). </p>
             <p>
-               Le noyau configure la priorité des 3 exceptions précédentes avec les valeurs ci-dessous :
+               Le noyau configure la priorité des 4 exceptions précédentes avec les valeurs ci-dessous :
             </p>
             <br>
             <pre class="code">
@@ -130,7 +134,7 @@
 <span class="multi-line-comment"></span>
 <span class="keyword">#define</span> K_MK_SCHEDULER_BASE_PRIORITY <span class="number">15</span> <span class="multi-line-comment">/* SysTick and PendSV */</span>
 <span class="keyword">#define</span> K_MK_SCHEDULER_SVC_PRIORITY <span class="number">7</span> <span class="multi-line-comment">/* SVC = MASK_PRIORITY - 1 */</span>
-<span class="keyword">#define</span> K_MK_SCHEDULER_MASK_PRIORITY <span class="number">8</span> <span class="multi-line-comment">/* Seuil de priorité utilisé dans les sections critiques */</span>
+<span class="keyword">#define</span> K_MK_SCHEDULER_MASK_PRIORITY <span class="number">8</span> <span class="multi-line-comment">/* MemManage - seuil de priorité utilisé dans les sections critiques */</span>
 </pre>
             <br>
             <p>
