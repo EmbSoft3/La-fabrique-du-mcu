@@ -37,14 +37,14 @@
          <div>
             <h1 class="title-article">Protéger son programme avec Mk</h1>
             <p>Mk offre un ensemble de mécanismes pour protéger un programme. Cet article présente la méthodologie à
-               utiliser pour déclarer et placer ses variables en mémoire, créer des tâches privilégiées ou non, partager
+               utiliser pour déclarer et placer ses variables en mémoire, créer des tâches privilégiées, partager
                des données et gérer
                les
                erreurs de permissions.</p>
 
             <p>Ce chapitre fait directement suite à l'article précédent <a href="./mpu_settings.html"><span
                      class="bold-strong">Le
-                     modèle de protection de Mk</a></span>.</p>
+                     modèle de protection de Mk</span></a>.</p>
             <h2>1. Déclarer et protéger ses variables</h2>
 
             <p>Dans un programme informatique, les variables globales et statiques sont positionnées par
@@ -269,9 +269,10 @@
                <p class="warning-logo">⚠️</p>
                <div class="warning-text ">
                   <p>Une variable globale ou statique déclarée sans macro est placée dans les sections <span
-                        class="bold-strong">.bss</span>,
+                        class="bold-strong">.bss</span> ou
                      <span class="bold-strong">.data</span>. Elle est donc
-                     inaccessible aux tâches non privilégiées. Une tâche non privilégiée qui la manipule provoque une
+                     <span class="underline">inaccessible</span> aux tâches non privilégiées. Une tâche non privilégiée
+                     qui la manipule provoque une
                      exception <span class="bold-strong">MemManage</span>.
                   </p>
                </div>
@@ -281,8 +282,9 @@
             <div class="warning">
                <p class="warning-logo">⚠️</p>
                <div class="warning-text ">
-                  <p>Une variable déclarée avec le mot clé "const" est placée dans la section <span
-                        class="bold-strong">.rodata</span>, accessible en lecture aux tâches non privilégiées.
+                  <p>Une variable globale ou statique déclarée avec le mot clé "const" est placée dans la section <span
+                        class="bold-strong">.rodata</span>. Elle n'est accessible qu'en lecture (tâches privilégiées et
+                     non privilégiées).
                   </p>
                </div>
             </div>
@@ -374,7 +376,7 @@
             <div class="comment">
                <p class="comment-logo">💬</p>
                <div class="comment-text ">
-                  <p>A l'instar des tâches non privilégiées, les tâches privilégiées utilisent aussi le pointeur de pile
+                  <p>À l'instar des tâches non privilégiées, les tâches privilégiées utilisent aussi le pointeur de pile
                      <span class="bold-strong">PSP</span>. Leur
                      contexte
                      reste protégé par la <span class="bold-strong">MPU</span>.
@@ -413,17 +415,13 @@
       <span class="define-underline">K_MK_TYPE_DEFAULT</span>, <span class="define">K_MK_TASK_ID_MY_TASK</span>,
       <span class="number">10</span>, <span class="define">K_MK_NULL</span> );
 
-   <span class="multi-line-comment">/* Si aucune erreur ne s'est produite */</span>
-   <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
-   {
-      <span class="multi-line-comment">/* Création de la tâche */</span>
-      <span class="multi-line-comment">/* Point d'entrée de la tâche : mk_task_non_privileged */</span>
-      <span class="multi-line-comment">/* Argument de la fonction : "Hello world !" */</span>
-      l_result = <span class="function">mk_task_create</span> ( &l_task, &l_stack, <span
-         class="type">K_MK_NULL</span>,
-         &l_taskCtrlBlock, <span class="function">mk_task_unprivileged</span>, ( <span class="type">T_mkAddr</span> ) 
-         <span class="string">"Hello world !"</span> );
-   }
+   <span class="multi-line-comment">/* Création de la tâche */</span>
+   <span class="multi-line-comment">/* Point d'entrée de la tâche : mk_task_unprivileged */</span>
+   <span class="multi-line-comment">/* Argument de la fonction : "Hello world !" */</span>
+   l_result |= <span class="function">mk_task_create</span> ( &l_task, &l_stack, <span
+      class="type">K_MK_NULL</span>,
+      &l_taskCtrlBlock, <span class="function">mk_task_unprivileged</span>, ( <span class="type">T_mkAddr</span> ) 
+      <span class="string">"Hello world !"</span> );
 }
 
 </pre>
@@ -458,8 +456,8 @@
 
 <span class="multi-line-comment">/* Déclaration du buffer de la boîte de messages */</span>
 <span class="multi-line-comment">/* Celui-ci n'est pas accessible à la tâche non privilégiée */</span>
-<span class="multi-line-comment">/* Taille: 4 messages de (3+1) mots 32bits, chaque message a une entête de 3 mots */</span>
-<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_mailBuf [ <span class="number">16</span> ];
+<span class="multi-line-comment">/* Taille: 4 messages 32bits */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_mailBuf [ <span class="number">4</span> ];
 
 <span class="multi-line-comment">/* Déclaration d'un pointeur de boîte de messages */</span>
 <span class="multi-line-comment">/* Celui-ci doit être accessible en lecture à la tâche non privilégiée */</span>
@@ -482,17 +480,17 @@
    ( <span class="keyword">void</span> ) p_param;
 
    <span class="multi-line-comment">/* Création de la boîte de messages */</span>
-   <span class="multi-line-comment">/* On crée 4 messages de 4 octets chacun */</span>
+   <span class="multi-line-comment">/* On crée 4 messages de 32bits chacun */</span>
    <span class="multi-line-comment">/* La boîte n'est pas protégée, elle peut être utilisée par une tâche */</span>
    <span class="multi-line-comment">/* non privilégiée */</span>
-   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_mailBuf, <span class="number">16</span> );
+   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_mailBuf, <span class="number">4</span> );
    l_result |= <span class="function">mk_mail_create</span> ( &g_mail, 
       <span class="define-underline">K_MK_AREA_UNPROTECTED</span>, &l_area, <span class="number">1</span>, <span class="number">4</span> ); 
 
    <span class="multi-line-comment">/* Boucle pour toujours... */</span>
    <span class="keyword">while</span> ( <span class="number">1</span> )
    {
-      <span class="multi-line-comment">/* Ecriture d'un message dans la messagerie */</span>
+      <span class="multi-line-comment">/* Écriture d'un message dans la messagerie */</span>
       l_result |= <span class="function">mk_mail_post</span> ( g_mail, &l_incomingMessage, 
          <span class="define">K_MK_STATE_READY</span>, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
 
@@ -543,7 +541,7 @@
                   tâches non
                   privilégiées.
                </li>
-               <li><span class="gray">✔</span>La boîte de message et son pointeur (<span
+               <li><span class="gray">✔</span>La boîte de messages et son pointeur (<span
                      class="bold-strong">g_mail</span>)
                   sont situés dans la zone privilégiée
                   accessible seulement en lecture aux tâches non privilégiées. Le buffer de la boîte (<span
@@ -568,8 +566,8 @@
 
 <span class="multi-line-comment">/* Déclaration du buffer de la boîte de messages */</span>
 <span class="multi-line-comment">/* Celui-ci doit obligatoirement être dans une zone non privilégiée */</span>
-<span class="multi-line-comment">/* Taille: 4 messages de (3+1) mots 32bits, chaque message a une entête de 3 mots */</span>
-<span class="define-underline">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_mailBuf [ <span class="number">16</span> ];
+<span class="multi-line-comment">/* Taille: 4 messages de 32bits */</span>
+<span class="define-underline">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_mailBuf [ <span class="number">4</span> ];
 
 <span class="multi-line-comment">/* Déclaration d'un pointeur de boîte de messages */</span>
 <span class="multi-line-comment">/* Celui-ci doit être accessible en lecture et en écriture à la tâche non privilégiée */</span>
@@ -585,24 +583,24 @@
    <span class="multi-line-comment">/* Cette structure est utilisée pour créer la boîte de messages */</span>
    <span class="type">T_mkPoolArea</span> l_area;
 
-   <span class="multi-line-comment">/* Déclaration du message à transmettre à la tâche non privilégiée */</span>
+   <span class="multi-line-comment">/* Déclaration du message à transmettre à la tâche privilégiée */</span>
    <span class="type">uint32_t</span> l_incomingMessage = <span class="number">1</span>;
 
    <span class="multi-line-comment">/* Suppression warning */</span>
    ( <span class="keyword">void</span> ) p_param;
 
    <span class="multi-line-comment">/* Création de la boîte de messages */</span>
-   <span class="multi-line-comment">/* On crée 4 messages de 4 octets chacun */</span>
+   <span class="multi-line-comment">/* On crée 4 messages de 32bits chacun */</span>
    <span class="multi-line-comment">/* La boîte n'est pas protégée, elle peut être utilisée par une tâche */</span>
    <span class="multi-line-comment">/* non privilégiée */</span>
-   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_mailBuf, <span class="number">16</span> );
+   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_mailBuf, <span class="number">4</span> );
    l_result |= <span class="function">mk_mail_create</span> ( &g_mail, 
       <span class="define-underline">K_MK_AREA_UNPROTECTED</span>, &l_area, <span class="number">1</span>, <span class="number">4</span> ); 
 
    <span class="multi-line-comment">/* Boucle pour toujours... */</span>
    <span class="keyword">while</span> ( <span class="number">1</span> )
    {
-      <span class="multi-line-comment">/* Ecriture d'un message dans la messagerie */</span>
+      <span class="multi-line-comment">/* Écriture d'un message dans la messagerie */</span>
       l_result |= <span class="function">mk_mail_post</span> ( g_mail, &l_incomingMessage, 
          <span class="define">K_MK_STATE_READY</span>, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
 
@@ -651,7 +649,7 @@
                   accessible
                   à toutes les tâches.
                </li>
-               <li><span class="gray">✔</span>La boîte de message est situées dans la zone privilégiée
+               <li><span class="gray">✔</span>La boîte de messages est située dans la zone privilégiée
                   qui n'est accessible qu'en lecture pour les tâches non privilégiées. Le buffer (<span
                      class="bold-strong">g_mailBuf</span>) et le pointeur (<span class="bold-strong">g_mail</span>)
                   de boîte sont accessibles à tous les types de tâches.
@@ -664,41 +662,50 @@
                </li>
             </ul>
 
+            <p>Lorsqu’une tâche non privilégiée poste un message, le buffer source doit obligatoirement être situé en
+               zone non
+               privilégiée. Dans le cas contraire, l'appel système sera rejeté par le noyau. Le but étant de ne pas
+               recopier le contenu d'une
+               mémoire protégée en lecture dans un emplacement non privilégié.</p>
+            <br>
             <p>Lorsque l'application le permet, c'est-à-dire lorsque les données sont produites par la tâche privilégiée
                et consommées par la tâche non privilégiée, il est
-               préférable d'allouer la boîte de message au
+               préférable de créer la boîte de messages au
                sein de la tâche privilégiée. Cette configuration permet de protéger l'ensemble des données contre les
                écritures intempestives venant d'une tâche non privilégiée. </p>
-            <p>Par ailleurs, dans la situation où le buffer de la boîte est en zone non privilégiée, n’importe quelle
+            <br>
+            <p>En effet, dans la situation où le buffer de la boîte est en zone non privilégiée, n'importe quelle
                tâche
                non privilégiée peut venir modifier un message entre un <span class="bold-strong">post</span> et un <span
                   class="bold-strong">pend</span>. Il est donc important que la
                tâche privilégiée traite le contenu des messages comme non fiable et réalise des contrôles
                supplémentaires.
             </p>
+
             <br>
 
             <p>Les boîtes de messages permettent le partage de données entre le monde privilégié et le monde non
-               privilégié. Cependant, une mauvaise configuration de celle-ci peut briser la barrière les séparant.</p>
+               privilégié. Cependant, une mauvaise configuration de celles-ci peut briser la barrière les séparant.</p>
             <br>
 
 
-            <p>En effet, lors de sa création, une boîte de messages est configurée avec une taille de messages. À chaque
+            <p>Lors de sa création, une boîte de messages est configurée avec une taille de messages. À chaque
                lecture de la boîte (<span class="bold-strong">pend</span>), le noyau
-               copie un message de cette taille dans le buffer fourni par l'utilisateur. Bien qu'il vérifie que
-               l’adresse du
-               buffer
-               soit situé dans la bonne zone mémoire, le noyau ne connaît pas la taille réelle de la variable de
-               destination. Un mauvais paramétrage d'une boîte peut donc ouvrir une brèche de sécurité en permettant à
-               une tâche non privilégiée d'écrire dans de la mémoire privilégiée.</p>
-            <p>Un comportement similaire s'applique aussi lors de l'écriture d'un message dans la boîte (<span
-                  class="bold-strong">post</span>). Le noyau ne
+               copie un message de cette taille dans le buffer fourni par l'utilisateur.</p>
+            <p>
+               Lorsque l'appelant est une tâche non privilégiée, le noyau vérifie que toute la plage copiée se situe
+               dans la bonne zone mémoire. Pour les tâches privilégiées, ce contrôle n'est pas réalisé.
+               Un buffer trop petit côté privilégié permet donc à une tâche non privilégiée d'écraser la mémoire
+               voisine ouvrant ainsi une brèche de sécurité.
+            </p>
+
+            <p>Un comportement analogue s'applique lors de l'écriture d'un message (<span
+                  class="bold-strong">post</span>) par une tâche privilégiée. Le noyau ne
                connaissant
-               pas la taille de la variable source, une copie de taille fixe est réalisée dans la boîte de messages. Si
-               la variable source n'est pas correctement dimensionnée,
-               des segments de mémoire normalement inaccessibles aux tâches non privilégiées (en lecture) peuvent être
+               pas la taille de la variable source,
+               des segments de mémoire normalement inaccessibles aux tâches non privilégiées peuvent être
                copiés dans la
-               boîte et rendus publics.</p>
+               boîte et rendus publics lorsque le buffer est trop petit.</p>
             <br>
             <div class="warning">
                <p class="warning-logo">⚠️</p>
@@ -706,7 +713,7 @@
                   <p>Les buffers <span class="bold-strong">l_incomingMessage</span> et <span
                         class="bold-strong">l_outgoingMessage</span> doivent avoir une taille au moins égale à celle des
                      messages de la boîte. Dans
-                     le cas contraire, le noyau, qui s’exécute en mode privilégié, écrase la mémoire située
+                     le cas contraire, le noyau, qui s'exécute en mode privilégié, écrase la mémoire située
                      après la
                      variable avec le contenu du message. Dans le second cas, il copie la mémoire située
                      après la variable dans le
@@ -753,7 +760,7 @@ l_result = <span class="function">mk_mail_pend</span> ( <span class="define">K_M
 <span class="multi-line-comment">/* Sinon */</span>
 <span class="keyword">else</span>
 {
-   
+   <span class="multi-line-comment">/* Faire quelque chose ici... */</span>
 }
             </pre>
             <br>
@@ -762,14 +769,15 @@ l_result = <span class="function">mk_mail_pend</span> ( <span class="define">K_M
                <span class="bold-strong">mk_<wbr>handler_<wbr>right<wbr>Fault</span>.
             </p>
             <p>Ces fonctions sont exécutées par le noyau en mode privilégié de
-               suite après la détection de l'erreur. Elles sont vides par défaut mais peuvent être implémentées par
+               suite après la détection de l'erreur. Leur corps est vide par défaut mais elles peuvent être implémentées
+               par
                l'utilisateur en utilisant la fonction <span class="bold-strong">mk_<wbr>handler_<wbr>set</span>.
             </p>
             <br>
             <pre class="code">
 <span class="multi-line-comment">/* On indique au noyau les fonctions à utiliser lorsque les erreurs se produisent */</span>
-<span class="multi-line-comment">/* Ecriture de l'adresse des fonctions */</span>
-<span class="keyword">T_mkKernelCallback</span> l_kernelCallbackHandler = { <span class="define">K_MK_NULL</span> };
+<span class="multi-line-comment">/* Si ces fonctions ne sont pas configurées, le noyau exécute les fonctions par défaut */</span>
+<span class="type">T_mkKernelCallback</span> l_kernelCallbackHandler = { <span class="define">K_MK_NULL</span> };
 l_kernelCallbackHandler.rightFault = <span class="function">mk_rightFault</span>;
 l_kernelCallbackHandler.handleFault = <span class="function">mk_handleFault</span>;
 l_kernelCallbackHandler.memFault = <span class="function">mk_memFault</span>;
@@ -795,7 +803,8 @@ l_kernelCallbackHandler.memFault = <span class="function">mk_memFault</span>;
    <span class="multi-line-comment">/* pour cette callback */ </span>
    ( <span class="keyword">void</span> ) p_param1, ( <span class="keyword">void</span> ) p_param2, ( <span class="keyword">void</span> ) p_param3;
    
-   <span class="multi-line-comment">/* Déclenchement d'un changement de contexte */</span>
+   <span class="multi-line-comment">/* L'interruption matérielle MemManageFault sera déclenchée */</span>
+   <span class="multi-line-comment">/* après la fin de l'appel système */</span>
    <span class="function">nvic_setPendingException</span> ( <span class="define">K_NVIC_PENDING_MEMFAULT</span> );
    
    <span class="keyword">return</span>;
@@ -811,7 +820,8 @@ l_kernelCallbackHandler.memFault = <span class="function">mk_memFault</span>;
    <span class="multi-line-comment">/* pour cette callback */ </span>
    ( <span class="keyword">void</span> ) p_param1, ( <span class="keyword">void</span> ) p_param2, ( <span class="keyword">void</span> ) p_param3;
    
-   <span class="multi-line-comment">/* Déclenchement d'un changement de contexte */</span>
+   <span class="multi-line-comment">/* L'interruption matérielle MemManageFault sera déclenchée */</span>
+   <span class="multi-line-comment">/* après la fin de l'appel système */</span>
    <span class="function">nvic_setPendingException</span> ( <span class="define">K_NVIC_PENDING_MEMFAULT</span> );
    
    <span class="keyword">return</span>;
@@ -819,7 +829,7 @@ l_kernelCallbackHandler.memFault = <span class="function">mk_memFault</span>;
 </pre>
             <br>
             <p>En plus des appels explicites réalisés par les fonctions ci-dessus, le vecteur d'interruption <span
-                  class="bold-strong">MemManageFault</span> est aussi exécutée lorsqu'une violation d'accès mémoire est
+                  class="bold-strong">MemManageFault</span> est aussi exécuté lorsqu'une violation d'accès mémoire est
                détectée par la
                <span class="bold-strong">MPU</span>. C'est dans ce gestionnaire que la tâche fautive peut être
                suspendue.
@@ -858,7 +868,9 @@ l_kernelCallbackHandler.memFault = <span class="function">mk_memFault</span>;
             <p>Lorsque ce vecteur n'est pas implémenté avec la fonction <span
                   class="bold-strong">mk_<wbr>handler_<wbr>set</span> et qu'une violation mémoire se produit, le noyau
                bloque son exécution par le biais d'une boucle infinie. Le but étant de stopper le déclenchement
-               infini de l'exception MemManage qui continue tant que la tâche fautive n'a pas été arrêtée.
+               perpétuel de l'exception <span class="bold-strong">MemManage</span> qui continue tant que la tâche
+               fautive n'a
+               pas été arrêtée.
             </p>
 
 
@@ -866,7 +878,7 @@ l_kernelCallbackHandler.memFault = <span class="function">mk_memFault</span>;
       </section>
 
       <section>
-         <div class="button-article">
+         <div class=" button-article">
             <a href="./mpu_settings.html">
                <div>
                   <p>&lt;</p>
