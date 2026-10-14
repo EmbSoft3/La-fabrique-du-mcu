@@ -8,9 +8,11 @@
 	font-family: monospace;
 	background: #212326;
 	color: #d1d9e1;
-	white-space: pre-wrap;
+	white-space: pre;
 	tab-size: 3;
 	overflow-x: auto;
+	overflow-wrap: normal;
+	max-width: 100%;
 
 }
 

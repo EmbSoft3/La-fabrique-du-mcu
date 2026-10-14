@@ -69,34 +69,15 @@ li.newLine {
 
 @media screen and (max-width: 640px) {
 	p {
-		color: rgb(230, 230, 230);
-		font-size: 1.1em;
 		text-align: start;
-		vertical-align: baseline;
-		margin: 0em;
-		margin-top: 0.3em;
-		line-height: 1.3em;
 	}
 
 	li {
-		color: rgb(230, 230, 230);
-		font-size: 1.1em;
 		text-align: start;
-		vertical-align: baseline;
-		margin: 0em;
-		margin-top: 0.3em;
-		line-height: 1.3em;
 	}
 
 	li.newLine {
-		color: rgb(230, 230, 230);
-		font-size: 1.1em;
 		text-align: start;
-		vertical-align: baseline;
-		margin: 0em;
-		margin-top: 0.3em;
-		margin-bottom: 1.3em;
-		line-height: 1.3em;
 	}
 }
 
@@ -150,7 +131,6 @@ figcaption {
 	margin-bottom: 3%;
 }
 
-
 table {
 	width: 100%;
 	table-layout: auto;
@@ -179,11 +159,6 @@ th {
 	white-space: nowrap;
 }
 
-table .th-fixed55 {
-	width: 25%;
-	white-space: nowrap;
-}
-
 td {
 	color: rgb(230, 230, 230);
 	padding: 0.7em 1em;
@@ -201,14 +176,23 @@ table td.center {
 	line-height: 1.35em;
 }
 
-table caption {
-	caption-side: bottom;
-	text-align: center;
-	padding-top: 0.5em;
-	font-weight: normal;
-	color: rgb(230, 230, 230);
-	padding-top: 1em;
-	padding-bottom: 1em;
+.table-scroll-container {
+	width: 100%;
+	max-width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	padding-bottom: 0.5em;
+}
+
+.table-scroll-container table {
+	width: 100%;
+	min-width: 640px;
+}
+
+.table-scroll-container td,
+.table-scroll-container th {
+	overflow-wrap: break-word;
+	word-break: normal;
 }
 
 img {

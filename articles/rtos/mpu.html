@@ -52,52 +52,54 @@
                   class="bold-strong">Mk</span> configure ces
                sections de la manière suivante dans le fichier d'édition de liens :
             </p>
-            <table class="fixed">
-               <colgroup>
-                  <col style="width: 20%"> <!-- Section -->
-                  <col style="width: 17%"> <!-- Contenu -->
-                  <col style="width: 15%"> <!-- Mémoire -->
-                  <col style="width: 11%"> <!-- MPU -->
-                  <col style="width: 20%"> <!-- Privilégié / Non privilégié -->
-                  <col style="width: 17%"> <!-- Exécution -->
-               </colgroup>
-               <thead>
-                  <tr>
-                     <th>Section</th>
-                     <th>Contenu</th>
-                     <th>Mémoire</th>
-                     <th>MPU</th>
-                     <th>Privilégié / Non privilégié</th>
-                     <th>Exécution</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  <tr>
-                     <td><span class="gray">.rodata</span></td>
-                     <td>Constantes</td>
-                     <td><span class="gray">FLASH_<wbr>ITCM</span></td>
-                     <td>2</td>
-                     <td>RW* / RO</td>
-                     <td>Autorisée</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">.bss</span></td>
-                     <td>Variables non initialisées privilégiées</td>
-                     <td><span class="gray">DTCM_<wbr>RAM</span></td>
-                     <td>3</td>
-                     <td>RW / Aucun accès</td>
-                     <td>Interdite</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">.data</span></td>
-                     <td>Variables initialisées privilégiées</td>
-                     <td><span class="gray">DTCM_<wbr>RAM</span></td>
-                     <td>3</td>
-                     <td>RW / Aucun accès</td>
-                     <td>Interdite</td>
-                  </tr>
-               </tbody>
-            </table>
+            <div class="table-scroll-container">
+               <table class="fixed">
+                  <colgroup>
+                     <col style="width: 20%"> <!-- Section -->
+                     <col style="width: 17%"> <!-- Contenu -->
+                     <col style="width: 15%"> <!-- Mémoire -->
+                     <col style="width: 11%"> <!-- MPU -->
+                     <col style="width: 20%"> <!-- Privilégié / Non privilégié -->
+                     <col style="width: 17%"> <!-- Exécution -->
+                  </colgroup>
+                  <thead>
+                     <tr>
+                        <th>Section</th>
+                        <th>Contenu</th>
+                        <th>Mémoire</th>
+                        <th>MPU</th>
+                        <th>Privilégié / Non privilégié</th>
+                        <th>Exécution</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="gray">.rodata</span></td>
+                        <td>Constantes</td>
+                        <td><span class="gray">FLASH_<wbr>ITCM</span></td>
+                        <td>2</td>
+                        <td>RW* / RO</td>
+                        <td>Autorisée</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">.bss</span></td>
+                        <td>Variables non initialisées privilégiées</td>
+                        <td><span class="gray">DTCM_<wbr>RAM</span></td>
+                        <td>3</td>
+                        <td>RW / Aucun accès</td>
+                        <td>Interdite</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">.data</span></td>
+                        <td>Variables initialisées privilégiées</td>
+                        <td><span class="gray">DTCM_<wbr>RAM</span></td>
+                        <td>3</td>
+                        <td>RW / Aucun accès</td>
+                        <td>Interdite</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
             <br>
             <p><i>*L'attribut 'write' de la section <span class="bold-strong">.rodata</span> est sans effet lorsque
                   celle-ci
@@ -139,44 +141,46 @@
                leurs variables avec
                un attribut spécifique afin de les localiser dans la bonne section :
             </p>
-            <table class="fixed">
-               <colgroup>
-                  <col style="width: 20%"> <!-- Section -->
-                  <col style="width: 17%"> <!-- Contenu -->
-                  <col style="width: 15%"> <!-- Mémoire -->
-                  <col style="width: 11%"> <!-- MPU -->
-                  <col style="width: 20%"> <!-- Privilégié / Non privilégié -->
-                  <col style="width: 17%"> <!-- Exécution -->
-               </colgroup>
-               <thead>
-                  <tr>
-                     <th>Section</th>
-                     <th>Contenu</th>
-                     <th>Mémoire</th>
-                     <th>MPU</th>
-                     <th>Privilégié / Non privilégié</th>
-                     <th>Exécution</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  <tr>
-                     <td><span class="gray">.mk_<wbr>unprivileged_<wbr>bss_<wbr>memory</span></td>
-                     <td>Variables non initialisées non privilégiées</td>
-                     <td><span class="gray">SRAM1</span></td>
-                     <td>4</td>
-                     <td>RW / RW</td>
-                     <td>Interdite</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">.mk_<wbr>unprivileged_<wbr>data_<wbr>memory</span></td>
-                     <td>Variables initialisées non privilégiées</td>
-                     <td><span class="gray">SRAM1</span></td>
-                     <td>4</td>
-                     <td>RW / RW</td>
-                     <td>Interdite</td>
-                  </tr>
-               </tbody>
-            </table>
+            <div class="table-scroll-container">
+               <table class="fixed">
+                  <colgroup>
+                     <col style="width: 20%"> <!-- Section -->
+                     <col style="width: 17%"> <!-- Contenu -->
+                     <col style="width: 15%"> <!-- Mémoire -->
+                     <col style="width: 11%"> <!-- MPU -->
+                     <col style="width: 20%"> <!-- Privilégié / Non privilégié -->
+                     <col style="width: 17%"> <!-- Exécution -->
+                  </colgroup>
+                  <thead>
+                     <tr>
+                        <th>Section</th>
+                        <th>Contenu</th>
+                        <th>Mémoire</th>
+                        <th>MPU</th>
+                        <th>Privilégié / Non privilégié</th>
+                        <th>Exécution</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="gray">.mk_<wbr>unprivileged_<wbr>bss_<wbr>memory</span></td>
+                        <td>Variables non initialisées non privilégiées</td>
+                        <td><span class="gray">SRAM1</span></td>
+                        <td>4</td>
+                        <td>RW / RW</td>
+                        <td>Interdite</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">.mk_<wbr>unprivileged_<wbr>data_<wbr>memory</span></td>
+                        <td>Variables initialisées non privilégiées</td>
+                        <td><span class="gray">SRAM1</span></td>
+                        <td>4</td>
+                        <td>RW / RW</td>
+                        <td>Interdite</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
             <br>
             <p>L'extrait de code ci-dessous montre une déclaration dans les sections non privilégiées :</p>
             <br>
@@ -206,45 +210,47 @@
             <p id="mk_privileged_dma_memory">En addition, le noyau offre deux macros supplémentaires afin d'allouer un
                buffer <span class="bold-strong">DMA</span> ou un bloc mémoire
                partiellement partagé (RW/RO) : </p>
-            <table class="fixed">
-               <colgroup>
-                  <col style="width: 20%"> <!-- Section -->
-                  <col style="width: 17%"> <!-- Contenu -->
-                  <col style="width: 15%"> <!-- Mémoire -->
-                  <col style="width: 11%"> <!-- MPU -->
-                  <col style="width: 20%"> <!-- Privilégié / Non privilégié -->
-                  <col style="width: 17%"> <!-- Exécution -->
-               </colgroup>
-               <thead>
-                  <tr>
-                     <th>Section</th>
-                     <th>Contenu</th>
-                     <th>Mémoire</th>
-                     <th>MPU</th>
-                     <th>Privilégié / Non privilégié</th>
-                     <th>Exécution</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  <tr>
-                     <td><span class="gray">.mk_<wbr>privileged_<wbr>dma_<wbr>memory</span></td>
-                     <td>Données DMA privilégiées</td>
-                     <td><span class="gray">SRAM1</span></td>
-                     <td>1</td>
-                     <td>RW / Aucun accès</td>
-                     <td>Interdite</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">.mk_<wbr>privileged_<wbr>ro_<wbr>memory</span></td>
-                     <td>Données privilégiées partagées en lecture</td>
-                     <td><span class="gray">SRAM2</span></td>
-                     <td>6</td>
-                     <td>RW / RO</td>
-                     <td>Interdite</td>
-                  </tr>
+            <div class="table-scroll-container">
+               <table class="fixed">
+                  <colgroup>
+                     <col style="width: 20%"> <!-- Section -->
+                     <col style="width: 17%"> <!-- Contenu -->
+                     <col style="width: 15%"> <!-- Mémoire -->
+                     <col style="width: 11%"> <!-- MPU -->
+                     <col style="width: 20%"> <!-- Privilégié / Non privilégié -->
+                     <col style="width: 17%"> <!-- Exécution -->
+                  </colgroup>
+                  <thead>
+                     <tr>
+                        <th>Section</th>
+                        <th>Contenu</th>
+                        <th>Mémoire</th>
+                        <th>MPU</th>
+                        <th>Privilégié / Non privilégié</th>
+                        <th>Exécution</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="gray">.mk_<wbr>privileged_<wbr>dma_<wbr>memory</span></td>
+                        <td>Données DMA privilégiées</td>
+                        <td><span class="gray">SRAM1</span></td>
+                        <td>1</td>
+                        <td>RW / Aucun accès</td>
+                        <td>Interdite</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">.mk_<wbr>privileged_<wbr>ro_<wbr>memory</span></td>
+                        <td>Données privilégiées partagées en lecture</td>
+                        <td><span class="gray">SRAM2</span></td>
+                        <td>6</td>
+                        <td>RW / RO</td>
+                        <td>Interdite</td>
+                     </tr>
 
-               </tbody>
-            </table>
+                  </tbody>
+               </table>
+            </div>
             <br>
             <p id="K_MK_PRIVILEGED_DMA_MEMORY">À l'instar des sections de type <span class="bold-strong">.bss</span>,
                ces zones mémoire sont

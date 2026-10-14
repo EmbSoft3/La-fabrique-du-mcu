@@ -1,5 +1,4 @@
 /* ************************************************************************** */
-/* Sections header */
 
 header {
 	display: flex;
@@ -21,7 +20,6 @@ header .onglet {
 
 header div a {
 	color: rgb(255, 255, 255);
-	;
 	font-size: 1.5em;
 	text-decoration: none;
 }
@@ -38,15 +36,10 @@ header div span {
 
 @media screen and (max-width: 640px) {
 	header {
-		display: flex;
-		flex-wrap: wrap;
 		flex-direction: column;
 		justify-content: center;
-		align-items: center;
 		padding-top: 1.5em;
 		padding-bottom: 1em;
-		border-bottom: 1px dotted rgb(255, 255, 255);
-		font-weight: bold;
 	}
 
 	header .onglet {
@@ -54,7 +47,6 @@ header div span {
 	}
 
 	header .onglet a {
-		color: rgb(43, 188, 138);
 		font-size: 1.1em;
 		padding-left: 0.35em;
 		padding-right: 0.35em;
@@ -62,12 +54,10 @@ header div span {
 
 	header div span {
 		display: none;
-		color: rgb(43, 188, 138);
 	}
 }
 
 /* ************************************************************************** */
-/* Sections main */
 
 main {
 	display: flex;
@@ -81,8 +71,14 @@ main section div {
 	padding-bottom: 1%;
 }
 
+main,
+main section,
+main section div {
+	min-width: 0;
+	max-width: 100%;
+}
+
 /* ************************************************************************** */
-/* Section next-article */
 
 .button-article {
 	display: flex;
@@ -130,6 +126,7 @@ main section div {
 }
 
 /* ************************************************************************** */
+
 .api-grid {
 	display: flex;
 	flex-direction: column;
@@ -162,11 +159,7 @@ main section div {
 
 @media screen and (max-width: 640px) {
 	.api-grid .api-description {
-		color: rgb(230, 230, 230);
 		text-align: left;
-		vertical-align: baseline;
-		margin: 0em;
-		margin-top: 0.3em;
 	}
 }
 
@@ -179,7 +172,6 @@ main section div {
 }
 
 /* ************************************************************************** */
-/* Section comment */
 
 .warning,
 .answer,
@@ -189,14 +181,6 @@ main section div {
 	background: #212326;
 	padding-left: 1em;
 	padding-right: 1.5em;
-	border-radius: 10px;
-}
-
-.prototype-comment {
-	display: flex;
-	align-items: center;
-	padding-left: 1em;
-	padding-right: 0em;
 	border-radius: 10px;
 }
 
@@ -210,7 +194,6 @@ main section div {
 	margin-top: 0em;
 	font-size: 3em;
 	margin-right: 0.5em;
-	/*color: rgb(134, 154, 181);*/
 }
 
 .warning-text,
@@ -225,10 +208,7 @@ main section div {
 	margin-bottom: 1.0em;
 }
 
-.prototype-text p,
-.prototype-text ul {
-	margin: 0;
-}
+/* ************************************************************************** */
 
 .prototype {
 	text-align: left;
@@ -239,10 +219,22 @@ main section div {
 	color: #d1d9e1;
 }
 
+.prototype-comment {
+	display: flex;
+	align-items: center;
+	padding-left: 1em;
+	padding-right: 0em;
+	border-radius: 10px;
+}
+
+.prototype-text p,
+.prototype-text ul {
+	margin: 0;
+}
+
 .prototype li {
 	color: rgb(230, 230, 230);
 	font-size: 1.05em;
-
 	vertical-align: baseline;
 	margin: 0em;
 	margin-top: 0.3em;
@@ -254,12 +246,9 @@ main section div {
 	padding: 5px 10px;
 	margin: 0px;
 	font-size: 1.05em;
-
 	border-radius: 10px;
 	font-family: monospace;
-
 	color: #d1d9e1;
-
 }
 
 /* ************************************************************************** */
