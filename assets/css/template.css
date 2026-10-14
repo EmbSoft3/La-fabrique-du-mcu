@@ -111,6 +111,24 @@ main section div {
 	border-radius: 10px;
 }
 
+@media screen and (max-width: 640px) {
+	.button-article {
+		flex-direction: column;
+		align-items: center;
+		gap: 20px;
+		width: 100%;
+	}
+
+	.button-article a {
+		width: 75%;
+	}
+
+	.button-article div {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
 /* ************************************************************************** */
 .api-grid {
 	display: flex;
@@ -259,7 +277,7 @@ footer div {
 	display: flex;
 	align-items: center;
 	flex-direction: column;
-	padding-top: 240px;
+	padding-top: 50px;
 	font-style: italic;
 	/*border-top: 1px dotted rgb(255, 255, 255);*/
 }
