@@ -34,6 +34,8 @@
 	<main>
 		<section>
 			<div>
+
+				<h1 class="title-article">L'architecture du MCU</h1>
 				<!-- Introduction -->
 
 				<p>
@@ -68,7 +70,7 @@
 					mieux !</p>
 
 				<!-- Définitions -->
-				<p class="title">1. Définitions</p>
+				<h2>1. Définitions</h2>
 
 				<p>
 					Un <span class="bold">microcontrôleur</span> ou MCU est un circuit
@@ -102,7 +104,7 @@
 					fonctionnent ces MCU ?</p>
 
 				<!-- L'architecture -->
-				<h1>2. L'architecture du MCU</h1>
+				<h2>2. L'architecture du MCU</h2>
 				<p>
 					C'est une très bonne question. D'ailleurs, l'image ci-dessous nous
 					présente l'architecture des familles de composants <span class="bold">STM32F75xxx</span> et <span
@@ -117,7 +119,7 @@
 					</figcaption>
 				</figure>
 
-				<h2 class="subtitle">2-1. Le CPU</h2>
+				<h3 class="subtitle">2-1. Le CPU</h3>
 				<p>
 					En haut à gauche, on observe l'organe central du composant, le <span class="bold">CPU</span> pour
 					"Central Process Unit". Nous ne
@@ -127,7 +129,7 @@
 				</p>
 				<br>
 
-				<h2 class="subtitle">2-2. La mémoire</h2>
+				<h3 class="subtitle">2-2. La mémoire</h3>
 				<p>
 					En parlant <span class="bold">mémoire</span>, on observe que notre
 					MCU en possède plusieurs :
@@ -160,7 +162,7 @@
 				</div>
 				<br>
 
-				<h2 class="subtitle">2-3. Les périphériques</h2>
+				<h3 class="subtitle">2-3. Les périphériques</h3>
 				<p>
 					Un <span class="bold">périphérique</span> est un dispositif
 					électronique relié au MCU qui lui ajoute de nouvelles
@@ -187,7 +189,7 @@
 				</div>
 				<br>
 
-				<h2 id="2-4.Les-bus-de-communication" class="subtitle">2-4. Les bus de communication</h2>
+				<h3 id="2-4.Les-bus-de-communication" class="subtitle">2-4. Les bus de communication</h3>
 				<p>
 					Un <span class="bold">bus de communication</span> est une voie de
 					communication contenant une ou plusieurs lignes de données. Sa
@@ -230,7 +232,7 @@
 				</p>
 				<br>
 
-				<h2 class="subtitle">2-5. Les matrices d'interconnexion</h2>
+				<h3 class="subtitle">2-5. Les matrices d'interconnexion</h3>
 
 				<p>
 					Le rôle d'une <span class="bold">matrice d'interconnexion</span>
@@ -254,7 +256,7 @@
 					d'arrivée (FIFO).</p>
 				<br>
 
-				<h2 class="subtitle">2-6. Un premier bilan</h2>
+				<h3 class="subtitle">2-6. Un premier bilan</h3>
 
 				<div class="comment">
 					<p class="comment-logo">💬</p>
@@ -269,7 +271,7 @@
 				<!-- Le fonctionnement -->
 				<h2>3. Le fonctionnement du MCU</h2>
 
-				<h2 class="subtitle">3.1. Le rôle</h2>
+				<h3 class="subtitle">3.1. Le rôle</h3>
 
 				<div class="comment">
 					<p class="comment-logo">💬</p>
@@ -284,7 +286,7 @@
 
 				<br>
 
-				<h2 class="subtitle">3.2. Un programme simple</h2>
+				<h3 class="subtitle">3.2. Un programme simple</h3>
 
 				<p>
 					Afin de mieux appréhender le fonctionnement du MCU, je vous propose
@@ -321,8 +323,8 @@ myVar++;
 				<br>
 
 
-				<h2 class="subtitle">3.3. Une ligne peut en cacher plusieurs
-					...</h2>
+				<h3 class="subtitle">3.3. Une ligne peut en cacher plusieurs
+					...</h3>
 
 				<p>
 					Une incrémentation est en fait constituée d'une lecture, d'une
@@ -385,7 +387,7 @@ myVar++;
 					donc bien adapté à notre cas d'emploi.</p>
 				<br>
 
-				<h2 class="subtitle">3.4. Une machinerie bien rodée</h2>
+				<h3 class="subtitle">3.4. Une machinerie bien rodée</h3>
 
 				<p>Cela étant dit, nous pouvons commencer à analyser le
 					séquencement des flux internes du MCU lors de l'exécution de notre
@@ -448,7 +450,7 @@ myVar++;
 				</p>
 				<br>
 
-				<h2 class="subtitle">3.5. Un CPU, mais pour quoi faire ?</h2>
+				<h3 class="subtitle">3.5. Un CPU, mais pour quoi faire ?</h3>
 
 				<p>Nous venons de voir à quoi ressemblait le séquencement d'un
 					programme simple ne faisant intervenir que le CPU. À titre
@@ -486,7 +488,7 @@ myVar++;
 						directement dans la mémoire SRAM2 en utilisant le bus DMA_MEM1.</li>
 				</ul>
 
-				<h2 class="subtitle">3.6. Le surmenage de la matrice</h2>
+				<h3 class="subtitle">3.6. Le surmenage de la matrice</h3>
 
 				<p>Les deux exemples précédents montraient des situations
 					nominales où les transferts de données se déroulaient correctement
@@ -537,8 +539,8 @@ myVar++;
 					la ronde 😎.</p>
 				<br>
 
-				<h2 class="subtitle">3.7. Une architecture pour les gouverner
-					toutes</h2>
+				<h3 class="subtitle">3.7. Une architecture pour les gouverner
+					toutes</h3>
 
 				<p>
 					Avant de clôturer cet article, j'aimerais vous introduire les deux
