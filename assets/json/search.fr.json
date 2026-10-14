@@ -174,6 +174,90 @@
          "submodule": "",
          "description": "Fonction permettant de récupérer le taux de charge CPU d'une tâche.",
          "anchor": "task.html#mk_task_getLoad"
+      },
+      {
+         "name": "linker.ld",
+         "module": "Linker",
+         "submodule": "",
+         "description": "Fichier d'édition de lien.",
+         "anchor": "mpu_settings.html#linker"
+      },
+      {
+         "name": ".rodata",
+         "module": "Linker",
+         "submodule": "",
+         "description": "Section contenant les variables globales ou statiques constantes.",
+         "anchor": "mpu_settings.html#variables"
+      },
+      {
+         "name": ".bss",
+         "module": "Linker",
+         "submodule": "",
+         "description": "Section privilégiée contenant les variables globales ou statiques non initialisées.",
+         "anchor": "mpu_settings.html#variables"
+      },
+      {
+         "name": ".data",
+         "module": "Linker",
+         "submodule": "",
+         "description": "Section privilégiée contenant les variables globales ou statiques initialisées.",
+         "anchor": "mpu_settings.html#variables"
+      },
+      {
+         "name": ".mk_unprivileged_bss_memory",
+         "module": "Linker",
+         "submodule": "",
+         "description": "Section non privilégiée contenant les variables globales ou statiques non initialisées.",
+         "anchor": "mpu_settings.html#variables"
+      },
+      {
+         "name": "K_MK_UNPRIVILEGED_BSS_MEMORY ",
+         "module": "Linker",
+         "submodule": "Memory",
+         "description": "Constante permettant d'allouer une variable dans la section .mk_unprivileged_bss_memory.",
+         "anchor": "mpu_settings.html#variables"
+      },
+      {
+         "name": ".mk_unprivileged_data_memory",
+         "module": "Linker",
+         "submodule": "",
+         "description": "Section non privilégiée contenant les variables globales ou statiques initialisées.",
+         "anchor": "mpu_settings.html#variables"
+      },
+      {
+         "name": "K_MK_UNPRIVILEGED_DATA_MEMORY  ",
+         "module": "Linker",
+         "submodule": "Memory",
+         "description": "Constante permettant d'allouer une variable dans la section .mk_unprivileged_data_memory.",
+         "anchor": "mpu_settings.html#variables"
+      },
+      {
+         "name": ".mk_privileged_dma_memory",
+         "module": "Linker",
+         "submodule": "",
+         "description": "Section privilégiée contenant les variables utilisées pour les transferts DMA.",
+         "anchor": "mpu_settings.html#variables"
+      },
+      {
+         "name": "K_MK_PRIVILEGED_DMA_MEMORY",
+         "module": "Linker",
+         "submodule": "Memory",
+         "description": "Constante permettant d'allouer une variable dans la section .mk_privileged_dma_memory.",
+         "anchor": "mpu_settings.html#variables"
+      },
+      {
+         "name": ".mk_privileged_ro_memory",
+         "module": "Linker",
+         "submodule": "",
+         "description": "Section privilégiée contenant les variables partagées en lecture.",
+         "anchor": "mpu_settings.html#variables"
+      },
+      {
+         "name": "K_MK_PRIVILEGED_RO_MEMORY",
+         "module": "Linker",
+         "submodule": "Memory",
+         "description": "Constante permettant d'allouer une variable dans la section .mk_privileged_ro_memory.",
+         "anchor": "mpu_settings.html#variables"
       }
    ]
 }
