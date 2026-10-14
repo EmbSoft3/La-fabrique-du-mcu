@@ -186,7 +186,7 @@
          "name": ".rodata",
          "module": "Linker",
          "submodule": "",
-         "description": "Section contenant les variables globales ou statiques constantes.",
+         "description": "Section contenant les constantes globales ou statiques.",
          "anchor": "mpu.html#variables"
       },
       {
@@ -208,56 +208,56 @@
          "module": "Linker",
          "submodule": "",
          "description": "Section non privilégiée contenant les variables globales ou statiques non initialisées.",
-         "anchor": "mpu.html#variables"
+         "anchor": "mpu.html#K_MK_UNPRIVILEGED_BSS_MEMORY"
       },
       {
          "name": "K_MK_UNPRIVILEGED_BSS_MEMORY ",
          "module": "Linker",
          "submodule": "Memory",
          "description": "Constante permettant d'allouer une variable dans la section .mk_unprivileged_bss_memory.",
-         "anchor": "mpu.html#variables"
+         "anchor": "mpu.html#K_MK_UNPRIVILEGED_BSS_MEMORY"
       },
       {
          "name": ".mk_unprivileged_data_memory",
          "module": "Linker",
          "submodule": "",
          "description": "Section non privilégiée contenant les variables globales ou statiques initialisées.",
-         "anchor": "mpu.html#variables"
+         "anchor": "mpu.html#K_MK_UNPRIVILEGED_BSS_MEMORY"
       },
       {
          "name": "K_MK_UNPRIVILEGED_DATA_MEMORY  ",
          "module": "Linker",
          "submodule": "Memory",
          "description": "Constante permettant d'allouer une variable dans la section .mk_unprivileged_data_memory.",
-         "anchor": "mpu.html#variables"
+         "anchor": "mpu.html#K_MK_UNPRIVILEGED_BSS_MEMORY"
       },
       {
          "name": ".mk_privileged_dma_memory",
          "module": "Linker",
          "submodule": "",
          "description": "Section privilégiée contenant les variables utilisées pour les transferts DMA.",
-         "anchor": "mpu.html#variables"
+         "anchor": "mpu.html#mk_privileged_dma_memory"
       },
       {
          "name": "K_MK_PRIVILEGED_DMA_MEMORY",
          "module": "Linker",
          "submodule": "Memory",
          "description": "Constante permettant d'allouer une variable dans la section .mk_privileged_dma_memory.",
-         "anchor": "mpu.html#variables"
+         "anchor": "mpu.html#K_MK_PRIVILEGED_DMA_MEMORY"
       },
       {
          "name": ".mk_privileged_ro_memory",
          "module": "Linker",
          "submodule": "",
          "description": "Section privilégiée contenant les variables partagées en lecture.",
-         "anchor": "mpu.html#variables"
+         "anchor": "mpu.html#mk_privileged_dma_memory"
       },
       {
          "name": "K_MK_PRIVILEGED_RO_MEMORY",
          "module": "Linker",
          "submodule": "Memory",
          "description": "Constante permettant d'allouer une variable dans la section .mk_privileged_ro_memory.",
-         "anchor": "mpu.html#variables"
+         "anchor": "mpu.html#K_MK_PRIVILEGED_DMA_MEMORY"
       }
    ]
 }

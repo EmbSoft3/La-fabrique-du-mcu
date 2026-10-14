@@ -132,8 +132,8 @@
 }</pre>
 
             <br>
-            <p>Du fait des attributs de la <span class="bold-strong">MPU</span> (aucun accès autorisé pour <span
-                  class="bold-strong">.bss</span> et
+            <p id="K_MK_UNPRIVILEGED_BSS_MEMORY">Du fait des attributs de la <span class="bold-strong">MPU</span> (aucun
+               accès autorisé pour <span class="bold-strong">.bss</span> et
                <span class="bold-strong">.data</span>), les tâches non privilégiées ne peuvent
                pas accéder à ces variables en lecture et en écriture. Elles doivent donc déclarer
                leurs variables avec
@@ -203,8 +203,8 @@
 }</pre>
             <br>
 
-            <p>En addition, le noyau offre deux macros supplémentaires afin d'allouer un buffer <span
-                  class="bold-strong">DMA</span> ou un bloc mémoire
+            <p id="mk_privileged_dma_memory">En addition, le noyau offre deux macros supplémentaires afin d'allouer un
+               buffer <span class="bold-strong">DMA</span> ou un bloc mémoire
                partiellement partagé (RW/RO) : </p>
             <table class="fixed">
                <colgroup>
@@ -246,7 +246,8 @@
                </tbody>
             </table>
             <br>
-            <p>À l'instar des sections de type <span class="bold-strong">.bss</span>, ces zones mémoire sont
+            <p id="K_MK_PRIVILEGED_DMA_MEMORY">À l'instar des sections de type <span class="bold-strong">.bss</span>,
+               ces zones mémoire sont
                initialisées à la valeur nulle par le code
                de
                démarrage. On les utilise de la manière suivante : </p>
