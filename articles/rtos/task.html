@@ -100,6 +100,10 @@
                      <td>Récupère l'adresse d'une tâche.</td>
                   </tr>
                   <tr>
+                     <td><a href="#mk_task_getCurrent"><span class="gray">mk_<wbr>task_<wbr>getCurrent</span></a></td>
+                     <td>Récupère l'adresse de la tâche en cours d'exécution.</td>
+                  </tr>
+                  <tr>
                      <td><a href="#mk_task_get"><span class="gray">mk_<wbr>task_<wbr>get</span></a></td>
                      <td>Récupère l'identifiant, le type, l'état ou la priorité d'une tâche.</td>
                   </tr>
@@ -1239,10 +1243,30 @@
                </div>
             </details>
 
-            <!-- 3.12. La fonction mk_task_get() -->
+            <!-- 3.12. La fonction mk_task_getCurrent() -->
             <details open>
                <summary>
-                  <span class="subtitle" id="mk_task_get">3.12. La fonction mk_task_get()</span>
+                  <span class="subtitle" id="mk_task_getCurrent">3.12. La fonction mk_task_getCurrent()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction retourne l'adresse de la tâche en cours d'exécution.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkTask*</span> mk_task_getCurrent ( <span class="keyword">void</span> );
+                  </pre>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>L'adresse d'une tâche de type <span class="bold-strong">T_mkTask</span>.</li><br>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 3.13. La fonction mk_task_get() -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_task_get">3.13. La fonction mk_task_get()</span>
                </summary>
                <div class="prototype">
                   <p>Cette fonction récupère l'identifiant, le type, l'état ou la priorité d'une tâche à partir de
@@ -1290,10 +1314,10 @@
                </div>
             </details>
 
-            <!-- 3.13. La fonction mk_task_getLoad() -->
+            <!-- 3.14. La fonction mk_task_getLoad() -->
             <details open>
                <summary>
-                  <span class="subtitle" id="mk_task_getLoad">3.13. La fonction mk_task_getLoad()</span>
+                  <span class="subtitle" id="mk_task_getLoad">3.14. La fonction mk_task_getLoad()</span>
                </summary>
                <div class="prototype">
                   <p>Cette fonction récupère le taux de charge CPU d'une tâche.</p>
@@ -1341,10 +1365,10 @@
                </div>
             </details>
 
-            <!-- 3.14 Les définitions -->
+            <!-- 3.15 Les définitions -->
             <details open>
                <summary>
-                  <span class="subtitle">3.14. Les définitions</span>
+                  <span class="subtitle">3.15. Les définitions</span>
                </summary>
                <p>Le module <span class="bold-strong">task</span> peut être configuré à l'aide des définitions
                   suivantes :</p>
@@ -1381,11 +1405,11 @@
             <a href="./kernel.html">
                <div>
                   <p>&lt;</p>
-                  <p>Initialisation du noyau</p>
+                  <p>Initialiser et configurer le noyau</p>
                </div>
             </a> <a href="./mpu_settings.html">
                <div>
-                  <p>Le modèle de protection</p>
+                  <p>Le modèle de protection de Mk</p>
                   <p>></p>
                </div>
             </a>
