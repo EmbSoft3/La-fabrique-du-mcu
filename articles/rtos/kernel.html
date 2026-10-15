@@ -42,41 +42,42 @@
             <h2>1. Synthèse des fonctions</h2>
             <p>L'ensemble de ces fonctions est déclaré dans le fichier d'en-tête <span
                   class="bold-strong">mk_kernel.h</span> :</p>
-            <table>
-               <thead>
-                  <tr>
-                     <th>Fonction</th>
-                     <th>Description</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  <tr>
-                     <td><a href="#mk_init"><span class="gray">mk_init</span></a></td>
-                     <td>Initialise le noyau.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_createIdle"><span class="gray">mk_createIdle</span></a></td>
-                     <td>Initialise les attributs de la tâche de repos.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_start"><span class="gray">mk_start</span></a></td>
-                     <td>Démarre le noyau.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_stop"><span class="gray">mk_stop</span></a></td>
-                     <td>Arrête le noyau puis charge de nouveau le contexte de démarrage. </td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_restart"><span class="gray">mk_restart</span></a></td>
-                     <td>Redémarre le noyau.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_getTick"><span class="gray">mk_getTick</span></a></td>
-                     <td>Renvoie le nombre de ticks écoulés depuis le démarrage du noyau.</td>
-                  </tr>
-               </tbody>
-            </table>
-
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Fonction</th>
+                        <th>Description</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><a href="#mk_init"><span class="gray">mk_init</span></a></td>
+                        <td>Initialise le noyau.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_createIdle"><span class="gray">mk_createIdle</span></a></td>
+                        <td>Initialise les attributs de la tâche de repos.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_start"><span class="gray">mk_start</span></a></td>
+                        <td>Démarre le noyau.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_stop"><span class="gray">mk_stop</span></a></td>
+                        <td>Arrête le noyau puis charge de nouveau le contexte de démarrage. </td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_restart"><span class="gray">mk_restart</span></a></td>
+                        <td>Redémarre le noyau.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_getTick"><span class="gray">mk_getTick</span></a></td>
+                        <td>Renvoie le nombre de ticks écoulés depuis le démarrage du noyau.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
             <h2>2. Utilisation</h2>
             <p> L'initialisation du noyau s'effectue par l'appel des fonctions <span class="bold-strong">mk_init</span>,
                <span class="bold-strong">mk_createIdle</span> et <span class="bold-strong">mk_start</span>. L'extrait de
@@ -119,8 +120,9 @@
    l_result |= <span class="function">mk_start</span> ( 27000 );
 
    <span class="multi-line-comment">/* Après l'appel de mk_start(), le noyau est démarré. */ </span>
-   <span class="multi-line-comment">/* Le compteur de programme (PC) ne revient ici que suite à l'appel de la fonction mk_stop(). */</span>
-   
+   <span class="multi-line-comment">/* Le compteur de programme (PC) ne revient ici que suite */</span>
+   <span class="multi-line-comment">/* à l'appel de la fonction mk_stop(). */ </span>
+
    <span class="keyword">for</span> ( ;; ) ;
 }
 			</pre>
@@ -223,7 +225,8 @@
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
                   <pre class="code">
-<span class="type">T_mkCode</span> mk_init ( <span class="type">uint32_t</span> p_mkType, <span class="type">uint32_t*</span> p_mkStack, <span class="type">uint32_t</span> p_mkStackSize );
+<span class="type">T_mkCode</span> mk_init ( 
+   <span class="type">uint32_t</span> p_mkType, <span class="type">uint32_t*</span> p_mkStack, <span class="type">uint32_t</span> p_mkStackSize );
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
@@ -274,7 +277,9 @@
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
                   <pre class="code">
-<span class="type">T_mkCode</span> mk_createIdle ( <span class="type">uint32_t*</span> p_mkStack, <span class="type">uint32_t</span> p_mkStackSize, <span class="type">T_mkAddress</span> p_mkFunction, <span class="type">T_mkAddr</span> p_mkArg );
+<span class="type">T_mkCode</span> mk_createIdle ( 
+   <span class="type">uint32_t*</span> p_mkStack, <span class="type">uint32_t</span> p_mkStackSize, 
+   <span class="type">T_mkAddress</span> p_mkFunction, <span class="type">T_mkAddr</span> p_mkArg );
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
@@ -486,43 +491,45 @@
                <p>L'utilisateur peut personnaliser la configuration du noyau à l'aide des définitions suivantes :</p>
                <br>
                <div class="prototype">
-                  <table id="K_MK_SCHEDULER">
-                     <thead>
-                        <tr>
-                           <th>Définition</th>
-                           <th>Description</th>
-                           <th>Valeur</th>
-                        </tr>
-                     </thead>
-                     <tbody>
-                        <tr>
-                           <td><a href="#K_MK_SCHEDULER_MASK_PRIORITY"><span
-                                    class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MASK_<wbr>PRIORITY</span></a></td>
-                           <td>
-                              Cette constante configure le masque du registre BASEPRI pour les appels système. Elle
-                              masque les interruptions de priorité supérieure ou égale à la valeur définie. Elle doit
-                              être comprise
-                              entre 1 et 15.
-                           </td>
-                           <td class="center">8</td>
-                        </tr>
-                        <tr>
-                           <td><a href="#K_MK_SCHEDULER_SVC_PRIORITY"><span
-                                    class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>SVC_<wbr>PRIORITY</span></a></td>
-                           <td>Cette constante fixe la priorité du vecteur d'interruption SVC (valeur de 0 à 14,
-                              obligatoirement inférieure à K_MK_SCHEDULER_MASK_PRIORITY).</td>
-                           <td class="center">7</td>
-                        </tr>
-                        <tr>
-                           <td><a href="#K_MK_SCHEDULER_PRIORITY_NUMBER"><span
-                                    class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>PRIORITY_<wbr>NUMBER</span></a></td>
-                           <td>Cette constante configure le nombre de priorités gérées par l'ordonnanceur. Sa valeur
-                              peut varier de 1 à 32.
-                           </td>
-                           <td class="center">10</td>
-                        </tr>
-                     </tbody>
-                  </table>
+                  <div class="table-scroll-container">
+                     <table id="K_MK_SCHEDULER">
+                        <thead>
+                           <tr>
+                              <th>Définition</th>
+                              <th>Description</th>
+                              <th>Valeur</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           <tr>
+                              <td><a href="#K_MK_SCHEDULER_MASK_PRIORITY"><span
+                                       class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MASK_<wbr>PRIORITY</span></a></td>
+                              <td>
+                                 Cette constante configure le masque du registre BASEPRI pour les appels système. Elle
+                                 masque les interruptions de priorité supérieure ou égale à la valeur définie. Elle doit
+                                 être comprise
+                                 entre 1 et 15.
+                              </td>
+                              <td class="center">8</td>
+                           </tr>
+                           <tr>
+                              <td><a href="#K_MK_SCHEDULER_SVC_PRIORITY"><span
+                                       class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>SVC_<wbr>PRIORITY</span></a></td>
+                              <td>Cette constante fixe la priorité du vecteur d'interruption SVC (valeur de 0 à 14,
+                                 obligatoirement inférieure à K_MK_SCHEDULER_MASK_PRIORITY).</td>
+                              <td class="center">7</td>
+                           </tr>
+                           <tr>
+                              <td><a href="#K_MK_SCHEDULER_PRIORITY_NUMBER"><span
+                                       class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>PRIORITY_<wbr>NUMBER</span></a></td>
+                              <td>Cette constante configure le nombre de priorités gérées par l'ordonnanceur. Sa valeur
+                                 peut varier de 1 à 32.
+                              </td>
+                              <td class="center">10</td>
+                           </tr>
+                        </tbody>
+                     </table>
+                  </div>
                </div>
             </details>
 

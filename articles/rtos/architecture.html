@@ -91,34 +91,35 @@
             <p>
                <span class="bold-strong">Mk</span> implémente les 3 exceptions matérielles suivantes :
             </p>
-            <table>
-               <!--caption>Tableau 1 - Liste des exceptions utilisées par le noyau</caption-->
-               <thead>
-                  <tr>
-                     <th>Exception</th>
-                     <th>Rôle</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  <tr>
-                     <td><span class="gray">SysTick</span></td>
-                     <td>Incrémente le compteur de tick (32 bits) et déclenche l'interruption PendSV</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">PendSV</span></td>
-                     <td>Réalise l'ordonnancement, les changements de contexte et le calcul de la charge CPU.</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">SVC</span></td>
-                     <td>Exécute les appels système réalisés par les tâches.</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">Mem<wbr>Manage</span></td>
-                     <td>Traite les violations d'accès mémoire détectées par la MPU.</td>
-                  </tr>
-               </tbody>
-            </table>
-
+            <div class="table-scroll-container">
+               <table>
+                  <!--caption>Tableau 1 - Liste des exceptions utilisées par le noyau</caption-->
+                  <thead>
+                     <tr>
+                        <th>Exception</th>
+                        <th>Rôle</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="gray">SysTick</span></td>
+                        <td>Incrémente le compteur de tick (32 bits) et déclenche l'interruption PendSV</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">PendSV</span></td>
+                        <td>Réalise l'ordonnancement, les changements de contexte et le calcul de la charge CPU.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">SVC</span></td>
+                        <td>Exécute les appels système réalisés par les tâches.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">Mem<wbr>Manage</span></td>
+                        <td>Traite les violations d'accès mémoire détectées par la MPU.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
             <h2>4. Priorité d'interruption</h2>
             <p>
                Le Cortex-M7 définit ses priorités sur 4 bits (0 = la plus forte, 15 = la plus faible). </p>
@@ -130,9 +131,12 @@
 <span class="multi-line-comment">/* Fichier mk_scheduler_constants.h */</span>
 <span class="multi-line-comment">/* ... */</span>
 <span class="multi-line-comment"></span>
-<span class="keyword">#define</span> K_MK_SCHEDULER_BASE_PRIORITY <span class="number">15</span> <span class="multi-line-comment">/* SysTick and PendSV */</span>
-<span class="keyword">#define</span> K_MK_SCHEDULER_SVC_PRIORITY <span class="number">7</span> <span class="multi-line-comment">/* SVC = MASK_PRIORITY - 1 */</span>
-<span class="keyword">#define</span> K_MK_SCHEDULER_MASK_PRIORITY <span class="number">8</span> <span class="multi-line-comment">/* MemManage - seuil de priorité utilisé dans les sections critiques */</span>
+ <span class="multi-line-comment">/* SysTick and PendSV */</span>
+<span class="keyword">#define</span> K_MK_SCHEDULER_BASE_PRIORITY <span class="number">15</span>
+<span class="multi-line-comment">/* SVC = MASK_PRIORITY - 1 */</span>
+<span class="keyword">#define</span> K_MK_SCHEDULER_SVC_PRIORITY <span class="number">7</span> 
+<span class="multi-line-comment">/* MemManageFault - seuil de priorité utilisé pour les sections critiques */</span>
+<span class="keyword">#define</span> K_MK_SCHEDULER_MASK_PRIORITY <span class="number">8</span> 
 </pre>
             <br>
             <p>
@@ -566,37 +570,39 @@ _mk_svc_set ( &l_svc );
                gestionnaire SVC pour traiter l'appel système en fonction de son identifiant :
             </p>
 
-            <table>
-               <!--caption>Tableau 1 - Listes des exceptions utilisée par le noyau</caption-->
-               <thead>
-                  <tr>
-                     <th>Identifiant</th>
-                     <th>Gestionnaire</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  <tr>
-                     <td><span class="gray">1000–1007</span></td>
-                     <td>Création d'objet (mk_call_create).</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">2000–2006</span></td>
-                     <td>Suppression d'objet (mk_call_delete).</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">3000–3008</span></td>
-                     <td>Manipulation de tâches (mk_call_handleTask).</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">4000–4006</span></td>
-                     <td>Synchronisation de tâches (mk_call_synchronise).</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">5000–5003</span></td>
-                     <td>Déblocage des tâches (mk_call_unblock).</td>
-                  </tr>
-               </tbody>
-            </table>
+            <div class="table-scroll-container">
+               <table>
+                  <!--caption>Tableau 1 - Listes des exceptions utilisée par le noyau</caption-->
+                  <thead>
+                     <tr>
+                        <th>Identifiant</th>
+                        <th>Gestionnaire</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="gray">1000–1007</span></td>
+                        <td>Création d'objet (mk_call_create).</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">2000–2006</span></td>
+                        <td>Suppression d'objet (mk_call_delete).</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">3000–3008</span></td>
+                        <td>Manipulation de tâches (mk_call_handleTask).</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">4000–4006</span></td>
+                        <td>Synchronisation de tâches (mk_call_synchronise).</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">5000–5003</span></td>
+                        <td>Déblocage des tâches (mk_call_unblock).</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
             <br>
             <p>Lorsqu'au moins une liste de tâches est modifiée et si une tâche plus prioritaire se retrouve prête à
                être exécutée, un
@@ -618,13 +624,17 @@ _mk_svc_set ( &l_svc );
 
       <section>
          <div class="button-article">
-            <div></div>
-            <a href="./download.html">
+            <a href="./index.html">
                <div>
-                  <p>Télécharger et compiler le noyau</p>
-                  <p>></p>
+                  <p>&lt;</p>
+                  <p>Sommaire</p>
                </div>
-            </a>
+               <a href="./download.html">
+                  <div>
+                     <p>Télécharger et compiler le noyau</p>
+                     <p>></p>
+                  </div>
+               </a>
          </div>
       </section>
    </main>

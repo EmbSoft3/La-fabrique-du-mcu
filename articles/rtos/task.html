@@ -45,75 +45,77 @@
             <h2>1. Synthèse des fonctions</h2>
             <p>L'ensemble de ces fonctions est déclaré dans les fichiers d'en-tête <span
                   class="bold-strong">mk_task.h</span> et <span class="bold-strong">mk_stack.h</span> :</p>
-            <table>
-               <thead>
-                  <tr>
-                     <th>Fonction</th>
-                     <th>Description</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  <tr>
-                     <td><a href="#mk_stack_create"><span class="gray">mk_<wbr>stack_<wbr>create</span></a></td>
-                     <td>Initialise les attributs d'une pile.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_setTaskCtrlBlock"><span
-                              class="gray">mk_<wbr>task_<wbr>setTaskCtrlBlock</span></a>
-                     </td>
-                     <td>Initialise les attributs d'une tâche.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_create"><span class="gray">mk_<wbr>task_<wbr>create</span></a></td>
-                     <td>Crée une tâche.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_terminate"><span class="gray">mk_<wbr>task_<wbr>terminate</span></a></td>
-                     <td>Supprime une tâche.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_yield"><span class="gray">mk_<wbr>task_<wbr>yield</span></a></td>
-                     <td>Réalise un changement de contexte.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_sleep"><span class="gray">mk_<wbr>task_<wbr>sleep</span></a></td>
-                     <td>Réalise une temporisation.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_delay"><span class="gray">mk_<wbr>task_<wbr>delay</span></a></td>
-                     <td>Réalise une temporisation relative.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_suspend"><span class="gray">mk_<wbr>task_<wbr>suspend</span></a></td>
-                     <td>Suspend une tâche.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_resume"><span class="gray">mk_<wbr>task_<wbr>resume</span></a></td>
-                     <td>Réveille une tâche suspendue.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_priority"><span class="gray">mk_<wbr>task_<wbr>priority</span></a></td>
-                     <td>Change la priorité d'une tâche.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_getHandle"><span class="gray">mk_<wbr>task_<wbr>getHandle</span></a></td>
-                     <td>Récupère l'adresse d'une tâche.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_getCurrent"><span class="gray">mk_<wbr>task_<wbr>getCurrent</span></a></td>
-                     <td>Récupère l'adresse de la tâche en cours d'exécution.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_get"><span class="gray">mk_<wbr>task_<wbr>get</span></a></td>
-                     <td>Récupère l'identifiant, le type, l'état ou la priorité d'une tâche.</td>
-                  </tr>
-                  <tr>
-                     <td><a href="#mk_task_getLoad"><span class="gray">mk_<wbr>task_<wbr>getLoad</span></a></td>
-                     <td>Récupère le taux de charge CPU d'une tâche.</td>
-                  </tr>
-               </tbody>
-            </table>
-
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Fonction</th>
+                        <th>Description</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><a href="#mk_stack_create"><span class="gray">mk_<wbr>stack_<wbr>create</span></a></td>
+                        <td>Initialise les attributs d'une pile.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_setTaskCtrlBlock"><span
+                                 class="gray">mk_<wbr>task_<wbr>setTaskCtrlBlock</span></a>
+                        </td>
+                        <td>Initialise les attributs d'une tâche.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_create"><span class="gray">mk_<wbr>task_<wbr>create</span></a></td>
+                        <td>Crée une tâche.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_terminate"><span class="gray">mk_<wbr>task_<wbr>terminate</span></a></td>
+                        <td>Supprime une tâche.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_yield"><span class="gray">mk_<wbr>task_<wbr>yield</span></a></td>
+                        <td>Réalise un changement de contexte.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_sleep"><span class="gray">mk_<wbr>task_<wbr>sleep</span></a></td>
+                        <td>Réalise une temporisation.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_delay"><span class="gray">mk_<wbr>task_<wbr>delay</span></a></td>
+                        <td>Réalise une temporisation relative.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_suspend"><span class="gray">mk_<wbr>task_<wbr>suspend</span></a></td>
+                        <td>Suspend une tâche.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_resume"><span class="gray">mk_<wbr>task_<wbr>resume</span></a></td>
+                        <td>Réveille une tâche suspendue.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_priority"><span class="gray">mk_<wbr>task_<wbr>priority</span></a></td>
+                        <td>Change la priorité d'une tâche.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_getHandle"><span class="gray">mk_<wbr>task_<wbr>getHandle</span></a></td>
+                        <td>Récupère l'adresse d'une tâche.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_getCurrent"><span class="gray">mk_<wbr>task_<wbr>getCurrent</span></a>
+                        </td>
+                        <td>Récupère l'adresse de la tâche en cours d'exécution.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_get"><span class="gray">mk_<wbr>task_<wbr>get</span></a></td>
+                        <td>Récupère l'identifiant, le type, l'état ou la priorité d'une tâche.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_task_getLoad"><span class="gray">mk_<wbr>task_<wbr>getLoad</span></a></td>
+                        <td>Récupère le taux de charge CPU d'une tâche.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
             <h2>2. Utilisation</h2>
 
             <p>La création d'une tâche s'effectue à partir des fonctions <span
@@ -166,10 +168,12 @@
       <span class="multi-line-comment">/* Point d'entrée de la tâche : mk_task_privileged */</span>
       <span class="multi-line-comment">/* Argument de la fonction : "Hello world !" */</span>
       l_result = <span class="function">mk_task_create</span> ( &l_task, &l_stack, <span class="type">K_MK_NULL</span>, 
-         &l_taskCtrlBlock, <span class="function">mk_task_privileged</span>, ( <span class="type">T_mkAddr</span> ) <span class="string">"Hello world !"</span> );
+         &l_taskCtrlBlock, <span class="function">mk_task_privileged</span>, 
+         ( <span class="type">T_mkAddr</span> ) <span class="string">"Hello world !"</span> );
    }
 }
 </pre>
+            <br>
             <p>La fonction <span class="bold-strong">mk_stack_create</span> permet de rassembler les attributs de la
                pile
                dans une structure de type <span class="bold">T_mkStack</span>. En fonction du type de la pile
@@ -308,7 +312,8 @@
 <span class="multi-line-comment">/* Déclaration d'un pointeur de pool */</span>
 <span class="type">T_mkPool</span>* g_mkPool;
 
-<span class="multi-line-comment">/* Il est nécessaire d'initialiser un gestionnaire mémoire dans un contexte persistant */</span>
+<span class="multi-line-comment">/* Il est nécessaire d'initialiser un gestionnaire mémoire */ </span>
+<span class="multi-line-comment">/* dans un contexte persistant */</span>
 <span class="keyword">void</span> <span class="function">mk_task</span> ( <span class="keyword">T_mkAddr</span> p_param )
 {
    <span class="multi-line-comment">/* ... */</span>
@@ -605,24 +610,32 @@
             </div>
             <br>
             <p>
-               Enfin, le module <span class="bold-strong">task</span> offre deux derniers services au travers des
+               Enfin, le module <span class="bold-strong">task</span> offre trois derniers services au travers des
                fonctions
-               <span class="bold-strong">mk_task_get</span> et <span class="bold-strong">mk_task_getLoad</span>.
+               <span class="bold-strong">mk_task_get</span>, <span class="bold-strong">mk_task_getCurrent</span> et
+               <span class="bold-strong">mk_task_getLoad</span>.
             </p>
             <br>
             <p>La
                première fonction permet de récupérer l'identifiant, le type, l'état ou la priorité d'une tâche. La
-               seconde permet de récupérer le taux de charge CPU d'une tâche en pourcentage :
+               deuxième l'adresse de la tâche courante et la
+               troisième le taux de charge CPU d'une tâche (en pourcentage) :
             </p>
             <br>
             <pre class="code">
 <span class="keyword">void</span> <span class="function">mk_task</span> ( <span class="keyword">T_mkAddr</span> p_param )
 {
+   <span class="multi-line-comment">/* Déclaration d'un pointeur de tâche */</span>
+   <span class="type">T_mkTask*</span> l_current;
+
    <span class="multi-line-comment">/* Déclaration des variables stockant les attributs */</span>
    <span class="type">uint32_t</span> l_id, l_type, l_state, l_basePriority, l_currentPriority;
    <span class="type">uint32_t</span> l_load;
 
    <span class="multi-line-comment">/* ... */</span>
+
+<span class="multi-line-comment">/* Récupération de l'instance de la courante */</span> 
+   l_task = <span class="function">mk_task_getCurrent</span> ( );
 
    <span class="multi-line-comment">/* Récupération de l'instance d'une tâche */</span> 
    l_result = <span class="function">mk_task_getHandle</span> ( &l_task, <span class="define">K_MK_TASK_ID</span> );
@@ -1373,29 +1386,29 @@
                <p>Le module <span class="bold-strong">task</span> peut être configuré à l'aide des définitions
                   suivantes :</p>
                <br>
-
-               <table id="K_MK_SCHEDULER_MAX_NUMBER_OF_TASKS">
-                  <thead>
-                     <tr>
-                        <th>Définition</th>
-                        <th>Description</th>
-                        <th>Valeur</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                     <tr>
-                        <td><a href="#K_MK_SCHEDULER_MAX_NUMBER_OF_TASKS"><span
-                                 class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>TASKS</span></a>
-                        </td>
-                        <td>
-                           Cette constante définit le nombre de tâches pouvant être allouées. Elle ne peut pas être
-                           nulle.
-                        </td>
-                        <td class="center">32</td>
-                     </tr>
-                  </tbody>
-               </table>
-
+               <div class="table-scroll-container">
+                  <table id="K_MK_SCHEDULER_MAX_NUMBER_OF_TASKS">
+                     <thead>
+                        <tr>
+                           <th>Définition</th>
+                           <th>Description</th>
+                           <th>Valeur</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        <tr>
+                           <td><a href="#K_MK_SCHEDULER_MAX_NUMBER_OF_TASKS"><span
+                                    class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>TASKS</span></a>
+                           </td>
+                           <td>
+                              Cette constante définit le nombre de tâches pouvant être allouées. Elle ne peut pas être
+                              nulle.
+                           </td>
+                           <td class="center">32</td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </div>
             </details>
          </div>
       </section>

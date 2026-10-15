@@ -261,7 +261,8 @@
             <pre class="code">
 
 <span class="multi-line-comment">/* Déclaration d'une variable dans la section .mk_privileged_dma_memory */</span>
-<span class="multi-line-comment">/* Les accès au cache sont désactivés pour conserver une cohérence entre le CPU et la DMA */</span>
+<span class="multi-line-comment">/* Les accès au cache sont désactivés pour conserver une cohérence */ </span>
+<span class="multi-line-comment">/* entre le CPU et la DMA */</span>
 <span class="define">K_MK_PRIVILEGED_DMA_MEMORY</span> <span class="type">uint32_t</span> g_dmaBuf [ <span class="number">512</span> ];
 
 <span class="multi-line-comment">/* Déclaration d'une variable dans la section .mk_privileged_ro_memory */</span>
@@ -589,7 +590,8 @@
 <span class="define-underline">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_mailBuf [ <span class="number">4</span> ];
 
 <span class="multi-line-comment">/* Déclaration d'un pointeur de boîte de messages */</span>
-<span class="multi-line-comment">/* Celui-ci doit être accessible en lecture et en écriture à la tâche non privilégiée */</span>
+<span class="multi-line-comment">/* Celui-ci doit être accessible en lecture et en écriture */</span>
+<span class="multi-line-comment">/* à la tâche non privilégiée */</span>
 <span class="define">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkMail</span>* g_mail;
 
 <span class="multi-line-comment">/* Code de la tâche non privilégiée */</span>
@@ -822,8 +824,9 @@ l_result = <span class="function">mk_mail_pend</span> ( <span class="define">K_M
             </p>
             <br>
             <pre class="code">
-<span class="multi-line-comment">/* On indique au noyau les fonctions à utiliser lorsque les erreurs se produisent */</span>
-<span class="multi-line-comment">/* Si ces fonctions ne sont pas configurées, le noyau exécute les fonctions par défaut */</span>
+<span class="multi-line-comment">/* On indique au noyau les fonctions à utiliser lorsque les erreurs */</span>
+<span class="multi-line-comment">/* se produisent. Si ces fonctions ne sont pas configurées, */</span>
+<span class="multi-line-comment">/* le noyau exécute les fonctions par défaut */</span>
 <span class="type">T_mkKernelCallback</span> l_kernelCallbackHandler = { <span class="define">K_MK_NULL</span> };
 l_kernelCallbackHandler.rightFault = <span class="function">mk_rightFault</span>;
 l_kernelCallbackHandler.handleFault = <span class="function">mk_handleFault</span>;

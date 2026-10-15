@@ -313,42 +313,44 @@
             <p>La table ci-dessous présente les caractéristiques des différents types de mémoire du processeur Cortex-M7
                :</p>
 
-            <table class="fixed">
-               <colgroup>
-                  <col style="width: 30%"> <!-- Type -->
-                  <col style="width: 20%"> <!-- Cache L1 -->
-                  <col style="width: 25%"> <!-- Accès spéculatifs -->
-                  <col style="width: 25%"> <!-- Ordre des accès -->
-               </colgroup>
-               <thead>
-                  <tr>
-                     <th>Type</th>
-                     <th>Cache L1</th>
-                     <th>Accès spéculatifs</th>
-                     <th>Ordre des accès</th>
-                  </tr>
-               </thead>
-               <tbody>
-                  <tr>
-                     <td><span class="gray">Normal cacheable</span></td>
-                     <td>Oui</td>
-                     <td>Possibles</td>
-                     <td>Réordonnés</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">Normal non cacheable</span></td>
-                     <td>Non</td>
-                     <td>Possibles</td>
-                     <td>Réordonnés</td>
-                  </tr>
-                  <tr>
-                     <td><span class="gray">Device</span></td>
-                     <td>Non</td>
-                     <td>Interdits</td>
-                     <td>Préservé</td>
-                  </tr>
-               </tbody>
-            </table>
+            <div class="table-scroll-container">
+               <table class="fixed">
+                  <colgroup>
+                     <col style="width: 30%"> <!-- Type -->
+                     <col style="width: 20%"> <!-- Cache L1 -->
+                     <col style="width: 25%"> <!-- Accès spéculatifs -->
+                     <col style="width: 25%"> <!-- Ordre des accès -->
+                  </colgroup>
+                  <thead>
+                     <tr>
+                        <th>Type</th>
+                        <th>Cache L1</th>
+                        <th>Accès spéculatifs</th>
+                        <th>Ordre des accès</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="gray">Normal cacheable</span></td>
+                        <td>Oui</td>
+                        <td>Possibles</td>
+                        <td>Réordonnés</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">Normal non cacheable</span></td>
+                        <td>Non</td>
+                        <td>Possibles</td>
+                        <td>Réordonnés</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">Device</span></td>
+                        <td>Non</td>
+                        <td>Interdits</td>
+                        <td>Préservé</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
             <br>
 
             <p>De la même manière, pour maintenir la cohérence des données
