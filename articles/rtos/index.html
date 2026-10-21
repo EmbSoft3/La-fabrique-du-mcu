@@ -44,11 +44,15 @@
             </p>
             <br>
             <div class="api-grid">
-               <a href="./architecture.html" class="api-link"><b>✔ Architecture et caractéristiques du noyau</b>
+               <a href="./architecture.html" class="api-link"><b>
+                     <h2 class="link">✔ Architecture et caractéristiques du noyau</h2>
+                  </b>
                   <span class="api-description">Cet article présente l'architecture et les fonctionnalités du noyau
-                     temps réel <span class="bold-strong">Mk</span>. Il présente le fonctionnement de l'ordonnanceur, la
+                     temps réel <span class="bold-strong">Mk</span>. Il présente le fonctionnement de l'ordonnanceur,
+                     la
                      gestion de la mémoire, le modèle de
-                     privilège/isolation via la MPU, le support de la FPU, la gestion des interruptions, les primitives
+                     privilège/isolation via la MPU, le support de la FPU, la gestion des interruptions, les
+                     primitives
                      de synchronisation et le mécanisme d'appels
                      système par interruption SVC.
                   </span>
@@ -56,9 +60,13 @@
             </div>
 
             <div class="api-grid">
-               <a href="./download.html" class="api-link"><b>✔ Télécharger et compiler le noyau</b>
-                  <span class="api-description">Cet article détaille la méthodologie à utiliser pour prendre en main le
-                     noyau Mk. Il se concentre sur l'installation des logiciels (chaine de compilation GNU Arm, CMake,
+               <a href="./download.html" class="api-link"><b>
+                     <h2 class="link">✔ Télécharger et compiler le noyau</h2>
+                  </b>
+                  <span class="api-description">Cet article détaille la méthodologie à utiliser pour prendre en main
+                     le
+                     noyau Mk. Il se concentre sur l'installation des logiciels (chaine de compilation GNU Arm,
+                     CMake,
                      Ninja,
                      J-Link),
                      la récupération du code source sur GitHub, la compilation sous VS Code,
@@ -68,9 +76,12 @@
             </div>
 
             <div class="api-grid">
-               <a href="./kernel.html" class="api-link"><b>✔ Initialiser et configurer le noyau</b>
+               <a href="./kernel.html" class="api-link"><b>
+                     <h2 class="link">✔ Initialiser et configurer le noyau</h2>
+                  </b>
                   <span class="api-description">Cet article présente la séquence d'initialisation du noyau
-                     (modes FPU/flottant et pile principale), la configuration de la tâche de repos, le démarrage et le
+                     (modes FPU/flottant et pile principale), la configuration de la tâche de repos, le démarrage et
+                     le
                      réglage du timer système, ainsi que les
                      mécanismes de lecture du tick système, d'arrêt et de redémarrage du noyau.
                   </span>
@@ -78,31 +89,51 @@
             </div>
 
             <div class="api-grid">
-               <a href="./task.html" class="api-link"><b>✔ Créer et manipuler des tâches</b>
+               <a href="./task.html" class="api-link"><b>
+                     <h2 class="link">✔ Créer et manipuler des tâches</h2>
+                  </b>
                   <span class="api-description">Cet article explique comment créer et piloter les tâches du noyau,
-                     comment allouer une pile, configurer ou récupérer les attributs d'une tâche, changer la priorité,
+                     comment allouer une pile, configurer ou récupérer les attributs d'une tâche, changer la
+                     priorité,
                      suspendre, redémarrer ou temporiser une tâche.
                   </span>
                </a>
             </div>
 
             <div class="api-grid">
-               <a href="./mpu_settings.html" class="api-link"><b>✔ Le modèle de protection de Mk</b>
+               <a href="./mpu_settings.html" class="api-link"><b>
+                     <h2 class="link">✔ Le modèle de protection de Mk</h2>
+                  </b>
                   <span class="api-description">Cet article détaille le modèle de protection du noyau Mk (isolation
-                     entre modes privilégié et non privilégié), le paramétrage des régions de la MPU en adéquation avec
-                     le fichier d'édition de lien, la protection des périphériques et la détection logicielle des accès
+                     entre modes privilégié et non privilégié), le paramétrage des régions de la MPU en adéquation
+                     avec
+                     le fichier d'édition de lien, la protection des périphériques et la détection logicielle des
+                     accès
                      non autorisés.
                   </span>
                </a>
             </div>
 
             <div class="api-grid">
-               <a href="./mpu.html" class="api-link"><b>✔ Protéger son programme avec Mk</b>
+               <a href="./mpu.html" class="api-link"><b>
+                     <h2 class="link">✔ Protéger son programme avec Mk</h2>
+                  </b>
                   <span class="api-description">Cet article présente l'utilisation du modèle de
-                     protection de <span class="bold-strong">Mk</span>. Il détaille le placement des variables dans la
+                     protection de <span class="bold-strong">Mk</span>. Il détaille le placement des variables dans
+                     la
                      mémoire, la création des tâches
                      privilégiées, le partage des données et la gestion des erreurs
                      de permissions.
+                  </span>
+               </a>
+            </div>
+
+            <div class="api-grid">
+               <a href="./pool.html" class="api-link"><b>
+                     <h2 class="link">✔ Allouer des blocs de taille fixe avec les Pools</h2>
+                  </b>
+                  <span class="api-description">Cet article détaille le fonctionnement et l'utilisation des allocateurs
+                     mémoire de taille fixe, de leur création à leur suppression.
                   </span>
                </a>
             </div>

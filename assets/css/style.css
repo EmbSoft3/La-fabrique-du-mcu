@@ -95,6 +95,17 @@ h2,
 	font-weight: bold;
 }
 
+h2.link {
+	color: rgb(43, 188, 138);
+	font-size: 1.0em;
+	font-weight: normal;
+	text-align: justify;
+	vertical-align: baseline;
+	margin: 0em;
+	margin-top: 0.3em;
+	line-height: 1.3em;
+}
+
 h1.title-article {
 	color: rgb(72, 192, 153);
 	font-size: 1.7em;
@@ -260,12 +271,6 @@ img {
 
 .underline-dotted {
 	text-decoration: underline dotted;
-}
-
-.bold-orange {
-	text-decoration: none;
-	color: rgb(255, 165, 0);
-	font-weight: bold;
 }
 
 .default-orange {
