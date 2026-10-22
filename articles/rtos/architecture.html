@@ -124,14 +124,12 @@
             <p>
                Le Cortex-M7 définit ses priorités sur 4 bits (0 = la plus forte, 15 = la plus faible). </p>
             <p>
-               Le noyau configure la priorité des 4 exceptions précédentes avec les valeurs ci-dessous :
+               Le noyau configure la priorité des 4 exceptions précédentes avec les valeurs ci-dessous (fichier
+               <span class="bold-strong">mk_scheduler_constants.h</span>) :
             </p>
             <br>
             <pre class="code">
-<span class="multi-line-comment">/* Fichier mk_scheduler_constants.h */</span>
-<span class="multi-line-comment">/* ... */</span>
-<span class="multi-line-comment"></span>
- <span class="multi-line-comment">/* SysTick and PendSV */</span>
+<span class="multi-line-comment">/* SysTick and PendSV */</span>
 <span class="keyword">#define</span> K_MK_SCHEDULER_BASE_PRIORITY <span class="number">15</span>
 <span class="multi-line-comment">/* SVC = MASK_PRIORITY - 1 */</span>
 <span class="keyword">#define</span> K_MK_SCHEDULER_SVC_PRIORITY <span class="number">7</span> 
