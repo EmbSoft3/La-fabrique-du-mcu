@@ -292,7 +292,7 @@
             <div class="warning">
                <p class="warning-logo">⚠️</p>
                <div class="warning-text ">
-                  <p>Une variable globale ou statique déclarée avec le mot clé "const" est placée dans la section <span
+                  <p>Une variable globale ou statique déclarée avec le mot-clé "const" est placée dans la section <span
                         class="bold-strong">.rodata</span>. Elle n'est accessible qu'en lecture (tâches privilégiées et
                      non privilégiées).
                   </p>
@@ -380,7 +380,7 @@
                principal. Lorsqu'une tâche privilégiée est créée, elle s'exécute avec le bit <span
                   class="bold-strong">nPRIV</span> positionné à 0, elle peut donc accéder à toutes les ressources
                du
-               système sauf restriction spéciale imposée par la <span class="bold-strong">MPU</span>.</p>
+               système sauf restriction spécifique imposée par la <span class="bold-strong">MPU</span>.</p>
 
             <br>
             <div class="comment">
@@ -452,7 +452,7 @@
                venir le
                récupérer en demandant au noyau de le copier dans un buffer de destination.</p>
             <p>Les boîtes de messages permettent à n'importe quel type de tâche de communiquer. Néanmoins, lorsqu'une
-               donnée doit transiter du monde privilégié au monde non privilégié, la boîte
+               donnée doit transiter entre le monde privilégié et le monde non privilégié, la boîte
                doit être
                déclarée avec l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span>.</p>
             <p> Cet
@@ -465,7 +465,7 @@
             <pre class="code">
 
 <span class="multi-line-comment">/* Déclaration du buffer de la boîte de messages */</span>
-<span class="multi-line-comment">/* Celui-ci n'est pas accessible à la tâche non privilégiée */</span>
+<span class="multi-line-comment">/* Celui-ci n'est pas directement accessible à la tâche non privilégiée */</span>
 <span class="multi-line-comment">/* Taille: 4 messages 32 bits */</span>
 <span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_mailBuf [ <span class="number">4</span> ];
 
@@ -491,7 +491,7 @@
 
    <span class="multi-line-comment">/* Création de la boîte de messages */</span>
    <span class="multi-line-comment">/* On crée 4 messages de 32 bits chacun */</span>
-   <span class="multi-line-comment">/* La boîte n'est pas protégée, elle peut être utilisée par une tâche */</span>
+   <span class="multi-line-comment">/* La boîte n'est pas protégée, elle peut être manipulée par une tâche */</span>
    <span class="multi-line-comment">/* non privilégiée */</span>
    l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_mailBuf, <span class="number">4</span> );
    l_result |= <span class="function">mk_mail_create</span> ( &g_mail, 
@@ -567,20 +567,140 @@
             </ul>
             <p>La figure ci-dessous présente une représentation visuelle de cette configuration : </p>
             <figure>
-               <img src="../../images/rtos/rtos-mailbox-privileged.jpg" alt="organisation mémoire d'un transfert privilégié par
-                  boîte de
-                  messages.">
+               <img src="../../images/rtos/rtos-mailbox-privileged.jpg"
+                  alt="transfert d’une tâche privilégiée vers une tâche non privilégiée.">
                <figcaption>
-                  <span class="underline">Figure 1</span> : organisation mémoire d'un transfert privilégié par
-                  boîte de
-                  messages.
+                  <span class="underline">Figure 1</span> : transfert d’une tâche privilégiée vers une tâche non
+                  privilégiée.
                </figcaption>
             </figure>
             <p>Si la communication se déroule dans le sens inverse, c'est-à-dire que la tâche non privilégiée poste la
-               donnée pendant que la tâche privilégiée la récupère, le buffer de la boîte de messages doit
-               obligatoirement se situer dans la zone non privilégiée. Dans le cas contraire, le noyau détecte une
-               écriture non autorisée et rejette l'appel système.
+               donnée pendant que la tâche privilégiée la récupère, le buffer de la boîte de messages peut se situer
+               dans
+               les deux zones (privilégiée ou non privilégiée). Néanmoins, il est préférable de le localiser en zone
+               privilégiée
+               afin que seul le noyau puisse modifier le contenu de la boîte.
             </p>
+
+            <br>
+            <pre class="code">
+
+<span class="multi-line-comment">/* Déclaration du buffer de la boîte de messages */</span>
+<span class="multi-line-comment">/* Celui-ci n'est pas directement accessible à la tâche non privilégiée */</span>
+<span class="multi-line-comment">/* Taille: 4 messages de 32 bits */</span>
+<span class="define-underline">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_mailBuf [ <span class="number">4</span> ];
+
+<span class="multi-line-comment">/* Déclaration d'un pointeur de boîte de messages */</span>
+<span class="multi-line-comment">/* Celui-ci doit être accessible en lecture à la tâche non privilégiée */</span>
+<span class="define">K_MK_PRIVILEGED_RO_MEMORY</span> <span class="type"> T_mkMail</span>* g_mail;
+
+<span class="multi-line-comment">/* Code de la tâche non privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_unprivileged</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
+
+   <span class="multi-line-comment">/* Déclaration du message à transmettre à la tâche privilégiée */</span>
+   <span class="type">uint32_t</span> l_incomingMessage = <span class="number">1</span>;
+
+   <span class="multi-line-comment">/* Suppression warning */</span>
+   ( <span class="keyword">void</span> ) p_param;
+
+   <span class="multi-line-comment">/* La tâche privilégiée est plus prioritaire que la tâche */</span>
+   <span class="multi-line-comment">/* non privilégiée. La boite de messages sera donc déjà initialisée */</span>
+   <span class="multi-line-comment">/* avant de faire le premier mk_mail_post */</span>
+
+   <span class="multi-line-comment">/* Boucle pour toujours... */</span>
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* Écriture d'un message dans la messagerie */</span>
+      l_result |= <span class="function">mk_mail_post</span> ( g_mail, &l_incomingMessage, 
+         <span class="define">K_MK_STATE_READY</span>, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+      <span class="multi-line-comment">/* Temporisation de la tâche */</span>
+      l_result |= <span class="function">mk_task_sleep</span> ( <span class="number">10</span> );            
+   }
+
+   <span class="multi-line-comment">/* Retour */</span>
+   <span class="keyword">return</span>;
+}
+
+<span class="multi-line-comment">/* Code de la tâche privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration d'une structure de type T_mkPoolArea */</span>
+   <span class="multi-line-comment">/* Cette structure est utilisée pour créer la boîte de messages */</span>
+   <span class="type">T_mkPoolArea</span> l_area;
+
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
+
+   <span class="multi-line-comment">/* Déclaration de la variable où sera stocké le message reçu */</span>
+   <span class="type">uint32_t</span> l_outgoingMessage = <span class="number">0</span>;
+
+   <span class="multi-line-comment">/* Suppression warning */</span>
+   ( <span class="keyword">void</span> ) p_param;
+
+   <span class="multi-line-comment">/* Création de la boîte de messages */</span>
+   <span class="multi-line-comment">/* On crée 4 messages de 32 bits chacun */</span>
+   <span class="multi-line-comment">/* La boîte n'est pas protégée, elle peut être manipulée par une tâche */</span>
+   <span class="multi-line-comment">/* non privilégiée */</span>
+   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_mailBuf, <span class="number">4</span> );
+   l_result |= <span class="function">mk_mail_create</span> ( &g_mail, 
+      <span class="define-underline">K_MK_AREA_UNPROTECTED</span>, &l_area, <span class="number">1</span>, <span class="number">4</span> ); 
+
+   <span class="multi-line-comment">/* Boucle pour toujours... */</span>
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* Récupération d'un message dans la messagerie */</span>
+      <span class="multi-line-comment">/* La variable l_outgoingMessage passe à 1 */</span>
+      l_result |= <span class="function">mk_mail_pend</span> ( <span class="define">K_MK_NULL</span>, g_mail, 
+         &l_outgoingMessage, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+      <span class="multi-line-comment">/* Temporisation de la tâche */</span>
+      l_result |= <span class="function">mk_task_sleep</span> ( <span class="number">10</span> );            
+   }
+
+   <span class="multi-line-comment">/* Retour */</span>
+   <span class="keyword">return</span>;
+}
+            </pre>
+            <br>
+
+            <p> Dans l'exemple ci-dessus, l'organisation mémoire est la suivante : </p>
+            <ul>
+               <li><span class="gray">✔</span>Le buffer source <span class="bold-strong">l_incomingMessage</span> est
+                  situé dans la pile de <span class="bold-strong">mk_<wbr>task_<wbr>unprivileged</span> qui est
+                  accessible
+                  à toutes les tâches.
+               </li>
+               <li><span class="gray">✔</span>La boîte de messages et son pointeur (<span
+                     class="bold-strong">g_mail</span>) sont situés dans la zone privilégiée
+                  qui n'est accessible qu'en lecture aux tâches non privilégiées. Le buffer de la boîte (<span
+                     class="bold-strong">g_mailBuf</span>) est situé dans une zone inaccessible.
+               </li>
+               <li><span class="gray">✔</span>Le buffer de destination <span
+                     class="bold-strong">l_outgoingMessage</span> est
+                  situé dans la pile de <span class="bold-strong">mk_<wbr>task_<wbr>privileged</span> inaccessible
+                  aux tâches non
+                  privilégiées.
+               </li>
+            </ul>
+
+            <p>La figure ci-dessous présente une représentation visuelle de cette configuration : </p>
+            <figure>
+               <img src="../../images/rtos/rtos-mailbox-privileged-1.jpg" alt="organisation mémoire d'un transfert non privilégié par
+                  boîte de messages.">
+               <figcaption>
+                  <span class="underline">Figure 2</span> : transfert d’une tâche non privilégiée vers une tâche
+                  privilégiée, boîte créée par la tâche privilégiée.
+               </figcaption>
+            </figure>
+
+            <p>Dans la situation où la boîte de messages est créée par une tâche non privilégiée, le buffer de
+               la boîte de messages doit
+               obligatoirement se situer dans la zone non privilégiée. Dans le cas contraire, le noyau détecte une
+               création non autorisée et rejette l'appel système : </p>
             <br>
             <pre class="code">
 
@@ -645,6 +765,11 @@
    <span class="multi-line-comment">/* Suppression warning */</span>
    ( <span class="keyword">void</span> ) p_param;
 
+   <span class="multi-line-comment">/* La tâche privilégiée est plus prioritaire que la tâche */</span>
+   <span class="multi-line-comment">/* non privilégiée. On attend quelques millisecondes pour s'assurer */</span>
+   <span class="multi-line-comment">/* que la boite est initialisée. */</span>
+   ( <span class="keyword">void</span> ) <span class="function">mk_task_sleep</span> ( <span class="number">10</span> );  
+
    <span class="multi-line-comment">/* Boucle pour toujours... */</span>
    <span class="keyword">while</span> ( <span class="number">1</span> )
    {
@@ -685,12 +810,11 @@
 
             <p>La figure ci-dessous présente une représentation visuelle de cette configuration : </p>
             <figure>
-               <img src="../../images/rtos/rtos-mailbox-unprivileged.jpg" alt="organisation mémoire d'un transfert non privilégié par
-                  boîte de messages.">
+               <img src="../../images/rtos/rtos-mailbox-unprivileged.jpg" alt="transfert d’une tâche non privilégiée vers une tâche
+                  privilégiée, boîte créée par la tâche non privilégiée.">
                <figcaption>
-                  <span class="underline">Figure 2</span> : organisation mémoire d'un transfert non privilégié par
-                  boîte de
-                  messages.
+                  <span class="underline">Figure 3</span> : transfert d’une tâche non privilégiée vers une tâche
+                  privilégiée, boîte créée par la tâche non privilégiée.
                </figcaption>
             </figure>
 
@@ -711,11 +835,9 @@
             <div class="warning">
                <p class="warning-logo">⚠️</p>
                <div class="warning-text ">
-                  <p>Lorsque l'application le permet, c'est-à-dire lorsque les données sont produites par la tâche
-                     privilégiée
-                     et consommées par la tâche non privilégiée, il est
-                     préférable de créer la boîte de messages au
-                     sein de la tâche privilégiée. </p>
+                  <p>Lorsque l'application le permet, il est préférable de créer la boîte au sein d'une tâche
+                     privilégiée afin de pouvoir placer son buffer en zone privilégiée.
+                  </p>
                </div>
             </div>
 
@@ -731,6 +853,67 @@
                supplémentaires.
             </p>
 
+            <br>
+            <p>Le tableau ci-dessous résume les règles de placement d'une boîte de messages non protégée :</p>
+            <div class="table-scroll-container">
+               <table class="fixed">
+                  <colgroup>
+                     <col style="width: 16%"> <!-- Créateur -->
+                     <col style="width: 18%"> <!-- Sens -->
+                     <col style="width: 19%"> <!-- Buffer de la boîte -->
+                     <col style="width: 15%"> <!-- Pointeur de la boîte -->
+                     <col style="width: 16%"> <!-- Source du post -->
+                     <col style="width: 18%"> <!-- Destination du pend -->
+                  </colgroup>
+                  <thead>
+                     <tr>
+                        <th>Créateur</th>
+                        <th>Sens</th>
+                        <th>Buffer de la boîte</th>
+                        <th>Pointeur de la boîte</th>
+                        <th>Source du <span class="bold-strong">post</span></th>
+                        <th>Destination du <span class="bold-strong">pend</span></th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td>Tâche privilégiée</td>
+                        <td>Privilégiée vers non privilégiée (figure 1)</td>
+                        <td>Privilégié recommandé ou non privilégié</td>
+                        <td>Privilégié (RO)</td>
+                        <td>Non contrôlée</td>
+                        <td>Zone non privilégiée</td>
+                     </tr>
+                     <tr>
+                        <td>Tâche privilégiée</td>
+                        <td>Non privilégiée vers privilégiée (figure 2)</td>
+                        <td>Privilégié recommandé ou non privilégié</td>
+                        <td>Privilégié (RO)</td>
+                        <td>Zone non privilégiée</td>
+                        <td>Non contrôlée</td>
+                     </tr>
+                     <tr>
+                        <td>Tâche non privilégiée</td>
+                        <td>Non privilégiée vers privilégiée (figure 3)</td>
+                        <td>Non privilégié (obligatoire)</td>
+                        <td>Non privilégié</td>
+                        <td>Zone non privilégiée</td>
+                        <td>Non contrôlée</td>
+                     </tr>
+                     <tr>
+                        <td>Tâche non privilégiée</td>
+                        <td>Privilégiée vers non privilégiée</td>
+                        <td>Non privilégié (obligatoire)</td>
+                        <td>Non privilégié</td>
+                        <td>Non contrôlée</td>
+                        <td>Zone non privilégiée</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+            <p><i>« Non contrôlée » : le noyau ne vérifie pas l'adresse lorsque l'appelant est une tâche
+                  privilégiée.</i></p>
             <br>
 
             <p>Les boîtes de messages permettent le partage de données entre le monde privilégié et le monde non
@@ -767,6 +950,19 @@
                      après <span class="bold-strong">l_incomingMessage</span> dans la boîte, et écrase, lors d'un pend,
                      la mémoire située après
                      <span class="bold-strong">l_outgoingMessage</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>De même, lorsque la boîte de messages n'est pas protégée et que la taille du buffer est inférieure
+                     à
+                     <span class="bold-strong">msgNumber</span> x <span class="bold-strong">msgSize</span>
+                     mots, l'écriture du message dans la boîte (post) peut venir déborder dans la mémoire
+                     voisine.
                   </p>
                </div>
             </div>
