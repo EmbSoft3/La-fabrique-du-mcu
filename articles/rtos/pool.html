@@ -119,14 +119,12 @@
                <div class="comment-text ">
                   <p>L'en-tête mesure 4
                      octets et se situe
-                     dans le premier mot de chaque bloc. Celle-ci n'existe que lorsque le bloc est dans la chaîne. Lors
+                     dans le premier mot de chaque bloc. Celui-ci n'existe que lorsque le bloc est dans la chaîne. Lors
                      d'une
                      allocation, l'application récupère l'intégralité du bloc et peut l'écraser. Il n'y a aucun surcoût
                      mémoire. </p>
                </div>
             </div>
-
-
 
             <p>Lorsqu'une allocation est réalisée, le noyau retire le premier bloc de la chaîne et le fournit à
                l'application. Le pointeur <span class="bold-strong">current</span> est alors actualisé pour pointer sur
@@ -147,7 +145,7 @@
             <p>Les blocs 3 et 4 ne font plus partie de la chaîne et la <span class="bold-strong">pool</span> ne possède
                plus que deux blocs.</p>
             <p>Lorsqu'une désallocation est réalisée, le noyau effectue l'opération inverse en ajoutant un nouvel
-               élément à la chaîne. La figure ci-dessous montre l'état de la pool lorsque les blocs 4 puis 3 sont
+               élément à la chaîne. Les figures ci-dessous montrent l'état de la pool lorsque les blocs 4 puis 3 sont
                désalloués : </p>
 
             <figure>
@@ -177,42 +175,94 @@
                c'est-à-dire que le
                dernier bloc désalloué sera le prochain bloc alloué.
             </p>
+            <br>
             <p>
                Lorsque l'ensemble des blocs a été alloué, le pointeur <span class="bold-strong">current</span> devient
                nul.
                L'application doit donc attendre une désallocation avant de pouvoir allouer un nouveau bloc.
             </p>
-
             <br>
 
-            <p>Un gestionnaire d'allocation de taille fixe possède beaucoup d'avantages :
+            <p>
+               Lors de chaque désallocation, le noyau vérifie que le bloc fourni par l'application appartient bien à la
+               bonne <span class="bold-strong">pool</span>. Néanmoins, il ne vérifie pas si le bloc mémoire a déjà été
+               désalloué.
+            </p>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>
+                     Un bloc mémoire désalloué plusieurs fois corrompt le gestionnaire d'allocation de
+                     taille fixe. Deux allocations successives peuvent alors retourner la même adresse. Par conséquent,
+                     deux tâches peuvent partager un même bloc sans le savoir.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>
+               La figure ci-dessous montre la situation où le bloc 4 est désalloué deux fois consécutivement :
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-pool-free-3.jpg" alt="Corruption du gestionnaire de taille fixe après une
+                  double désallocation du bloc 4">
+               <figcaption>
+                  <span class="underline">Figure 5</span> : Corruption du gestionnaire de taille fixe après une
+                  double désallocation du bloc 4.
+               </figcaption>
+            </figure>
+
+            <p>Lors de chaque nouvelle allocation, le gestionnaire fournira toujours l'adresse du bloc 4. Les blocs 1 et
+               2 ne pourront plus jamais être alloués.</p>
+
+            <h2>3. Avantages et inconvénients</h2>
+
+            <p>Un gestionnaire d'allocation de taille fixe possède les avantages suivants :
             </p>
             <ul>
-               <li><span class="gray">✔</span>Une pool fournit toujours la même taille de bloc, le
+               <li><span class="gray">✔</span>Il fournit toujours la même taille de bloc, le
                   phénomène de <strong>fragmentation</strong> ne peut donc pas se produire.</li>
-               <li><span class="gray">✔</span>Elle n'alloue pas dans le tas (<strong>heap</strong>) mais
+               <li><span class="gray">✔</span>Il n'alloue pas dans le tas (<strong>heap</strong>) mais
                   dans son buffer applicatif. </li>
                <li><span class="gray">✔</span>Ses durées d'allocation et de désallocation sont fixes,
-                  elle
-                  est donc déterministe car son architecture ne nécessite aucune recherche pour effectuer une opération.
+                  il
+                  est donc déterministe car son architecture ne nécessite aucune recherche pour allouer ou désallouer un
+                  bloc.
                </li>
             </ul>
             <p>
-               Néanmoins, son principal défaut est qu'elle ne peut allouer que des blocs de taille fixe. Il est donc
-               nécessaire de créer une
+               Néanmoins, son principal défaut est intrinsèque à sa fonction, il ne peut allouer que des blocs de taille
+               fixe. Il faut donc
+               créer une
                <span class="bold-strong">pool</span> par taille de données à allouer.
             </p>
 
-            <h2>3. Utilisation</h2>
+            <h2>4. Utilisation</h2>
 
             <p>La création d'une pool s'effectue à partir des fonctions <span
                   class="bold-strong">mk_pool_initArea</span> et <span class="bold-strong">mk_pool_create</span>.
                L'exemple ci-dessous présente l'initialisation d'un gestionnaire de taille fixe de 12 blocs :</p>
             <br>
             <pre class="code">
+<span class="multi-line-comment">/* On définit une structure pour l'exemple */</span>
+<span class="multi-line-comment">/* Sa taille est de 4 mots */</span>
+<span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="define">T_mkDataStructure</span> <span class="define">T_mkDataStructure</span>;
+<span class="keyword">struct</span> <span class="define">T_mkDataStructure</span>
+{
+   <span class="type">uint32_t</span> data1;
+   <span class="type">uint32_t</span> data2;
+   <span class="type">uint32_t</span> data3;
+   <span class="type">uint32_t</span> data4;
+};
+
+<span class="multi-line-comment">/* On définit la taille du buffer de la pool */</span>
+<span class="multi-line-comment">/* On souhaite pouvoir allouer 12 structures T_mkDataStructure */</span>
+<span class="keyword">#define</span> <span class="define">K_POOL_SIZE</span> ( <span class="number">12</span> * ( <span class="keyword">sizeof</span> ( <span class="define">T_mkDataStructure</span> ) >> <span class="number">2</span> ) )
+
 <span class="multi-line-comment">/* Déclaration du buffer de la pool */</span>
-<span class="multi-line-comment">/* Sa taille est de 12 * 8 mots soit 96 mots */</span>
-<span class="define">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_poolBuf [ <span class="number">96</span> ];
+<span class="define">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_poolBuf [ <span class="define">K_POOL_SIZE</span> ];
 
 <span class="multi-line-comment">/* Déclaration d'un pointeur de pool */</span>
 <span class="define">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkPool</span>* g_pool;
@@ -228,42 +278,464 @@
 
    <span class="multi-line-comment">/* Initialisation du buffer de la pool */</span>  
    <span class="multi-line-comment">/* La taille est exprimée en mots 32 bits */</span>  
-   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_poolBuf, <span class="number">96</span> ); 
+   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_poolBuf, <span class="define">K_POOL_SIZE</span> ); 
 
-   <span class="multi-line-comment">/* Si aucune erreur ne s'est produite */</span>
-   <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
-   {
-      <span class="multi-line-comment">/* Création de la pool */</span>
-      <span class="multi-line-comment">/* Elle est accessible aux tâches privilégiées et non privilégiées */</span>
-      <span class="multi-line-comment">/* Taille : 12 blocs de 8 mots 32 bits chacun */</span>
-      l_result = <span class="function">mk_pool_create</span> ( &l_area, &g_pool, 
-         <span class="define">K_MK_AREA_UNPROTECTED</span>, <span class="number">8</span>, <span class="number">12</span> );
-   }
+   <span class="multi-line-comment">/* Création de la pool */</span>
+   <span class="multi-line-comment">/* Celle-ci n'est pas protégée donc accessible aux tâches */</span>
+   <span class="multi-line-comment">/* privilégiées et non privilégiées */</span>
+   l_result |= <span class="function">mk_pool_create</span> ( &l_area, &g_pool, <span class="define">K_MK_AREA_UNPROTECTED</span>, 
+      <span class="keyword">sizeof</span> ( <span class="define">T_mkDataStructure</span> ) >> <span class="number">2</span>, <span class="multi-line-comment">/* Taille de la pool */</span>  
+      <span class="number">12</span> ); <span class="multi-line-comment">/* Nombre de blocs dans la pool */</span>  
 
    <span class="multi-line-comment">/* ... */</span>
    <span class="keyword">for</span> ( ;; ) ;
 }
 </pre>
             <br>
-            <p>Suite à sa création, les blocs de la pool peuvent être alloués ou désalloués au sein d'une même tâche en
+            <p>Suite à sa création, les blocs de la pool peuvent être alloués ou désalloués <span class="underline">au
+                  sein d'une même tâche</span> en
                utilisant les fonctions
                <span class="bold-strong">mk_<wbr>pool_<wbr>alloc</span>, <span
-                  class="bold-strong">mk_<wbr>pool_<wbr>free</span> ou entre deux tâches en utilisant les fonctions
-               <span class="bold-strong">mk_<wbr>pool_<wbr>alloc<wbr>Safe</span>
-               ou <span class="bold-strong">mk_<wbr>pool_<wbr>free<wbr>Safe</span>.
+                  class="bold-strong">mk_<wbr>pool_<wbr>free</span>. Ces fonctions ne réalisent pas d'appels système,
+               elles ne sont donc pas protégées contre les accès concurrents.
             </p>
+            <br>
+
+            <pre class="code">
+
+<span class="multi-line-comment">/* Une tâche quelconque */</span>
+<span class="keyword">void</span> <span class="function">mk_task1</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* On déclare un pointeur qui contient l'adresse du bloc alloué */</span>
+   <span class="type">T_mkDataStructure</span>* l_block = <span class="define">K_MK_NULL</span>; 
+
+   <span class="multi-line-comment">/* Allocation d'un premier bloc de mémoire */</span>
+   <span class="multi-line-comment">/* Le bloc peut être remis à zéro ou non en utilisant les constantes */</span>
+   <span class="multi-line-comment">/* K_MK_POOL_CLEAR et K_MK_POOL_NO_CLEAR */</span>
+   l_block = <span class="function">mk_pool_alloc</span> ( g_pool, <span class="define">K_MK_POOL_CLEAR</span> );
+
+   <span class="multi-line-comment">/* Si la valeur retournée n'est pas nulle alors l'allocation a réussi */</span>
+   <span class="keyword">if</span> ( l_block != <span class="define">K_MK_NULL</span> )
+   {
+      <span class="multi-line-comment">/* Utilisation du bloc par le programme ... */</span>
+      l_block-><span class="field">data1</span> = <span class="number">1</span>;
+      l_block-><span class="field">data2</span> = <span class="number">2</span>;
+      l_block-><span class="field">data3</span> = <span class="number">3</span>;
+      l_block-><span class="field">data4</span> = <span class="number">4</span>;
+
+      <span class="multi-line-comment">/* ... */</span>
+
+      <span class="multi-line-comment">/* Désallocation du bloc */</span>
+      l_result = <span class="function">mk_pool_free</span> ( g_pool, l_block );
+
+      <span class="multi-line-comment">/* Si la fonction retourne K_MK_OK, la désallocation a réussi */</span>
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> );
+      <span class="keyword">else</span> { 
+         <span class="multi-line-comment">/* Si K_MK_ERROR_PARAM, au moins un des 2 paramètres est */</span>
+         <span class="multi-line-comment">/* invalide, mauvaise instance de pool, mauvaise adresse du bloc  */</span>
+         <span class="multi-line-comment">/* ou bloc n'appartenant pas à la pool. */</span>
+         <span class="multi-line-comment">/* Si K_MK_ERROR_RIGHT, une tâche non privilégiée */</span>
+         <span class="multi-line-comment">/* ne peut pas manipuler une pool protégée */</span>
+      }
+   }
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+</pre>
+
+            <br>
             <p>
-               Les fonctions <span class="bold-strong">mk_<wbr>pool_<wbr>alloc</span> et <span
-                  class="bold-strong">mk_<wbr>pool_<wbr>free</span> ne sont pas protégées contre les accès concurents,
-               elle ne réalise aucun appel système et de ce fait sont plus rapide que les précédente.
+               Lorsque la <span class="bold-strong">pool</span> est <span class="underline">partagée entre plusieurs
+                  tâches</span>, les fonctions <span class="bold-strong">mk_<wbr>pool_<wbr>alloc<wbr>Safe</span> et
+               <span class="bold-strong">mk_<wbr>pool_<wbr>free<wbr>Safe</span> doivent être utilisées.
+               Ces fonctions offrent un mécanisme de synchronisation simplifiant l'allocation de blocs :
             </p>
 
-            <h2>4. API</h2>
+            <br>
 
-            <!-- 4.1. La fonction mk_pool_initArea() -->
+            <pre class="code">
+<span class="multi-line-comment">/* Tâche 1 */</span>
+<span class="keyword">void</span> <span class="function">mk_task1</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* Allocation d'un bloc */</span>
+   <span class="multi-line-comment">/* La tâche ne doit pas se bloquer s'il n'y a pas de bloc disponible */</span>
+   l_result = <span class="function">mk_pool_allocSafe</span> ( g_pool, &l_block, <span class="define">K_MK_POOL_NO_CLEAR</span>, <span class="number">0</span> );
+
+   <span class="multi-line-comment">/* La fonction retourne K_MK_OK ou K_MK_ERROR_MALLOC en fonction */</span>
+   <span class="multi-line-comment">/* de la disponibilité du bloc ou une erreur */</span>
+   <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
+   {
+      <span class="multi-line-comment">/* Utilisation du bloc par le programme ... */</span>
+      l_block-><span class="field">data1</span> = <span class="number">1</span>;
+      l_block-><span class="field">data2</span> = <span class="number">2</span>;
+      l_block-><span class="field">data3</span> = <span class="number">3</span>;
+      l_block-><span class="field">data4</span> = <span class="number">4</span>;
+
+      <span class="multi-line-comment">/* ... */</span>
+
+      <span class="multi-line-comment">/* Désallocation du bloc */</span>
+      l_result = <span class="function">mk_pool_freeSafe</span> ( g_pool, l_block );
+
+      <span class="multi-line-comment">/* Si la fonction retourne K_MK_OK, la désallocation a réussi */</span>
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> );
+      <span class="keyword">else</span> { 
+         <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+         <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+      }
+   }   
+
+   <span class="multi-line-comment">/* Aucun bloc n'est disponible ...  */</span>
+   <span class="keyword">else if</span> ( l_result == <span class="define">K_MK_ERROR_MALLOC</span> );
+   <span class="keyword">else</span> {
+      <span class="multi-line-comment">/* Gestion des autres erreurs ...  */</span>
+      <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+   }  
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+
+<span class="multi-line-comment">/* Tâche 2 */</span>
+<span class="keyword">void</span> <span class="function">mk_task2</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* Allocation d'un bloc en spécifiant un timeout non nul */</span>
+   <span class="multi-line-comment">/* La tâche se bloque pendant 10 ticks s'il n'y a pas de */</span>
+   <span class="multi-line-comment">/* bloc disponible */</span>
+   l_result = <span class="function">mk_pool_allocSafe</span> ( g_pool, &l_block, <span class="define">K_MK_POOL_NO_CLEAR</span>, <span class="number">10</span> );
+
+   <span class="multi-line-comment">/* La fonction retourne K_MK_OK ou K_MK_ERROR_MALLOC en fonction */</span>
+   <span class="multi-line-comment">/* de la disponibilité du bloc */</span>
+   <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
+   {
+      <span class="multi-line-comment">/* Utilisation du bloc par le programme ... */</span>
+      l_block-><span class="field">data1</span> = <span class="number">1</span>;
+      l_block-><span class="field">data2</span> = <span class="number">2</span>;
+      l_block-><span class="field">data3</span> = <span class="number">3</span>;
+      l_block-><span class="field">data4</span> = <span class="number">4</span>;
+
+      <span class="multi-line-comment">/* ... */</span>
+
+      <span class="multi-line-comment">/* Désallocation du bloc */</span>
+      l_result = <span class="function">mk_pool_freeSafe</span> ( g_pool, l_block );
+
+      <span class="multi-line-comment">/* Si la fonction retourne K_MK_OK, la désallocation a réussi */</span>
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> );
+      <span class="keyword">else</span> { 
+         <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+         <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+      }
+   }   
+
+   <span class="multi-line-comment">/* Aucun bloc n'est disponible ...  */</span>
+   <span class="keyword">else if</span> ( l_result == <span class="define">K_MK_ERROR_MALLOC</span> );
+   <span class="keyword">else</span> {
+      <span class="multi-line-comment">/* Gestion des autres erreurs ...  */</span>
+      <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+   } 
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+
+<span class="multi-line-comment">/* Tâche 3 */</span>
+<span class="keyword">void</span> <span class="function">mk_task3</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* Allocation d'un bloc en spécifiant une attente infinie */</span>
+   <span class="multi-line-comment">/* La tâche se bloque tant qu'il n'y a pas de bloc disponible */</span>
+   l_result = <span class="function">mk_pool_allocSafe</span> ( g_pool, &l_block, <span class="define">K_MK_POOL_NO_CLEAR</span>, 
+      <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+   <span class="multi-line-comment">/* La fonction retourne K_MK_OK ou potentiellement une erreur */</span>
+   <span class="multi-line-comment">/* Pour une attente infinie, le bloc est obligatoirement disponible */</span>
+   <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
+   {
+      <span class="multi-line-comment">/* Utilisation du bloc par le programme ... */</span>
+      l_block-><span class="field">data1</span> = <span class="number">1</span>;
+      l_block-><span class="field">data2</span> = <span class="number">2</span>;
+      l_block-><span class="field">data3</span> = <span class="number">3</span>;
+      l_block-><span class="field">data4</span> = <span class="number">4</span>;
+
+      <span class="multi-line-comment">/* ... */</span>
+
+      <span class="multi-line-comment">/* Désallocation du bloc */</span>
+      l_result = <span class="function">mk_pool_freeSafe</span> ( g_pool, l_block );
+
+      <span class="multi-line-comment">/* Si la fonction retourne K_MK_OK, la désallocation a réussi */</span>
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> );
+      <span class="keyword">else</span> { 
+         <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+         <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+      }
+   }   
+
+   <span class="keyword">else</span> {
+      <span class="multi-line-comment">/* Gestion des autres erreurs ...  */</span>
+      <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+   } 
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+
+</pre>
+
+            <br>
+            <p>
+               Les fonctions <span class="bold-strong">mk_<wbr>pool_<wbr>available</span> et
+               <span class="bold-strong">mk_<wbr>pool_<wbr>count</span> sont des fonctions utilitaires. La première
+               permet de déterminer si au moins un bloc est disponible dans une <span class="bold-strong">pool</span>
+               et la seconde permet de récupérer le nombre de blocs disponibles dans celle-ci :
+            </p>
+            <br>
+
+            <pre class="code">
+<span class="multi-line-comment">/* Test si au moins un bloc est disponible */</span>
+<span class="type">T_mkAddr</span> l_addr = <span class="function">mk_pool_available</span> ( g_pool );
+
+<span class="multi-line-comment">/* Une valeur non nulle indique un bloc disponible */</span>
+<span class="keyword">if</span> ( l_addr != <span class="define">K_MK_NULL</span> )
+{
+   <span class="multi-line-comment">/* Attention, le bloc est disponible mais n'est pas alloué */</span>
+}
+</pre>
+            <br>
+
+            <pre class="code">
+<span class="multi-line-comment">/* Déclaration des variables de travail */</span>
+<span class="type">uint32_t</span> l_numberOfBlockAvailable = <span class="number">0</span>;
+
+<span class="multi-line-comment">/* Récupération du nombre de blocs disponibles */</span>
+<span class="type">T_mkCode</span> l_result = <span class="function">mk_pool_count</span> ( g_pool,&l_numberOfBlockAvailable );
+
+<span class="multi-line-comment">/* Si au moins un bloc est disponible */</span>
+<span class="keyword">if</span> ( ( l_result == <span class="define">K_MK_OK</span> ) && ( l_numberOfBlockAvailable > <span class="number">0</span> ) )
+{
+   <span class="multi-line-comment">/* Faire quelque chose ici */</span>
+}
+</pre>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>
+                     Les fonctions <span class="bold-strong">mk_<wbr>pool_<wbr>available</span> et
+                     <span class="bold-strong">mk_<wbr>pool_<wbr>count</span> ne sont pas de type <span
+                        class="bold-strong">ThreadSafe</span>. Elles ne doivent donc pas être utilisées lorsqu'une pool
+                     est partagée entre plusieurs tâches.
+                  </p>
+               </div>
+            </div>
+            <br>
+            <p>Lorsque la <span class="bold-strong">pool</span> n'est pas partagée, ces
+               fonctions peuvent être utilisées librement sans précaution particulière. En effet, le risque que la
+               valeur
+               retournée
+               par ces fonctions
+               soit devenu obsolète suite à une préemption n'existe pas.</p>
+            <br>
+            <p>Lorsque l'utilisation de <span class="bold-strong">g_pool</span> est terminée, l'application peut la
+               détruire
+               en exécutant la fonction <span class="bold-strong">mk_<wbr>pool_<wbr>delete</span> qui demande au noyau
+               de désallouer l'objet. </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Suppression de la pool */</span>
+<span class="type">T_mkCode</span> l_result = <span class="function">mk_pool_delete</span> ( g_pool );
+
+<span class="multi-line-comment">/* Si une erreur s'est produite */</span>
+<span class="keyword">if</span> ( l_result != <span class="define">K_MK_OK</span> )
+{
+      <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+      <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+}
+</pre>
+
+            <h2>5. Protéger ses pools </h2>
+            <p>Les gestionnaires d'allocation de taille fixe peuvent être
+               créés avec les attributs <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> et <span
+                  class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span>.</p>
+            <br>
+            <p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> est utilisé,
+               il est impossible pour une tâche non privilégiée de manipuler la pool créée. Dans ce cas de figure, le
+               buffer du gestionnaire d'allocation doit obligatoirement se situer en mémoire privilégiée pour éviter
+               qu'une tâche non privilégiée vienne corrompre le buffer.</p>
+
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Création d'une pool protégée par une tâche privilégiée */</span>
+<span class="multi-line-comment">/* Cette pool peut seulement être partagée entre tâches privilégiées */</span>
+
+<span class="multi-line-comment">/* Déclaration du pointeur de pool et de son buffer */</span>
+<span class="multi-line-comment">/* Ils doivent être en zone privilégiée pour interdire l'accès */</span>
+<span class="multi-line-comment">/* aux tâches non privilégiées */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkPool</span>* g_pool;
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span>  g_privilegedBuf [ <span class="define">K_POOL_SIZE</span> ];
+
+<span class="multi-line-comment">/* Une tâche privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* Initialisation du buffer de la pool */</span>  
+   <span class="multi-line-comment">/* La taille est exprimée en mots 32 bits */</span>  
+   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_privilegedBuf, <span class="define">K_POOL_SIZE</span> ); 
+
+   <span class="multi-line-comment">/* Création de la pool par une tâche privilégiée */</span>
+   <span class="multi-line-comment">/* Le pointeur, le buffer et la pool ne peuvent pas être manipulés */</span>
+   <span class="multi-line-comment">/* par une tâche non privilégiée. */</span>
+   l_result |= <span class="function">mk_pool_create</span> ( &l_area, &g_pool, <span class="define-underline">K_MK_AREA_PROTECTED</span>, 
+      <span class="keyword">sizeof</span> ( <span class="define">T_mkDataStructure</span> ) >> <span class="number">2</span>, <span class="number">12</span> );   
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+</pre>
+            <br>
+            <p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span> est utilisé,
+               une tâche non privilégiée peut manipuler la pool créée. Dans ce cas de figure, le
+               buffer du gestionnaire d'allocation doit obligatoirement se situer en mémoire non privilégiée pour
+               autoriser
+               la tâche non privilégiée à écrire dans les blocs qu'elle alloue.</p>
+            <br>
+
+            <pre class="code">
+<span class="multi-line-comment">/* Création d'une pool non protégée par une tâche privilégiée */</span>
+<span class="multi-line-comment">/* Cette pool est partageable entre tâches privilégiées et non privilégiées */</span>
+
+<span class="multi-line-comment">/* Déclaration du pointeur de pool et de son buffer */</span>
+<span class="multi-line-comment">/* Le pointeur g_pool doit être en zone privilégiée pour que les */</span>
+<span class="multi-line-comment">/* tâches non privilégiées ne puissent pas le modifier. */</span>
+<span class="multi-line-comment">/* Elles doivent cependant pouvoir le lire. */</span>
+<span class="multi-line-comment">/* Le buffer doit être en zone non privilégiée pour que les tâches */</span>
+<span class="multi-line-comment">/* non privilégiées puissent utiliser la mémoire allouée */</span>
+<span class="define">K_MK_PRIVILEGED_RO_MEMORY</span> <span class="type">T_mkPool</span>* g_pool;
+<span class="define">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span>  g_unprivilegedBuf [ <span class="define">K_POOL_SIZE</span> ];
+
+<span class="multi-line-comment">/* Une tâche privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* Initialisation du buffer de la pool */</span>  
+   <span class="multi-line-comment">/* La taille est exprimée en mots 32 bits */</span>  
+   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_unprivilegedBuf, <span class="define">K_POOL_SIZE</span> ); 
+
+   <span class="multi-line-comment">/* Création de la pool */</span>
+   l_result |= <span class="function">mk_pool_create</span> ( &l_area, &g_pool, <span class="define-underline">K_MK_AREA_UNPROTECTED</span>, 
+      <span class="keyword">sizeof</span> ( <span class="define">T_mkDataStructure</span> ) >> <span class="number">2</span>, <span class="multi-line-comment">/* Taille de la pool */</span>  
+      <span class="number">12</span> ); <span class="multi-line-comment">/* Nombre de blocs dans la pool */</span>  
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+</pre>
+            <br>
+            <p>Lorsque la <span class="bold-strong">pool</span> est créée par une tâche non privilégiée, le pointeur
+               et le buffer doivent obligatoirement être situés
+               en zone non privilégiée :</p>
+            <br>
+
+            <pre class="code">
+<span class="multi-line-comment">/* Création d'une pool non protégée par une tâche non privilégiée */</span>
+<span class="multi-line-comment">/* Cette pool est partageable entre tâche privilégiée et non privilégiée */</span>
+<span class="multi-line-comment">/* Néanmoins, on ne l'utilise que pour synchroniser */</span>
+<span class="multi-line-comment">/* des tâches non privilégiées */</span>
+
+<span class="multi-line-comment">/* Déclaration du pointeur de pool et de son buffer */</span>
+<span class="multi-line-comment">/* Le pointeur et le buffer doivent obligatoirement être en zone */</span>
+<span class="multi-line-comment">/* non privilégiée pour utiliser la mémoire allouée et écrire l'adresse */</span>
+<span class="multi-line-comment">/* de la pool dans g_pool */</span>
+<span class="define">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkPool</span>* g_pool;
+<span class="define">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span>  g_unprivilegedBuf [ <span class="define">K_POOL_SIZE</span> ];
+
+<span class="multi-line-comment">/* Une tâche non privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_unprivileged</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* Initialisation du buffer de la pool */</span>  
+   <span class="multi-line-comment">/* La taille est exprimée en mots 32 bits */</span>  
+   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_unprivilegedBuf, <span class="define">K_POOL_SIZE</span> ); 
+
+   <span class="multi-line-comment">/* Création de la pool */</span>
+   l_result |= <span class="function">mk_pool_create</span> ( &l_area, &g_pool, <span class="define-underline">K_MK_AREA_UNPROTECTED</span>, 
+      <span class="keyword">sizeof</span> ( <span class="define">T_mkDataStructure</span> ) >> <span class="number">2</span>, <span class="multi-line-comment">/* Taille de la pool */</span>  
+      <span class="number">12</span> ); <span class="multi-line-comment">/* Nombre de blocs dans la pool */</span>  
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+</pre>
+
+            <br>
+            <p>Le tableau ci-dessous résume les règles de placement de la pool :</p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Créateur</th>
+                        <th>Attribut</th>
+                        <th>Pointeur <span class="bold-strong">T_<wbr>mk<wbr>Pool*</span></th>
+                        <th>Buffer</th>
+                        <th>Utilisable par</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td>Tâche privilégiée</td>
+                        <td><span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span></td>
+                        <td>Zone privilégiée<br><span
+                              class="gray">(K_<wbr>MK_<wbr>PRIVILEGED_<wbr>BSS_<wbr>MEMORY)</span></td>
+                        <td>Zone privilégiée<br><span
+                              class="gray">(K_<wbr>MK_<wbr>PRIVILEGED_<wbr>BSS_<wbr>MEMORY)</span></td>
+                        <td>Tâches privilégiées uniquement</td>
+                     </tr>
+                     <tr>
+                        <td>Tâche privilégiée</td>
+                        <td><span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span></td>
+                        <td>Zone privilégiée<br><span
+                              class="gray">(K_<wbr>MK_<wbr>PRIVILEGED_<wbr>RO_<wbr>MEMORY)</span></td>
+                        <td>Zone non privilégiée<br><span
+                              class="gray">(K_<wbr>MK_<wbr>UNPRIVILEGED_<wbr>BSS_<wbr>MEMORY)</span></td>
+                        <td>Tâches privilégiées et non privilégiées</td>
+                     </tr>
+                     <tr>
+                        <td>Tâche non privilégiée</td>
+                        <td><span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span></td>
+                        <td>Zone non privilégiée<br><span
+                              class="gray">(K_<wbr>MK_<wbr>UNPRIVILEGED_<wbr>BSS_<wbr>MEMORY)</span></td>
+                        <td>Zone non privilégiée<br><span
+                              class="gray">(K_<wbr>MK_<wbr>UNPRIVILEGED_<wbr>BSS_<wbr>MEMORY)</span></td>
+                        <td>Tâches privilégiées et non privilégiées</td>
+                     </tr>
+                     <tr>
+                        <td>Tâche non privilégiée</td>
+                        <td><span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Cas interdit</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text">
+                  <p>Une tâche non privilégiée ne peut pas utiliser une pool protégée. Dans ce cas de figure, la valeur
+                     <span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>RIGHT</span> est retournée par les fonctions.
+                  </p>
+               </div>
+            </div>
+
+            <h2>6. API</h2>
+
+            <!-- 6.1. La fonction mk_pool_initArea() -->
             <details open>
                <summary>
-                  <span class="subtitle" id="mk_pool_initArea">4.1. La fonction mk_pool_initArea()</span>
+                  <span class="subtitle" id="mk_pool_initArea">6.1. La fonction mk_pool_initArea()</span>
                </summary>
                <div class="prototype">
                   <p>Cette fonction initialise une zone mémoire dédiée à l'allocation dynamique.</p>
@@ -296,10 +768,10 @@
                </div>
             </details>
 
-            <!-- 4.2. La fonction mk_pool_create() -->
+            <!-- 6.2. La fonction mk_pool_create() -->
             <details open>
                <summary>
-                  <span class="subtitle" id="mk_pool_create">4.2. La fonction mk_pool_create()</span>
+                  <span class="subtitle" id="mk_pool_create">6.2. La fonction mk_pool_create()</span>
                </summary>
                <div class="prototype">
                   <p>Cette fonction initialise un gestionnaire d'allocation dynamique de taille fixe dans la zone
@@ -356,10 +828,10 @@
                </div>
             </details>
 
-            <!-- 4.3. La fonction mk_pool_alloc() -->
+            <!-- 6.3. La fonction mk_pool_alloc() -->
             <details open>
                <summary>
-                  <span class="subtitle" id="mk_pool_alloc">4.3. La fonction mk_pool_alloc()</span>
+                  <span class="subtitle" id="mk_pool_alloc">6.3. La fonction mk_pool_alloc()</span>
                </summary>
                <div class="prototype">
                   <p>Cette fonction alloue un bloc de taille fixe dans un gestionnaire d'allocation dynamique.</p>
@@ -395,10 +867,10 @@
                </div>
             </details>
 
-            <!-- 4.4. La fonction mk_pool_free() -->
+            <!-- 6.4. La fonction mk_pool_free() -->
             <details open>
                <summary>
-                  <span class="subtitle" id="mk_pool_free">4.4. La fonction mk_pool_free()</span>
+                  <span class="subtitle" id="mk_pool_free">6.4. La fonction mk_pool_free()</span>
                </summary>
                <div class="prototype">
                   <p>Cette fonction désalloue un bloc de taille fixe.</p>
@@ -434,10 +906,10 @@
                </div>
             </details>
 
-            <!-- 4.5. La fonction mk_pool_allocSafe() -->
+            <!-- 6.5. La fonction mk_pool_allocSafe() -->
             <details open>
                <summary>
-                  <span class="subtitle" id="mk_pool_allocSafe">4.5. La fonction mk_pool_allocSafe()</span>
+                  <span class="subtitle" id="mk_pool_allocSafe">6.5. La fonction mk_pool_allocSafe()</span>
                </summary>
                <div class="prototype">
                   <p>Cette fonction alloue un bloc de taille fixe dans un gestionnaire d'allocation dynamique. Elle
@@ -496,10 +968,10 @@
                </div>
             </details>
 
-            <!-- 4.6. La fonction mk_pool_freeSafe() -->
+            <!-- 6.6. La fonction mk_pool_freeSafe() -->
             <details open>
                <summary>
-                  <span class="subtitle" id="mk_pool_freeSafe">4.6. La fonction mk_pool_freeSafe()</span>
+                  <span class="subtitle" id="mk_pool_freeSafe">6.6. La fonction mk_pool_freeSafe()</span>
                </summary>
                <div class="prototype">
                   <p>Cette fonction désalloue un bloc de taille fixe.</p>
@@ -538,10 +1010,10 @@
                </div>
             </details>
 
-            <!-- 4.7. La fonction mk_pool_count() -->
+            <!-- 6.7. La fonction mk_pool_count() -->
             <details open>
                <summary>
-                  <span class="subtitle" id="mk_pool_count">4.7. La fonction mk_pool_count()</span>
+                  <span class="subtitle" id="mk_pool_count">6.7. La fonction mk_pool_count()</span>
                </summary>
                <div class="prototype">
                   <p>Cette fonction retourne le nombre de blocs de taille fixe disponibles dans un gestionnaire
@@ -577,10 +1049,10 @@
                </div>
             </details>
 
-            <!-- 4.8. La fonction mk_pool_available() -->
+            <!-- 6.8. La fonction mk_pool_available() -->
             <details open>
                <summary>
-                  <span class="subtitle" id="mk_pool_available">4.8. La fonction mk_pool_available()</span>
+                  <span class="subtitle" id="mk_pool_available">6.8. La fonction mk_pool_available()</span>
                </summary>
                <div class="prototype">
                   <p>Cette fonction retourne l'adresse du prochain bloc de taille fixe disponible, sans l'allouer.</p>
@@ -604,10 +1076,10 @@
                </div>
             </details>
 
-            <!-- 4.9. La fonction mk_pool_delete() -->
+            <!-- 6.9. La fonction mk_pool_delete() -->
             <details open>
                <summary>
-                  <span class="subtitle" id="mk_pool_delete">4.9. La fonction mk_pool_delete()</span>
+                  <span class="subtitle" id="mk_pool_delete">6.9. La fonction mk_pool_delete()</span>
                </summary>
                <div class="prototype">
                   <p>Cette fonction supprime un gestionnaire d'allocation dynamique.</p>
