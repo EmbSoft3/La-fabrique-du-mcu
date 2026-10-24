@@ -55,7 +55,7 @@
                   <tbody>
                      <tr>
                         <td><a href="#mk_pool_initArea"><span class="gray">mk_<wbr>pool_<wbr>initArea</span></a></td>
-                        <td>Initialise le buffer mémoire d'une pool.</td>
+                        <td>Initialise le buffer d'une pool.</td>
                      </tr>
                      <tr>
                         <td><a href="#mk_pool_create"><span class="gray">mk_<wbr>pool_<wbr>create</span></a></td>
@@ -750,7 +750,7 @@
                   <span class="subtitle" id="mk_pool_initArea">6.1. La fonction mk_pool_initArea()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction initialise une zone mémoire dédiée à l'allocation dynamique.</p>
+                  <p>Cette fonction initialise le buffer d'une pool mémoire.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
@@ -764,16 +764,16 @@
                         <p>Adresse d'une structure de type <span class="bold-strong">T_mkPoolArea</span>.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkBuf</span> <span class="italic">[in]</span>
-                        <p>Adresse de base de la zone mémoire dédiée à l'allocation dynamique.</p><br>
+                        <p>Adresse du buffer (alignée sur 32 bits).</p><br>
                      </li>
                      <li><span class="bold-green">p_mkSize</span> <span class="italic">[in]</span>
-                        <p>Taille de la zone mémoire dédiée à l'allocation dynamique (en multiple de mots 32 bits).</p>
+                        <p>Taille du buffer (en multiple de mots 32 bits).</p>
                      </li>
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
-                     <li><span class="bold-strong">K_MK_OK</span> : les attributs de la zone mémoire ont été
-                        initialisés.</li>
+                     <li><span class="bold-strong">K_MK_OK</span> : les attributs du buffer ont été
+                        initialisés dans la structure.</li>
                      <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : les attributs de la zone mémoire n'ont
                         pas été initialisés car au moins un paramètre est invalide.</li>
                   </ul>
@@ -786,8 +786,7 @@
                   <span class="subtitle" id="mk_pool_create">6.2. La fonction mk_pool_create()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction initialise un gestionnaire d'allocation dynamique de taille fixe dans la zone
-                     mémoire définie par la structure <span class="bold-strong">T_mkPoolArea</span>.</p>
+                  <p>Cette fonction crée une pool mémoire.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
@@ -804,38 +803,31 @@
                         <p>Adresse d'un pointeur de type <span class="bold-strong">T_mkPool*</span>.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkAreaType</span> <span class="italic">[in]</span>
-                        <p>Type de la zone mémoire. Les valeurs possibles sont les suivantes :</p>
+                        <p>Type de la pool. Les valeurs possibles sont les suivantes :</p>
                         <ul>
-                           <li><span class="bold-strong">K_MK_AREA_PROTECTED</span> : le gestionnaire est protégé des
-                              appels système de type non privilégié.</li>
-                           <li><span class="bold-strong">K_MK_AREA_UNPROTECTED</span> : le gestionnaire n'est pas
-                              protégé des appels système de type non privilégié.</li>
-                        </ul><br>
+                           <li><span class="bold-strong">K_MK_AREA_PROTECTED</span> : la pool est protégée, elle ne peut pas être manipulée par des tâches non privilégiées.</li>
+                           <li><span class="bold-strong">K_MK_AREA_UNPROTECTED</span> : la pool n'est pas protégée, elle peut être manipulée par des tâches privilégiées et non privilégiées.</li>
+                        </ul>
                      </li>
                      <li><span class="bold-green">p_mkSize</span> <span class="italic">[in]</span>
-                        <p>Taille des blocs mémoire (en multiple de mots 32 bits).</p><br>
+                        <p>Taille des blocs de la pool (en multiple de mots 32 bits).</p><br>
                      </li>
                      <li><span class="bold-green">p_mkCount</span> <span class="italic">[in]</span>
-                        <p>Nombre de blocs mémoire.</p>
+                        <p>Nombre de blocs de la pool.</p>
                      </li>
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
-                     <li><span class="bold-strong">K_MK_OK</span> : le gestionnaire d'allocation dynamique a été
-                        initialisé.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le gestionnaire d'allocation dynamique
-                        n'a pas été initialisé car au moins un paramètre est invalide.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : le gestionnaire d'allocation dynamique
-                        n'a pas été initialisé car la taille de la zone mémoire définie par la structure <span
-                           class="bold-strong">T_mkPoolArea</span> est insuffisante.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le gestionnaire d'allocation dynamique n'a
-                        pas été initialisé car cette fonction a été exécutée depuis un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_OK</span> : la pool a été créée.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la pool n'a pas été créée car au moins un paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : la pool n'a pas été créée car aucun bloc mémoire n'était disponible lors de l'appel système.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la pool n'a pas été créée car cette fonction a été exécutée depuis un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la pool n'a pas été créée car une tâche non privilégiée ne peut pas créer une pool située dans un buffer privilégié ou une pool protégée.</li>
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
+                     <li>La taille du buffer de la pool est configurée avec la fonction <span class="bold-strong">mk_pool_initArea</span>. Elle doit être égale à <span class="bold-strong">p_mkCount x p_mkSize</span> mots 32 bits.</li>
                      <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
-                     <li>La mémoire réservée par cette fonction à partir de la structure <span
-                           class="bold-strong">T_mkPoolArea</span> ne peut pas être désallouée.</li>
                   </ul>
                </div>
             </details>
