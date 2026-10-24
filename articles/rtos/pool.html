@@ -125,6 +125,7 @@
                      mémoire. </p>
                </div>
             </div>
+            <br>
 
             <p>Lorsqu'une allocation est réalisée, le noyau retire le premier bloc de la chaîne et le fournit à
                l'application. Le pointeur <span class="bold-strong">current</span> est alors actualisé pour pointer sur
@@ -145,7 +146,7 @@
             <p>Les blocs 3 et 4 ne font plus partie de la chaîne et la <span class="bold-strong">pool</span> ne possède
                plus que deux blocs.</p>
             <p>Lorsqu'une désallocation est réalisée, le noyau effectue l'opération inverse en ajoutant un nouvel
-               élément à la chaîne. Les figures ci-dessous montrent l'état de la pool lorsque les blocs 4 puis 3 sont
+               élément à la chaîne. Les figures ci-dessous montrent l'état de la pool lorsque les blocs 4 puis 3 ont été
                désalloués : </p>
 
             <figure>
@@ -184,8 +185,8 @@
             <br>
 
             <p>
-               Lors de chaque désallocation, le noyau vérifie que le bloc fourni par l'application appartient bien à la
-               bonne <span class="bold-strong">pool</span>. Néanmoins, il ne vérifie pas si le bloc mémoire a déjà été
+               Lors de chaque désallocation, le noyau vérifie que l'adresse est bien dans le buffer de cette pool
+               et qu'elle est bien alignée sur un début de bloc. Néanmoins, il ne vérifie pas si le bloc mémoire a déjà été
                désalloué.
             </p>
             <br>
@@ -194,15 +195,14 @@
                <div class="warning-text ">
                   <p>
                      Un bloc mémoire désalloué plusieurs fois corrompt le gestionnaire d'allocation de
-                     taille fixe. Deux allocations successives peuvent alors retourner la même adresse. Par conséquent,
-                     deux tâches peuvent partager un même bloc sans le savoir.
+                     taille fixe. Les blocs précédemment disponibles ne le sont plus et deux allocations successives peuvent retourner la même adresse. Deux tâches peuvent donc partager un même bloc sans le savoir.
                   </p>
                </div>
             </div>
             <br>
 
             <p>
-               La figure ci-dessous montre la situation où le bloc 4 est désalloué deux fois consécutivement :
+               La figure ci-dessous montre la situation où le bloc 4 est désalloué deux fois successivement :
             </p>
 
             <figure>
@@ -538,10 +538,9 @@
                par ces fonctions
                soit devenu obsolète suite à une préemption n'existe pas.</p>
             <br>
-            <p>Lorsque l'utilisation de <span class="bold-strong">g_pool</span> est terminée, l'application peut la
-               détruire
-               en exécutant la fonction <span class="bold-strong">mk_<wbr>pool_<wbr>delete</span> qui demande au noyau
-               de désallouer l'objet. </p>
+            <p>La dernière fonction de l'<span class="bold-strong">API</span> est la fonction <span class="bold-strong">mk_<wbr>pool_<wbr>delete</span>. 
+               Elle permet de détruire l'objet <span class="bold-strong">g_pool</span> en demandant au noyau
+               de le désallouer. </p>
             <br>
             <pre class="code">
 <span class="multi-line-comment">/* Suppression de la pool */</span>
@@ -596,7 +595,7 @@
 </pre>
             <br>
             <p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span> est utilisé,
-               une tâche non privilégiée peut manipuler la pool créée. Dans ce cas de figure, le
+               une tâche non privilégiée peut manipuler le gestionnaire de taille fixe créé. Dans ce cas de figure, le
                buffer du gestionnaire d'allocation doit obligatoirement se situer en mémoire non privilégiée pour
                autoriser
                la tâche non privilégiée à écrire dans les blocs qu'elle alloue.</p>
@@ -604,7 +603,9 @@
 
             <pre class="code">
 <span class="multi-line-comment">/* Création d'une pool non protégée par une tâche privilégiée */</span>
-<span class="multi-line-comment">/* Cette pool est partageable entre tâches privilégiées et non privilégiées */</span>
+<span class="multi-line-comment">/* Cette pool est partageable entre tâches privilégiées */</span>
+<span class="multi-line-comment">/* et non privilégiées. Néanmoins, il n'est pas recommandé de la partager */</span>
+<span class="multi-line-comment">/* entre des tâches de différents types. */</span>
 
 <span class="multi-line-comment">/* Déclaration du pointeur de pool et de son buffer */</span>
 <span class="multi-line-comment">/* Le pointeur g_pool doit être en zone privilégiée pour que les */</span>
@@ -640,7 +641,8 @@
 
             <pre class="code">
 <span class="multi-line-comment">/* Création d'une pool non protégée par une tâche non privilégiée */</span>
-<span class="multi-line-comment">/* Cette pool est partageable entre tâche privilégiée et non privilégiée */</span>
+<span class="multi-line-comment">/* Cette pool est partageable entre tâches privilégiées */</span>
+<span class="multi-line-comment">/* et non privilégiées */</span>
 <span class="multi-line-comment">/* Néanmoins, on ne l'utilise que pour synchroniser */</span>
 <span class="multi-line-comment">/* des tâches non privilégiées */</span>
 
@@ -670,16 +672,26 @@
 </pre>
 
             <br>
-            <p>Le tableau ci-dessous résume les règles de placement de la pool :</p>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+            <p>D'une manière générale, il est conseillé de ne pas partager l'utilisation d'une <span class="bold-strong">pool</span> entre des tâches de différents types. 
+               Le but étant d'éviter qu'une tâche non privilégiée vienne corrompre le gestionnaire de taille fixe ou le contenu des blocs 
+               alloués par une tâche privilégiée.</p>
+               </div>
+            </div>
+            <br>
+
+            <p>Le tableau ci-dessous résume les règles de placement de la pool et les recommandations d'utilisation :</p>
             <div class="table-scroll-container">
                <table>
                   <thead>
                      <tr>
                         <th>Créateur</th>
                         <th>Attribut</th>
-                        <th>Pointeur <span class="bold-strong">T_<wbr>mk<wbr>Pool*</span></th>
+                        <th>Pointeur<br><span class="bold-strong">T_<wbr>mk<wbr>Pool*</span></th>
                         <th>Buffer</th>
-                        <th>Utilisable par</th>
+                        <th>Cas d'utilisation</th>
                      </tr>
                   </thead>
                   <tbody>
@@ -690,7 +702,7 @@
                               class="gray">(K_<wbr>MK_<wbr>PRIVILEGED_<wbr>BSS_<wbr>MEMORY)</span></td>
                         <td>Zone privilégiée<br><span
                               class="gray">(K_<wbr>MK_<wbr>PRIVILEGED_<wbr>BSS_<wbr>MEMORY)</span></td>
-                        <td>Tâches privilégiées uniquement</td>
+                        <td>Allocation entre tâches privilégiées uniquement</td>
                      </tr>
                      <tr>
                         <td>Tâche privilégiée</td>
@@ -699,7 +711,7 @@
                               class="gray">(K_<wbr>MK_<wbr>PRIVILEGED_<wbr>RO_<wbr>MEMORY)</span></td>
                         <td>Zone non privilégiée<br><span
                               class="gray">(K_<wbr>MK_<wbr>UNPRIVILEGED_<wbr>BSS_<wbr>MEMORY)</span></td>
-                        <td>Tâches privilégiées et non privilégiées</td>
+                        <td>⚠️ <span class="bold-strong">Non recommandé</span></td>
                      </tr>
                      <tr>
                         <td>Tâche non privilégiée</td>
@@ -708,14 +720,14 @@
                               class="gray">(K_<wbr>MK_<wbr>UNPRIVILEGED_<wbr>BSS_<wbr>MEMORY)</span></td>
                         <td>Zone non privilégiée<br><span
                               class="gray">(K_<wbr>MK_<wbr>UNPRIVILEGED_<wbr>BSS_<wbr>MEMORY)</span></td>
-                        <td>Tâches privilégiées et non privilégiées</td>
+                        <td>Allocation entre tâches non privilégiées uniquement</td>
                      </tr>
                      <tr>
                         <td>Tâche non privilégiée</td>
                         <td><span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span></td>
                         <td>-</td>
                         <td>-</td>
-                        <td>Cas interdit</td>
+                        <td>⚠️ <span class="bold-strong">Cas interdit</span></td>
                      </tr>
                   </tbody>
                </table>
@@ -724,8 +736,8 @@
             <div class="comment">
                <p class="comment-logo">💬</p>
                <div class="comment-text">
-                  <p>Une tâche non privilégiée ne peut pas utiliser une pool protégée. Dans ce cas de figure, la valeur
-                     <span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>RIGHT</span> est retournée par les fonctions.
+                  <p>À noter qu'une tâche non privilégiée ne peut pas manipuler une pool protégée. Dans ce cas de figure, la valeur
+                     <span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>RIGHT</span> est retournée par les fonctions possédant un code de retour.
                   </p>
                </div>
             </div>
