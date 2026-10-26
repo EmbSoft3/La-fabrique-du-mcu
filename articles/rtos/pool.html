@@ -63,19 +63,19 @@
                      </tr>
                      <tr>
                         <td><a href="#mk_pool_alloc"><span class="gray">mk_<wbr>pool_<wbr>alloc</span></a></td>
-                        <td>Alloue un bloc mémoire de taille fixe dans une pool.</td>
+                        <td>Alloue un bloc mémoire.</td>
                      </tr>
                      <tr>
                         <td><a href="#mk_pool_free"><span class="gray">mk_<wbr>pool_<wbr>free</span></a></td>
-                        <td>Désalloue un bloc mémoire de taille fixe.</td>
+                        <td>Désalloue un bloc mémoire.</td>
                      </tr>
                      <tr>
                         <td><a href="#mk_pool_allocSafe"><span class="gray">mk_<wbr>pool_<wbr>allocSafe</span></a></td>
-                        <td>Alloue un bloc mémoire de taille fixe dans une pool (thread safe).</td>
+                        <td>Alloue un bloc mémoire (thread safe).</td>
                      </tr>
                      <tr>
                         <td><a href="#mk_pool_freeSafe"><span class="gray">mk_<wbr>pool_<wbr>freeSafe</span></a></td>
-                        <td>Désalloue un bloc mémoire de taille fixe (thread safe).</td>
+                        <td>Désalloue un bloc mémoire (thread safe).</td>
                      </tr>
                      <tr>
                         <td><a href="#mk_pool_count"><span class="gray">mk_<wbr>pool_<wbr>count</span></a></td>
@@ -186,7 +186,8 @@
 
             <p>
                Lors de chaque désallocation, le noyau vérifie que l'adresse est bien dans le buffer de cette pool
-               et qu'elle est bien alignée sur un début de bloc. Néanmoins, il ne vérifie pas si le bloc mémoire a déjà été
+               et qu'elle est bien alignée sur un début de bloc. Néanmoins, il ne vérifie pas si le bloc mémoire a déjà
+               été
                désalloué.
             </p>
             <br>
@@ -195,7 +196,8 @@
                <div class="warning-text ">
                   <p>
                      Un bloc mémoire désalloué plusieurs fois corrompt le gestionnaire d'allocation de
-                     taille fixe. Les blocs précédemment disponibles ne le sont plus et deux allocations successives peuvent retourner la même adresse. Deux tâches peuvent donc partager un même bloc sans le savoir.
+                     taille fixe. Les blocs précédemment disponibles ne le sont plus et deux allocations successives
+                     peuvent retourner la même adresse. Deux tâches peuvent donc partager un même bloc sans le savoir.
                   </p>
                </div>
             </div>
@@ -506,14 +508,11 @@
             <br>
 
             <pre class="code">
-<span class="multi-line-comment">/* Déclaration des variables de travail */</span>
-<span class="type">uint32_t</span> l_numberOfBlockAvailable = <span class="number">0</span>;
-
 <span class="multi-line-comment">/* Récupération du nombre de blocs disponibles */</span>
-<span class="type">T_mkCode</span> l_result = <span class="function">mk_pool_count</span> ( g_pool,&l_numberOfBlockAvailable );
+<span class="type">uint32_t</span> l_numberOfBlockAvailable = <span class="function">mk_pool_count</span> ( g_pool );
 
 <span class="multi-line-comment">/* Si au moins un bloc est disponible */</span>
-<span class="keyword">if</span> ( ( l_result == <span class="define">K_MK_OK</span> ) && ( l_numberOfBlockAvailable > <span class="number">0</span> ) )
+<span class="keyword">if</span> ( l_numberOfBlockAvailable > <span class="number">0</span> )
 {
    <span class="multi-line-comment">/* Faire quelque chose ici */</span>
 }
@@ -525,7 +524,7 @@
                   <p>
                      Les fonctions <span class="bold-strong">mk_<wbr>pool_<wbr>available</span> et
                      <span class="bold-strong">mk_<wbr>pool_<wbr>count</span> ne sont pas de type <span
-                        class="bold-strong">ThreadSafe</span>. Elles ne doivent donc pas être utilisées lorsqu'une pool
+                        class="bold-strong">thread safe</span>. Elles ne doivent donc pas être utilisées lorsqu'une pool
                      est partagée entre plusieurs tâches.
                   </p>
                </div>
@@ -538,7 +537,8 @@
                par ces fonctions
                soit devenu obsolète suite à une préemption n'existe pas.</p>
             <br>
-            <p>La dernière fonction de l'<span class="bold-strong">API</span> est la fonction <span class="bold-strong">mk_<wbr>pool_<wbr>delete</span>. 
+            <p>La dernière fonction de l'<span class="bold-strong">API</span> est la fonction <span
+                  class="bold-strong">mk_<wbr>pool_<wbr>delete</span>.
                Elle permet de détruire l'objet <span class="bold-strong">g_pool</span> en demandant au noyau
                de le désallouer. </p>
             <br>
@@ -643,8 +643,7 @@
 <span class="multi-line-comment">/* Création d'une pool non protégée par une tâche non privilégiée */</span>
 <span class="multi-line-comment">/* Cette pool est partageable entre tâches privilégiées */</span>
 <span class="multi-line-comment">/* et non privilégiées */</span>
-<span class="multi-line-comment">/* Néanmoins, on ne l'utilise que pour synchroniser */</span>
-<span class="multi-line-comment">/* des tâches non privilégiées */</span>
+<span class="multi-line-comment">/* Néanmoins, on ne la partage qu'entre tâches non privilégiées */</span>
 
 <span class="multi-line-comment">/* Déclaration du pointeur de pool et de son buffer */</span>
 <span class="multi-line-comment">/* Le pointeur et le buffer doivent obligatoirement être en zone */</span>
@@ -675,14 +674,17 @@
             <div class="warning">
                <p class="warning-logo">⚠️</p>
                <div class="warning-text ">
-            <p>D'une manière générale, il est conseillé de ne pas partager l'utilisation d'une <span class="bold-strong">pool</span> entre des tâches de différents types. 
-               Le but étant d'éviter qu'une tâche non privilégiée vienne corrompre le gestionnaire de taille fixe ou le contenu des blocs 
-               alloués par une tâche privilégiée.</p>
+                  <p>D'une manière générale, il est conseillé de ne pas partager l'utilisation d'une <span
+                        class="bold-strong">pool</span> entre des tâches de différents types.
+                     Le but étant d'éviter qu'une tâche non privilégiée vienne corrompre le gestionnaire de taille fixe
+                     ou le contenu des blocs
+                     alloués par une tâche privilégiée.</p>
                </div>
             </div>
             <br>
 
-            <p>Le tableau ci-dessous résume les règles de placement de la pool et les recommandations d'utilisation :</p>
+            <p>Le tableau ci-dessous résume les règles de placement de la pool et les recommandations d'utilisation :
+            </p>
             <div class="table-scroll-container">
                <table>
                   <thead>
@@ -711,7 +713,9 @@
                               class="gray">(K_<wbr>MK_<wbr>PRIVILEGED_<wbr>RO_<wbr>MEMORY)</span></td>
                         <td>Zone non privilégiée<br><span
                               class="gray">(K_<wbr>MK_<wbr>UNPRIVILEGED_<wbr>BSS_<wbr>MEMORY)</span></td>
-                        <td>⚠️ <span class="bold-strong">Non recommandé</span></td>
+                        <td>⚠️ <span class="bold-strong">Non recommandé</span> (corruption possible de la pool par une
+                           tâche
+                           non privilégiée)</td>
                      </tr>
                      <tr>
                         <td>Tâche non privilégiée</td>
@@ -736,11 +740,31 @@
             <div class="comment">
                <p class="comment-logo">💬</p>
                <div class="comment-text">
-                  <p>À noter qu'une tâche non privilégiée ne peut pas manipuler une pool protégée. Dans ce cas de figure, la valeur
-                     <span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>RIGHT</span> est retournée par les fonctions possédant un code de retour.
+                  <p>À noter qu'une tâche non privilégiée ne peut pas manipuler une pool protégée. Dans ce cas de
+                     figure, la valeur
+                     <span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>RIGHT</span> est retournée par les fonctions
+                     <span class="bold-strong">mk_<wbr>pool_<wbr>create</span>, <span
+                        class="bold-strong">mk_<wbr>pool_<wbr>alloc<wbr>Safe</span>, <span
+                        class="bold-strong">mk_<wbr>pool_<wbr>free<wbr>Safe</span>
+                     et <span class="bold-strong">mk_<wbr>pool_<wbr>delete</span>.
                   </p>
                </div>
             </div>
+
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Les fonctions <span class="bold-strong">mk_<wbr>pool_<wbr>alloc</span>
+                     et <span class="bold-strong">mk_<wbr>pool_<wbr>free</span> ne réalisent pas d'appel système, le
+                     noyau ne peut donc pas appliquer les régles de protection imposés par la constante <span
+                        class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span>. C'est pourquoi, il
+                     est important de placer correctement le buffer mémoire d'une pool privilégiée dans une zone mémoire
+                     privilégiée afin d'éviter toute corruption.
+                  </p>
+               </div>
+            </div>
+            <br>
 
             <h2>6. API</h2>
 
@@ -796,7 +820,7 @@
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
-                     <li><span class="bold-green">p_mkArea</span> <span class="italic">[in]</span>
+                     <li><span class="bold-green">p_mkArea</span> <span class="italic">[in, out]</span>
                         <p>Adresse d'une structure de type <span class="bold-strong">T_mkPoolArea</span>.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkPool</span> <span class="italic">[out]</span>
@@ -805,8 +829,10 @@
                      <li><span class="bold-green">p_mkAreaType</span> <span class="italic">[in]</span>
                         <p>Type de la pool. Les valeurs possibles sont les suivantes :</p>
                         <ul>
-                           <li><span class="bold-strong">K_MK_AREA_PROTECTED</span> : la pool est protégée, elle ne peut pas être manipulée par des tâches non privilégiées.</li>
-                           <li><span class="bold-strong">K_MK_AREA_UNPROTECTED</span> : la pool n'est pas protégée, elle peut être manipulée par des tâches privilégiées et non privilégiées.</li>
+                           <li><span class="bold-strong">K_MK_AREA_PROTECTED</span> : la pool est protégée, elle ne peut
+                              pas être manipulée par des tâches non privilégiées.</li>
+                           <li><span class="bold-strong">K_MK_AREA_UNPROTECTED</span> : la pool n'est pas protégée, elle
+                              peut être manipulée par des tâches privilégiées ou non privilégiées.</li>
                         </ul>
                      </li>
                      <li><span class="bold-green">p_mkSize</span> <span class="italic">[in]</span>
@@ -819,15 +845,29 @@
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
                      <li><span class="bold-strong">K_MK_OK</span> : la pool a été créée.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la pool n'a pas été créée car au moins un paramètre est invalide.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : la pool n'a pas été créée car aucun bloc mémoire n'était disponible lors de l'appel système.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la pool n'a pas été créée car cette fonction a été exécutée depuis un vecteur d'interruption.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la pool n'a pas été créée car une tâche non privilégiée ne peut pas créer une pool située dans un buffer privilégié ou une pool protégée.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la pool n'a pas été créée car au moins un
+                        paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : la pool n'a pas été créée car le nombre
+                        maximal de pools pouvant être créées a été atteint.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la pool n'a pas été créée car cette fonction
+                        a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la pool n'a pas été créée car une tâche non
+                        privilégiée ne peut pas créer une pool située dans un buffer privilégié ou créer une pool
+                        protégée.
+                     </li>
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
-                     <li>La taille du buffer de la pool est configurée avec la fonction <span class="bold-strong">mk_pool_initArea</span>. Elle doit être égale à <span class="bold-strong">p_mkCount x p_mkSize</span> mots 32 bits.</li>
                      <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>La taille du buffer de la pool est configurée avec la fonction <a
+                           href="#mk_pool_initArea"><span class="bold-strong">mk_<wbr>pool_<wbr>initArea</span></a>.
+                        Elle doit
+                        être au moins égale à <span class="bold-strong">p_mkCount x p_mkSize</span> mots 32 bits.</li>
+                     <li>La constante <span
+                           class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>POOLS</span>
+                        définit le
+                        nombre maximal de pools pouvant être
+                        créées.</li>
                   </ul>
                </div>
             </details>
@@ -838,7 +878,7 @@
                   <span class="subtitle" id="mk_pool_alloc">6.3. La fonction mk_pool_alloc()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction alloue un bloc de taille fixe dans un gestionnaire d'allocation dynamique.</p>
+                  <p>Cette fonction alloue un bloc mémoire dans une pool.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
@@ -847,27 +887,37 @@
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
-                     <li><span class="bold-green">p_mkPool</span> <span class="italic">[in, out]</span>
+                     <li><span class="bold-green">p_mkPool</span> <span class="italic">[in]</span>
                         <p>Adresse d'une structure de type <span class="bold-strong">T_mkPool</span>.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkClear</span> <span class="italic">[in]</span>
-                        <p>Ce paramètre indique si le bloc alloué doit être initialisé à zéro
-                           (<span class="bold-strong">K_MK_POOL_CLEAR</span>) ou non
-                           (<span class="bold-strong">K_MK_POOL_NO_CLEAR</span>).</p>
+                        <p>Reset de la mémoire allouée. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">K_MK_POOL_CLEAR</span> : la mémoire allouée est remise à zéro.
+                           </li>
+                           <li><span class="bold-strong">K_MK_POOL_NO_CLEAR</span> : la mémoire allouée n'est pas remise
+                              à zéro.</li>
+                        </ul>
                      </li>
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
-                     <li>L'adresse du bloc de taille fixe alloué ou la valeur <span class="bold-strong">K_MK_NULL</span>
-                        si aucun bloc n'est disponible ou si un paramètre est
-                        invalide.</li>
+                     <li>L'adresse de la mémoire allouée ou la valeur <span class="bold-strong">K_MK_NULL</span>
+                        si l'allocation a échoué.</li>
                   </ul>
-                  <p><span class="underline">Note</span> :</p>
-                  <ul>
-                     <li>Cette fonction n'est pas de type « thread safe ». Pour une utilisation concurrente, la
-                        fonction <a href="#mk_pool_allocSafe"><span class="bold-strong">mk_pool_allocSafe</span></a>
-                        doit être utilisée.</li>
-                  </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Cette fonction n'est pas de type <span class="bold-strong">Thread Safe</span>. <br>Pour
+                              une utilisation concurrente, la
+                              fonction <a href="#mk_pool_allocSafe"><span
+                                    class="bold-strong">mk_pool_allocSafe</span></a>
+                              doit être utilisée.</li>
+                        </ul>
+                     </div>
+                  </div>
                </div>
             </details>
 
@@ -877,7 +927,7 @@
                   <span class="subtitle" id="mk_pool_free">6.4. La fonction mk_pool_free()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction désalloue un bloc de taille fixe.</p>
+                  <p>Cette fonction désalloue un bloc mémoire.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
@@ -886,27 +936,35 @@
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
-                     <li><span class="bold-green">p_mkPool</span> <span class="italic">[in, out]</span>
+                     <li><span class="bold-green">p_mkPool</span> <span class="italic">[in]</span>
                         <p>Adresse d'une structure de type <span class="bold-strong">T_mkPool</span>.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkAddr</span> <span class="italic">[in]</span>
-                        <p>Adresse du bloc de taille fixe à désallouer.</p>
+                        <p>Adresse de la mémoire à désallouer.</p>
                      </li>
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
-                     <li><span class="bold-strong">K_MK_OK</span> : le bloc de taille fixe a été désalloué.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le bloc de taille fixe n'a pas été
-                        désalloué car au moins un paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_OK</span> : la mémoire a été désallouée.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la mémoire n'a pas été désallouée car au
+                        moins un paramètre est invalide.</li>
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
-                     <li>Le bloc de taille fixe doit être désalloué dans le gestionnaire d'allocation de type <span
-                           class="bold-strong">T_mkPool</span> d'où il est originaire.</li>
-                     <li>Cette fonction n'est pas de type « thread safe ». Pour une utilisation concurrente, la
-                        fonction <a href="#mk_pool_freeSafe"><span class="bold-strong">mk_pool_freeSafe</span></a>
-                        doit être utilisée.</li>
+                     <li>La mémoire doit être désallouée dans la pool dont elle est originaire.</li>
                   </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Cette fonction n'est pas de type <span class="bold-strong">Thread Safe</span>. <br>Pour
+                              une utilisation concurrente, la
+                              fonction <a href="#mk_pool_freeSafe"><span class="bold-strong">mk_pool_freeSafe</span></a>
+                              doit être utilisée.</li>
+                        </ul>
+                     </div>
+                  </div>
                </div>
             </details>
 
@@ -916,8 +974,7 @@
                   <span class="subtitle" id="mk_pool_allocSafe">6.5. La fonction mk_pool_allocSafe()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction alloue un bloc de taille fixe dans un gestionnaire d'allocation dynamique. Elle
-                     peut bloquer la tâche appelante jusqu'à la libération d'un bloc.</p>
+                  <p>Cette fonction alloue un bloc mémoire dans une pool.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
@@ -927,17 +984,21 @@
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
-                     <li><span class="bold-green">p_mkPool</span> <span class="italic">[in, out]</span>
+                     <li><span class="bold-green">p_mkPool</span> <span class="italic">[in]</span>
                         <p>Adresse d'une structure de type <span class="bold-strong">T_mkPool</span>.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkAddr</span> <span class="italic">[out]</span>
-                        <p>Adresse du bloc de taille fixe alloué ou valeur <span class="bold-strong">K_MK_NULL</span>
+                        <p>Adresse de la mémoire allouée ou la valeur <span class="bold-strong">K_MK_NULL</span>
                            si l'allocation a échoué.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkClear</span> <span class="italic">[in]</span>
-                        <p>Ce paramètre indique si le bloc alloué doit être initialisé à zéro
-                           (<span class="bold-strong">K_MK_POOL_CLEAR</span>) ou non
-                           (<span class="bold-strong">K_MK_POOL_NO_CLEAR</span>).</p><br>
+                        <p>Reset de la mémoire allouée. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">K_MK_POOL_CLEAR</span> : la mémoire allouée est remise à zéro.
+                           </li>
+                           <li><span class="bold-strong">K_MK_POOL_NO_CLEAR</span> : la mémoire allouée n'est pas remise
+                              à zéro.</li>
+                        </ul>
                      </li>
                      <li><span class="bold-green">p_mkTick</span> <span class="italic">[in]</span>
                         <p>Durée maximale de blocage de la tâche. Les valeurs possibles sont les suivantes :</p>
@@ -954,16 +1015,15 @@
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
-                     <li><span class="bold-strong">K_MK_OK</span> : le bloc de taille fixe a été alloué.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le bloc de taille fixe n'a pas été
-                        alloué car au moins un paramètre est invalide.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : le bloc de taille fixe n'a pas été
-                        alloué car aucun bloc n'était disponible dans le délai imparti.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le bloc de taille fixe n'a pas été alloué
-                        car cette fonction a été exécutée depuis un vecteur d'interruption.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le bloc de taille fixe n'a pas été
-                        alloué car une tâche de type non privilégié ne peut pas utiliser un objet de type <span
-                           class="bold-strong">T_mkPool</span> protégé.</li>
+                     <li><span class="bold-strong">K_MK_OK</span> : la mémoire a été allouée.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la mémoire n'a pas été
+                        allouée car au moins un paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : la mémoire n'a pas été
+                        allouée car aucun bloc n'était disponible dans le délai imparti.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la mémoire n'a pas été allouée
+                        car cette fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la mémoire n'a pas été
+                        allouée car une tâche non privilégiée ne peut pas manipuler une pool protégée.</li>
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
@@ -978,7 +1038,7 @@
                   <span class="subtitle" id="mk_pool_freeSafe">6.6. La fonction mk_pool_freeSafe()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction désalloue un bloc de taille fixe.</p>
+                  <p>Cette fonction désalloue un bloc mémoire.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
@@ -987,29 +1047,27 @@
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
-                     <li><span class="bold-green">p_mkPool</span> <span class="italic">[in, out]</span>
+                     <li><span class="bold-green">p_mkPool</span> <span class="italic">[in]</span>
                         <p>Adresse d'une structure de type <span class="bold-strong">T_mkPool</span>.</p><br>
                      </li>
                      <li><span class="bold-green">p_mkAddr</span> <span class="italic">[in]</span>
-                        <p>Adresse du bloc de taille fixe à désallouer.</p>
+                        <p>Adresse de la mémoire à désallouer.</p>
                      </li>
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
-                     <li><span class="bold-strong">K_MK_OK</span> : le bloc de taille fixe a été désalloué.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le bloc de taille fixe n'a pas été
-                        désalloué car au moins un paramètre est invalide.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le bloc de taille fixe n'a pas été
-                        désalloué car cette fonction a été exécutée depuis un vecteur d'interruption.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le bloc de taille fixe n'a pas été
-                        désalloué car une tâche de type non privilégié ne peut pas utiliser un objet de type <span
-                           class="bold-strong">T_mkPool</span> protégé.</li>
+                     <li><span class="bold-strong">K_MK_OK</span> : la mémoire a été désallouée.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la mémoire n'a pas été
+                        désallouée car au moins un paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la mémoire n'a pas été
+                        désallouée car cette fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la mémoire n'a pas été
+                        désallouée car une tâche non privilégiée ne peut pas manipuler une pool protégée.</li>
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
                      <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
-                     <li>Le bloc de taille fixe doit être désalloué dans le gestionnaire d'allocation de type <span
-                           class="bold-strong">T_mkPool</span> d'où il est originaire.</li>
+                     <li>La mémoire doit être désallouée dans la pool dont elle est originaire.</li>
                   </ul>
                </div>
             </details>
@@ -1020,35 +1078,22 @@
                   <span class="subtitle" id="mk_pool_count">6.7. La fonction mk_pool_count()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction retourne le nombre de blocs de taille fixe disponibles dans un gestionnaire
-                     d'allocation dynamique.</p>
+                  <p>Cette fonction retourne le nombre de blocs disponibles dans une pool.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
                   <pre class="code">
-<span class="type">T_mkCode</span> mk_pool_count ( <span class="type">T_mkPool*</span> p_mkPool, <span class="type">uint32_t*</span> p_mkCount );
+<span class="type">uint32_t</span> mk_pool_count ( <span class="type">T_mkPool*</span> p_mkPool );
                   </pre>
                   <p><span class="underline">Paramètres</span> :</p>
                   <ul>
                      <li><span class="bold-green">p_mkPool</span> <span class="italic">[in]</span>
-                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkPool</span>.</p><br>
-                     </li>
-                     <li><span class="bold-green">p_mkCount</span> <span class="italic">[out]</span>
-                        <p>Nombre de blocs mémoire disponibles.</p>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkPool</span>.</p>
                      </li>
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
-                     <li><span class="bold-strong">K_MK_OK</span> : le nombre de blocs de taille fixe a été
-                        récupéré.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le nombre de blocs de taille fixe n'a
-                        pas été récupéré car au moins un paramètre est invalide.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le nombre de blocs de taille fixe n'a pas
-                        été récupéré car cette fonction a été exécutée depuis un vecteur d'interruption.</li>
-                  </ul>
-                  <p><span class="underline">Note</span> :</p>
-                  <ul>
-                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>La valeur 0 si le paramètre est invalide ou le nombre de blocs disponibles dans la pool.</li>
                   </ul>
                </div>
             </details>
@@ -1059,7 +1104,7 @@
                   <span class="subtitle" id="mk_pool_available">6.8. La fonction mk_pool_available()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction retourne l'adresse du prochain bloc de taille fixe disponible, sans l'allouer.</p>
+                  <p>Cette fonction retourne l'adresse du prochain bloc disponible dans une pool.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
@@ -1075,7 +1120,8 @@
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
                      <li>L'adresse du prochain bloc de taille fixe ou la valeur <span
-                           class="bold-strong">K_MK_NULL</span> si aucun bloc n'est disponible.</li>
+                           class="bold-strong">K_MK_NULL</span> si aucun bloc n'est disponible ou le paramètre est
+                        invalide.</li>
                   </ul>
                </div>
             </details>
@@ -1086,7 +1132,7 @@
                   <span class="subtitle" id="mk_pool_delete">6.9. La fonction mk_pool_delete()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction supprime un gestionnaire d'allocation dynamique.</p>
+                  <p>Cette fonction détruit une pool.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
                   <br>
@@ -1101,21 +1147,53 @@
                   </ul>
                   <p><span class="underline">Retour</span> :</p>
                   <ul>
-                     <li><span class="bold-strong">K_MK_OK</span> : le gestionnaire d'allocation dynamique a été
-                        détruit.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le gestionnaire d'allocation dynamique
-                        n'a pas été détruit car le paramètre est invalide.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le gestionnaire d'allocation dynamique
-                        n'a pas été détruit car cette fonction a été exécutée depuis un vecteur d'interruption.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le gestionnaire d'allocation dynamique
-                        n'a pas été détruit car une tâche de type non privilégié ne peut pas utiliser un objet de
-                        type <span class="bold-strong">T_mkPool</span> protégé.</li>
+                     <li><span class="bold-strong">K_MK_OK</span> : la pool a été détruite.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la pool n'a pas été détruite car le
+                        paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la pool n'a pas été détruite car cette
+                        fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la pool n'a pas été détruite car une tâche
+                        non privilégiée ne peut pas manipuler une pool protégée.</li>
                   </ul>
-
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                  </ul>
                </div>
             </details>
 
-
+            <!-- 6.10 Les définitions -->
+            <details open>
+               <summary>
+                  <span class="subtitle">6.10. Les définitions</span>
+               </summary>
+               <p>Le module <span class="bold-strong">pool</span> peut être configuré à l'aide des définitions
+                  suivantes :</p>
+               <br>
+               <div class="table-scroll-container">
+                  <table id="K_MK_SCHEDULER_MAX_NUMBER_OF_POOLS">
+                     <thead>
+                        <tr>
+                           <th>Définition</th>
+                           <th>Description</th>
+                           <th>Valeur</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        <tr>
+                           <td><a href="#K_MK_SCHEDULER_MAX_NUMBER_OF_POOLS"><span
+                                    class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>POOLS</span></a>
+                           </td>
+                           <td>
+                              Cette constante définit le nombre de pools pouvant être allouées. Elle ne peut pas être
+                              nulle.
+                           </td>
+                           <td class="center">32</td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </div>
+            </details>
 
          </div>
       </section>

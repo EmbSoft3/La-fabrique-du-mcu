@@ -55,6 +55,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://lafabriquedumcu.com/articles/rtos/pool.html</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://lafabriquedumcu.com/articles/rtos/mk.html</loc>
     <lastmod>2026-09-15</lastmod>
     <changefreq>monthly</changefreq>
