@@ -5,7 +5,7 @@
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="description"
-      content="Apprenez à utiliser les pools mémoire du noyau Mk en allouant et désallouant des blocs mémoire de taille fixe et en évitant la fragmentation.">
+      content="Apprenez à créer, protéger et utiliser les pools du noyau Mk pour allouer des blocs mémoire de taille fixe, sans fragmentation.">
    <title>Allouer des blocs de taille fixe avec les Pools</title>
    <link rel="icon" type="image/png" href="../../favicon.png">
    <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
@@ -108,7 +108,7 @@
                </figcaption>
             </figure>
 
-            <p>Lors de l'initialisation, le noyau réalise le chaînage de l'ensemble des blocs en
+            <p>Lors de son initialisation, l'ensemble des blocs de la pool sont chaînés en
                écrivant
                l'adresse du prochain bloc disponible dans l'en-tête de
                chaque bloc (ou la valeur <span class="bold-strong">null</span> pour le dernier bloc).</p>
@@ -561,7 +561,7 @@
             <br>
             <p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> est utilisé,
                il est impossible pour une tâche non privilégiée de manipuler la pool créée. Dans ce cas de figure, le
-               buffer du gestionnaire d'allocation doit obligatoirement se situer en mémoire privilégiée pour éviter
+               buffer du gestionnaire d'allocation doit se situer en mémoire privilégiée pour éviter
                qu'une tâche non privilégiée vienne corrompre le buffer.</p>
 
             <br>
@@ -596,7 +596,7 @@
             <br>
             <p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span> est utilisé,
                une tâche non privilégiée peut manipuler le gestionnaire de taille fixe créé. Dans ce cas de figure, le
-               buffer du gestionnaire d'allocation doit obligatoirement se situer en mémoire non privilégiée pour
+               buffer du gestionnaire d'allocation doit se situer en mémoire non privilégiée pour
                autoriser
                la tâche non privilégiée à écrire dans les blocs qu'elle alloue.</p>
             <br>
@@ -643,7 +643,8 @@
 <span class="multi-line-comment">/* Création d'une pool non protégée par une tâche non privilégiée */</span>
 <span class="multi-line-comment">/* Cette pool est partageable entre tâches privilégiées */</span>
 <span class="multi-line-comment">/* et non privilégiées */</span>
-<span class="multi-line-comment">/* Néanmoins, on ne la partage qu'entre tâches non privilégiées */</span>
+<span class="multi-line-comment">/* Néanmoins, il est recommandé de ne la partager qu'entre tâches */</span>
+<span class="multi-line-comment">/* non privilégiées */</span>
 
 <span class="multi-line-comment">/* Déclaration du pointeur de pool et de son buffer */</span>
 <span class="multi-line-comment">/* Le pointeur et le buffer doivent obligatoirement être en zone */</span>
@@ -745,8 +746,11 @@
                      <span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>RIGHT</span> est retournée par les fonctions
                      <span class="bold-strong">mk_<wbr>pool_<wbr>create</span>, <span
                         class="bold-strong">mk_<wbr>pool_<wbr>alloc<wbr>Safe</span>, <span
+                        class="bold-strong">mk_<wbr>pool_<wbr>free</span>, <span
                         class="bold-strong">mk_<wbr>pool_<wbr>free<wbr>Safe</span>
-                     et <span class="bold-strong">mk_<wbr>pool_<wbr>delete</span>.
+                     et <span class="bold-strong">mk_<wbr>pool_<wbr>delete</span>. La fonction <span
+                        class="bold-strong">mk_<wbr>pool_<wbr>alloc</span> retourne la valeur <span
+                        class="bold-strong">K_MK_NULL</span> faute de code de retour.
                   </p>
                </div>
             </div>
@@ -757,10 +761,21 @@
                <div class="warning-text ">
                   <p>Les fonctions <span class="bold-strong">mk_<wbr>pool_<wbr>alloc</span>
                      et <span class="bold-strong">mk_<wbr>pool_<wbr>free</span> ne réalisent pas d'appel système, le
-                     noyau ne peut donc pas appliquer les régles de protection imposés par la constante <span
-                        class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span>. C'est pourquoi, il
-                     est important de placer correctement le buffer mémoire d'une pool privilégiée dans une zone mémoire
-                     privilégiée afin d'éviter toute corruption.
+                     contrôle des droits est donc effectué dans le contexte de la tâche appelante. Si le buffer d'une
+                     pool
+                     protégée n'est pas en zone privilégiée, rien n'empêche une tâche non privilégiée de le corrompre.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>La protection d'une <span class="bold-strong">pool</span> n'empêche pas une tâche non privilégiée
+                     de lire ses états internes (nombre
+                     de blocs disponibles, adresse du prochain bloc libre, etc). Elle se limite à refuser à une tâche
+                     non privilégiée la création, l’allocation, la désallocation et la destruction d'une pool protégée.
                   </p>
                </div>
             </div>
@@ -863,8 +878,12 @@
                            href="#mk_pool_initArea"><span class="bold-strong">mk_<wbr>pool_<wbr>initArea</span></a>.
                         Elle doit
                         être au moins égale à <span class="bold-strong">p_mkCount x p_mkSize</span> mots 32 bits.</li>
-                     <li>La constante <span
-                           class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>POOLS</span>
+                     <li>La mémoire réservée par cette fonction dans la structure <span
+                           class="bold-strong">T_mkPoolArea</span> n'est jamais restituée, y compris après la
+                        destruction de la pool. Elle ne peut pas être
+                        réutilisée pour créer une nouvelle pool.</li>
+                     <li>La constante <a href="#K_MK_SCHEDULER_MAX_NUMBER_OF_POOLS"><span
+                              class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>POOLS</span></a>
                         définit le
                         nombre maximal de pools pouvant être
                         créées.</li>
@@ -910,7 +929,7 @@
                      <p class="prototype-logo">⚠️</p>
                      <div class="prototype-text ">
                         <ul>
-                           <li>Cette fonction n'est pas de type <span class="bold-strong">Thread Safe</span>. <br>Pour
+                           <li>Cette fonction n'est pas de type <span class="bold-strong">thread safe</span>. <br>Pour
                               une utilisation concurrente, la
                               fonction <a href="#mk_pool_allocSafe"><span
                                     class="bold-strong">mk_pool_allocSafe</span></a>
@@ -948,6 +967,8 @@
                      <li><span class="bold-strong">K_MK_OK</span> : la mémoire a été désallouée.</li>
                      <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la mémoire n'a pas été désallouée car au
                         moins un paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la mémoire n'a pas été
+                        désallouée car une tâche non privilégiée ne peut pas manipuler une pool protégée.</li>
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
@@ -958,7 +979,7 @@
                      <p class="prototype-logo">⚠️</p>
                      <div class="prototype-text ">
                         <ul>
-                           <li>Cette fonction n'est pas de type <span class="bold-strong">Thread Safe</span>. <br>Pour
+                           <li>Cette fonction n'est pas de type <span class="bold-strong">thread safe</span>. <br>Pour
                               une utilisation concurrente, la
                               fonction <a href="#mk_pool_freeSafe"><span class="bold-strong">mk_pool_freeSafe</span></a>
                               doit être utilisée.</li>
@@ -1158,7 +1179,22 @@
                   <p><span class="underline">Note</span> :</p>
                   <ul>
                      <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>La mémoire réservée dans la structure <span class="bold-strong">T_mkPoolArea</span> lors de
+                        la création de la pool n'est pas restituée.</li>
                   </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Les tâches bloquées par la fonction <a href="#mk_pool_allocSafe"><span
+                                    class="bold-strong">mk_<wbr>pool_<wbr>alloc<wbr>Safe</span></a> ne sont pas
+                              réveillées
+                              lorsque la pool est détruite. <br>L'application doit donc s'assurer qu'aucune
+                              tâche n'est en attente d'un bloc mémoire avant de détruire sa pool.</li>
+                        </ul>
+                     </div>
+                  </div>
                </div>
             </details>
 

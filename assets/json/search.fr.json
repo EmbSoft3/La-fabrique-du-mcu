@@ -176,6 +176,76 @@
          "anchor": "task.html#mk_task_getLoad"
       },
       {
+         "name": "Pool",
+         "module": "Module",
+         "submodule": "",
+         "description": "Description du module Pool.",
+         "anchor": "pool.html"
+      },
+      {
+         "name": "mk_pool_initArea",
+         "module": "Pool",
+         "submodule": "",
+         "description": "Fonction permettant d'initialiser le buffer d'une pool.",
+         "anchor": "pool.html#mk_pool_initArea"
+      },
+      {
+         "name": "mk_pool_create",
+         "module": "Pool",
+         "submodule": "",
+         "description": "Fonction permettant de créer une pool mémoire.",
+         "anchor": "pool.html#mk_pool_create"
+      },
+      {
+         "name": "mk_pool_alloc",
+         "module": "Pool",
+         "submodule": "",
+         "description": "Fonction permettant d'allouer un bloc mémoire.",
+         "anchor": "pool.html#mk_pool_alloc"
+      },
+      {
+         "name": "mk_pool_free",
+         "module": "Pool",
+         "submodule": "",
+         "description": "Fonction permettant de désallouer un bloc mémoire.",
+         "anchor": "pool.html#mk_pool_free"
+      },
+      {
+         "name": "mk_pool_allocSafe",
+         "module": "Pool",
+         "submodule": "",
+         "description": "Fonction permettant de d'allouer un bloc mémoire (thread safe).",
+         "anchor": "pool.html#mk_pool_allocSafe"
+      },
+      {
+         "name": "mk_pool_freeSafe",
+         "module": "Pool",
+         "submodule": "",
+         "description": "Fonction permettant de désallouer un bloc mémoire (thread safe).",
+         "anchor": "pool.html#mk_pool_freeSafe"
+      },
+      {
+         "name": "mk_pool_count",
+         "module": "Pool",
+         "submodule": "",
+         "description": "Fonction permettant de récupérer le nombre de blocs disponibles dans une pool.",
+         "anchor": "pool.html#mk_pool_count"
+      },
+      {
+         "name": "mk_pool_available",
+         "module": "Pool",
+         "submodule": "",
+         "description": "Fonction permettant de récupérer l'adresse du prochain bloc disponible dans une pool.",
+         "anchor": "pool.html#mk_pool_available"
+      },
+      {
+         "name": "mk_pool_delete",
+         "module": "Pool",
+         "submodule": "",
+         "description": "Fonction permettant de supprimer une pool mémoire.",
+         "anchor": "pool.html#mk_pool_delete"
+      },
+      {
          "name": "linker.ld",
          "module": "Linker",
          "submodule": "",
