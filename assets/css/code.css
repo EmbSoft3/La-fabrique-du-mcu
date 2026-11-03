@@ -13,6 +13,7 @@
 	overflow-x: auto;
 	overflow-wrap: normal;
 	max-width: 100%;
+	scrollbar-width: thin;
 
 }
 

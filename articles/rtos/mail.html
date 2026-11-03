@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description"
+		content="Apprenez à créer et utiliser les boîtes de messages du noyau Mk pour échanger des données entre tâches.">
+	<title>Communiquer avec les boîtes de messages</title>
+	<link rel="icon" type="image/png" href="../../favicon.png">
+	<link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
+	<link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/mail.html">
+	<link href="../../assets/css/style.css" rel="stylesheet">
+	<link href="../../assets/css/template.css" rel="stylesheet">
+	<link href="../../assets/css/mk.css" rel="stylesheet">
+	<link href="../../assets/css/code.css" rel="stylesheet">
+	<link href="../../assets/css/fonts.css" rel="stylesheet">
+</head>
+
+<body>
+	<header>
+		<div>
+			<a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+		</div>
+		<div class="onglet">
+			<nav>
+				<a href="./index.html">MK</a>
+				<a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+				<a href="../contact/contact.html">Contact</a>
+				<a href="./api.html"> 🔍</a>
+			</nav>
+		</div>
+	</header>
+
+	<main>
+		<section class="mk">
+			<div>
+				<h1 class="title-article">Communiquer avec les boîtes de messages</h1>
+				<p>Le module <span class="bold-strong">mail</span> permet d'échanger des données entre plusieurs tâches.
+					Cette page détaille le fonctionnement et l'utilisation des fonctions de ce module.
+				</p>
+
+				<h2>1. Synthèse des fonctions</h2>
+				<p>Les fonctions de ce module sont déclarées dans le fichier <span class="bold-strong">mk_mail.h</span>
+					:
+				</p>
+				<div class="table-scroll-container">
+					<table>
+						<thead>
+							<tr>
+								<th>Fonction</th>
+								<th>Description</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><a href="#mk_mail_create"><span class="gray">mk_<wbr>mail_<wbr>create</span></a>
+								</td>
+								<td>Crée une boîte de messages.</td>
+							</tr>
+							<tr>
+								<td><a href="#mk_mail_post"><span class="gray">mk_<wbr>mail_<wbr>post</span></a></td>
+								<td>Poste un message dans une boîte.</td>
+							</tr>
+							<tr>
+								<td><a href="#mk_mail_pend"><span class="gray">mk_<wbr>mail_<wbr>pend</span></a></td>
+								<td>Lit un message dans une boîte.</td>
+							</tr>
+							<tr>
+								<td><a href="#mk_mail_delete"><span class="gray">mk_<wbr>mail_<wbr>delete</span></a>
+								</td>
+								<td>Supprime une boîte de messages.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<h2>2. Fonctionnement</h2>
+
+				<p>Une boîte de messages est construite à partir d'un buffer fourni par l'application. Ce buffer est
+					découpé en plusieurs blocs de taille identique. Chaque bloc constitue un message. La figure
+					ci-dessous montre l'état
+					initial
+					d'une boîte de messages constituée de 4 messages : </p>
+
+				<figure>
+					<img src="../../images/rtos/rtos-mailbox-create.jpg"
+						alt="État initial d'une boîte de messages à sa création">
+					<figcaption>
+						<span class="underline">Figure 1</span> : État initial d'une boîte de messages à sa
+						création.
+					</figcaption>
+				</figure>
+
+				<p>Pour chaque message de la boîte, le noyau alloue un petit espace mémoire supplémentaire (<span
+						class="bold-strong">item</span>) qui contient les métadonnées suivantes :
+
+				</p>
+				<ul>
+					<li><span class="gray">✔</span>L'adresse du message dans le buffer.</li>
+					<li><span class="gray">✔</span>L'adresse de la tâche qui a posté le message.</li>
+					<li><span class="gray">✔</span>L'adresse du prochain <span class="bold-strong">item</span> de la
+						liste.
+					</li>
+				</ul>
+
+				<p>
+					Lors
+					de son initialisation, l'ensemble des <span class="bold-strong">items</span> de la boîte est
+					chaîné et positionné dans la
+					liste des <span class="bold-strong">items</span> non utilisés (<span
+						class="bold-strong">unusedList</span>).
+					En plus de cette liste, chaque boîte possède deux pointeurs, le <span class="bold-strong">poster</span>
+					et le <span class="bold-strong">pender</span> qui pointent
+					respectivement sur le dernier message écrit dans la boîte et sur le premier message à lire dans
+					celle-ci.
+				</p>
+
+				<br>
+				<div class="comment">
+					<p class="comment-logo">💬</p>
+					<div class="comment-text ">
+						<p>Le nombre de messages pouvant être alloués par le noyau est limité. Il est défini à la compilation
+							par la
+							constante <span
+								class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>ITEMS</span>.
+						</p>
+					</div>
+				</div>
+				<br>
+
+				<p> Les tâches interagissent avec les boîtes de messages de 2 manières. Lors d'un
+					<span class="bold-strong">post</span>, la tâche productrice transmet un
+					message au noyau qui le copie dans un emplacement libre de la
+					boîte.
+				</p>
+				<p>Lors d'un
+					<span class="bold-strong">pend</span>, la tâche consommatrice demande au noyau de copier
+					un
+					message de la boîte dans son buffer de destination.
+				</p>
+
+				<br>
+				<p>Les figures ci-dessous montrent l'état d'une boîte de messages après trois <span
+						class="bold-strong">posts</span> successifs : </p>
+
+				<figure>
+					<img src="../../images/rtos/rtos-mailbox-post-1.jpg" alt="État d'une boîte de messages après un post">
+					<figcaption>
+						<span class="underline">Figure 2</span> : État d'une boîte de messages après un post.
+					</figcaption>
+				</figure>
+
+				<figure>
+					<img src="../../images/rtos/rtos-mailbox-post-2.jpg" alt="État d'une boîte de messages après deux posts">
+					<figcaption>
+						<span class="underline">Figure 3</span> : État d'une boîte de messages après deux posts.
+					</figcaption>
+				</figure>
+
+				<figure>
+					<img src="../../images/rtos/rtos-mailbox-post-3.jpg"
+						alt="État d'une boîte de messages après trois posts">
+					<figcaption>
+						<span class="underline">Figure 4</span> : État d'une boîte de messages après trois posts.
+					</figcaption>
+				</figure>
+
+				<p>Le <span class="bold-strong">pender</span> se situe toujours en tête de liste alors que le <span
+						class="bold-strong">poster</span> se situe toujours en queue de liste. Lors de chaque <span
+						class="bold-strong">post</span>, l'élément au début
+					de <span class="bold-strong">unusedList</span> est déplacé dans la liste des <span
+						class="bold-strong">items</span> utilisés. Si aucun emplacement n'est disponible dans la boîte,
+					la tâche
+					productrice peut décider de se bloquer en attendant qu'un emplacement se libère.
+				</p>
+				<br>
+				<p>Les figures ci-dessous montrent l'évolution de la boîte de messages après plusieurs <span
+						class="bold-strong">pends</span> successifs.</p>
+
+				<figure>
+					<img src="../../images/rtos/rtos-mailbox-pend-1.jpg" alt="État d'une boîte de messages après un pend">
+					<figcaption>
+						<span class="underline">Figure 5</span> : État d'une boîte de messages après un pend.
+					</figcaption>
+				</figure>
+
+				<figure>
+					<img src="../../images/rtos/rtos-mailbox-pend-2.jpg" alt="État d'une boîte de messages après deux pends">
+					<figcaption>
+						<span class="underline">Figure 6</span> : État d'une boîte de messages après deux pends.
+					</figcaption>
+				</figure>
+
+				<p>Les messages sont lus dans l'ordre où ils sont postés (algorithme <span class="bold-strong">FIFO</span>).
+					Lors de chaque pend, le message à lire est retiré de la liste
+					des items utilisés pour être déplacé en tête de <span class="bold-strong">unusedList</span>. Dans la
+					situation où plus aucun message n'est disponible dans la boîte, la tâche consommatrice peut se
+					bloquer en
+					attendant qu'un
+					message soit posté.</p>
+
+				<br>
+				<p>Les figures ci-dessous montrent l'état d'une boîte de messages dans le cas particulier où elle
+					est pleine ou vide :</p>
+
+				<figure>
+					<img src="../../images/rtos/rtos-mailbox-full.jpg" alt="État d'une boîte de messages pleine">
+					<figcaption>
+						<span class="underline">Figure 7</span> : État d'une boîte de messages pleine.
+					</figcaption>
+				</figure>
+
+				<figure>
+					<img src="../../images/rtos/rtos-mailbox-empty.jpg" alt="État d'une boîte de messages vide">
+					<figcaption>
+						<span class="underline">Figure 8</span> : État d'une boîte de messages vide.
+					</figcaption>
+				</figure>
+
+				<br>
+				<div class="comment">
+					<p class="comment-logo">💬</p>
+					<div class="comment-text ">
+
+						<p>Lors de chaque <span class="bold-strong">post</span>, le noyau <span class="underline">copie</span>
+							le
+							contenu du message dans la boîte.
+							Un message peut néanmoins être transmis par référence en postant son adresse plutôt que sa
+							valeur.</p>
+					</div>
+				</div>
+
+
+				<h2>3. Utilisation</h2>
+
+				<p>La création d'une boîte s'effectue à partir des fonctions <span
+						class="bold-strong">mk_pool_initArea</span> et <span class="bold-strong">mk_mail_create</span>.
+					L'exemple ci-dessous crée une boîte de 4 messages :</p>
+				<br>
+				<pre class="code">
+<span class="multi-line-comment">/* On définit une structure pour l'exemple */</span>
+<span class="multi-line-comment">/* Sa taille est de 2 mots */</span>
+<span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="define">T_message</span> <span class="define">T_message</span>;
+<span class="keyword">struct</span> <span class="define">T_message</span>
+{
+   <span class="type">uint32_t</span> id;
+   <span class="type">uint32_t</span> value;
+};
+
+<span class="multi-line-comment">/* On définit la taille du buffer de la boîte */</span>
+<span class="multi-line-comment">/* On souhaite pouvoir allouer 4 structures T_message */</span>
+<span class="keyword">#define</span> <span class="define">K_BUF_SIZE</span> ( <span class="number">4</span> * ( <span class="keyword">sizeof</span> ( <span class="define">T_message</span> ) >> <span class="number">2</span> ) )
+
+<span class="multi-line-comment">/* Déclaration du buffer de la boîte */</span>
+<span class="multi-line-comment">/* Il peut contenir 4 messages de type T_message */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_mailBuf [ <span class="define">K_BUF_SIZE</span> ];
+
+<span class="multi-line-comment">/* Pointeur de la boîte */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkMail</span>* g_mail;
+
+<span class="multi-line-comment">/* Une tâche privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
+
+   <span class="multi-line-comment">/* Déclaration d'une structure contenant les caractéristiques du buffer */</span>
+   <span class="type">T_mkPoolArea</span> l_area = { };
+
+   <span class="multi-line-comment">/* Initialisation du buffer de la boîte */</span>  
+   <span class="multi-line-comment">/* La taille est exprimée en mots 32 bits */</span>  
+   l_result = <span class="function">mk_pool_initArea</span> ( &l_area, g_mailBuf, <span class="define">K_BUF_SIZE</span> );
+
+   <span class="multi-line-comment">/* Création de la boîte */</span>
+   <span class="multi-line-comment">/* Celle-ci est protégée et ne peut pas être manipulée */</span>
+   <span class="multi-line-comment">/* par tâches non privilégiées */</span>
+   l_result |= <span class="function">mk_mail_create</span> ( &g_mail, <span class="define">K_MK_AREA_PROTECTED</span>, &l_area,
+      <span class="keyword">sizeof</span> ( <span class="define">T_message</span> ) >> <span class="number">2</span>, <span class="multi-line-comment">/* Taille des messages */</span>
+      <span class="number">4</span> ); <span class="multi-line-comment">/* Nombre de messages */</span>
+
+   <span class="multi-line-comment">/* ... */</span>
+   <span class="keyword">for</span> ( ;; ) ;
+}
+</pre>
+				<br>
+				<p>Après sa création, un message est posté avec <span class="bold-strong">mk_mail_post</span> et lu
+					avec
+					<span class="bold-strong">mk_mail_pend</span>. Le paramètre <span class="bold-strong">p_mkTick</span>
+					définit le comportement de la tâche lorsque l'opération ne peut pas aboutir immédiatement :
+				</p>
+				<br>
+				<pre class="code">
+<span class="multi-line-comment">/* Tâche productrice */</span>
+<span class="keyword">void</span> <span class="function">mk_producer</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="type">T_mkCode</span> l_result;
+   <span class="type">T_message</span> l_message = { <span class="number">1</span>, <span class="number">100</span> };
+
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* La tâche attend au maximum 10 ticks un emplacement libre */</span>
+      <span class="multi-line-comment">/* Elle reste dans l'état READY suite à l'envoi du message */</span>
+      l_result = <span class="function">mk_mail_post</span> ( g_mail, &l_message, <span class="define">K_MK_STATE_READY</span>, <span class="number">10</span> );
+
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) {
+         <span class="multi-line-comment">/* Le message a été posté */</span>
+      }
+      <span class="keyword">else if</span> ( l_result == <span class="define">K_MK_ERROR_TIMEOUT</span> ) {
+         <span class="multi-line-comment">/* Le message n'a pas été posté */</span>
+         <span class="multi-line-comment">/* Boîte pleine pendant 10 ticks */</span>
+      }
+      <span class="keyword">else</span> {
+         <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+         <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+      }
+    }
+}
+
+<span class="multi-line-comment">/* Tâche consommatrice */</span>
+<span class="keyword">void</span> <span class="function">mk_consumer</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="type">T_mkCode</span> l_result;
+   <span class="type">T_message</span> l_message;
+   <span class="type">T_mkTask</span>* l_sender = <span class="define">K_MK_NULL</span>;
+
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* Attente infinie d'un message */</span>
+      <span class="multi-line-comment">/* l_sender reçoit l'adresse de la tâche qui a posté (optionnel) */</span>
+      l_result = <span class="function">mk_mail_pend</span> ( &l_sender, g_mail, &l_message, 
+         <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+      <span class="multi-line-comment">/* Si la fonction retourne K_MK_OK, un message a été récupéré */</span>
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) {
+         <span class="multi-line-comment">/* Traitement du message ... */</span>
+      }
+      <span class="keyword">else</span> { 
+         <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+         <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+      }
+   }
+}
+</pre>
+				<br>
+				<p>Le paramètre <span class="bold-strong">p_mkState</span> de <span class="bold-strong">mk_mail_post</span>
+					indique l'état que doit prendre la tâche appelante une fois le message posté. La constante <span
+						class="bold-strong">K_MK_STATE_READY</span> maintient la tâche dans l'état prêt alors que la
+					constante <span class="bold-strong">K_MK_STATE_SUSPENDED</span> suspend la tâche après l'écriture
+					du message. La tâche devra alors être redémarrée explicitement par une autre tâche avec la fonction
+					<span class="bold-strong">mk_task_resume</span>.
+				</p>
+				<br>
+
+				<pre class="code">
+<span class="multi-line-comment">/* Tâche productrice */</span>
+<span class="keyword">void</span> <span class="function">mk_producer</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* ... */</span>
+    
+   <span class="multi-line-comment">/* La tâche transfère son message puis se suspend */</span>
+   l_result = <span class="function">mk_mail_post</span> ( g_mail, &l_message, 
+      <span class="define">K_MK_STATE_SUSPENDED</span>, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+
+<span class="multi-line-comment">/* Tâche consommatrice */</span>
+<span class="keyword">void</span> <span class="function">mk_consumer</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* On récupère le message et l'adresse de la tâche qui l'a posté */</span>
+   l_result = <span class="function">mk_mail_pend</span> ( &l_sender, g_mail, &l_message, 
+      <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+   <span class="multi-line-comment">/* ... */</span>
+    
+   <span class="multi-line-comment">/* Si le message n'a pas été envoyé depuis un vecteur d'interruption */</span>
+   <span class="keyword">if</span> ( l_sender != <span class="define">K_MK_NULL</span> ) {
+      <span class="multi-line-comment">/* Le traitement est terminé, on réveille le producteur */</span>
+      l_result |= <span class="function">mk_task_resume</span> ( l_sender );
+   }   
+
+   <span class="multi-line-comment">/* ... */</span>
+}
+</pre>
+
+				<br>
+				<div class="comment">
+					<p class="comment-logo">💬</p>
+					<div class="comment-text ">
+						<p>Ce mécanisme simplifie la synchronisation des tâches et notamment
+							l'implémentation de modèles de type <strong>"sendAndReply"</strong>.</p>
+					</div>
+				</div>
+				<br>
+
+				<p>La copie d'un message dans la boîte peut être coûteuse en termes de mémoire et de rapidité. Dans
+					cette
+					situation, il est préférable de poster
+					une <span class="underline">référence</span> plutôt que la donnée elle-même. L'exemple ci-dessous
+					montre un transfert par référence en utilisant une pool mémoire : </p>
+				<br>
+				<pre class="code">
+
+<span class="multi-line-comment">/* On définit la taille du buffer de la pool */</span>
+<span class="multi-line-comment">/* On souhaite pouvoir allouer 4 structures T_message */</span>
+<span class="keyword">#define</span> <span class="define">K_POOL_SIZE</span> ( <span class="number">4</span> * ( <span class="keyword">sizeof</span> ( <span class="define">T_message</span> ) >> <span class="number">2</span> ) )
+
+<span class="multi-line-comment">/* Déclaration du buffer de la pool */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_poolBuf [ <span class="define">K_POOL_SIZE</span> ];
+
+<span class="multi-line-comment">/* Déclaration d'un pointeur de pool */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkPool</span>* g_pool;
+
+<span class="multi-line-comment">/* Tâche productrice */</span>
+<span class="keyword">void</span> <span class="function">mk_producer</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
+   <span class="type">T_message</span>* l_block = <span class="define">K_MK_NULL</span>;
+   <span class="type">T_mkPoolArea</span> l_mailArea, l_poolArea;
+   <span class="type">uint32_t</span> l_counter = 0;
+
+   <span class="multi-line-comment">/* Initialisation du buffer de la boîte */</span>  
+   l_result = <span class="function">mk_pool_initArea</span> ( &l_mailArea, g_mailBuf, <span class="number">4</span> );
+
+   <span class="multi-line-comment">/* Initialisation du buffer de la pool */</span>  
+   l_result |= <span class="function">mk_pool_initArea</span> ( &l_poolArea, g_poolBuf, <span class="define">K_POOL_SIZE</span> ); 
+
+   <span class="multi-line-comment">/* Création de la boîte (4 messages de 1 mot) */</span>
+   <span class="multi-line-comment">/* La taille de la boîte doit faire la taille d'un pointeur */</span>
+   l_result |= <span class="function">mk_mail_create</span> ( &g_mail, <span class="define">K_MK_AREA_PROTECTED</span>, 
+      &l_mailArea, <span class="number">1</span>, <span class="number">4</span> ); 
+
+   <span class="multi-line-comment">/* Création de la pool (4 structures T_message) */</span>
+   l_result |= <span class="function">mk_pool_create</span> ( &l_poolArea, &g_pool, 
+      <span class="define-underline">K_MK_AREA_PROTECTED</span>, <span class="keyword">sizeof</span> ( <span class="define">T_message</span> ) >> <span class="number">2</span>, <span class="number">4</span> );
+
+   <span class="multi-line-comment">/* Boucle pour toujours */</span>    
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* Allocation d'une structure T_message */</span>    
+      l_result = <span class="function">mk_pool_allocSafe</span> ( g_pool, 
+         ( <span class="type">T_mkAddr*</span> ) &l_block, <span class="define">K_MK_POOL_CLEAR</span>, 
+         <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+      <span class="multi-line-comment">/* Si l'allocation a réussi */</span> 
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) 
+      {
+         <span class="multi-line-comment">/* Écriture du message à envoyer */</span> 
+         l_block-><span class="field">id</span> = <span class="number">1</span>;
+         l_block-><span class="field">value</span> = l_counter++;
+
+         <span class="multi-line-comment">/* Réinitialisation du compteur */</span> 
+         <span class="keyword">if</span> ( l_counter == <span class="number">4</span> ) l_counter = <span class="number">0</span>;
+
+         <span class="multi-line-comment">/* Transfert de l'adresse de l_block */</span>
+         l_result = <span class="function">mk_mail_post</span> ( g_mail, &l_block, 
+            <span class="define">K_MK_STATE_READY</span>, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+         <span class="multi-line-comment">/* Si une erreur s'est produite */</span>   
+         <span class="keyword">if</span> ( l_result != <span class="define">K_MK_OK</span> ) {
+            <span class="multi-line-comment">/* Libération du bloc */</span>
+            l_result = <span class="function">mk_pool_freeSafe</span> ( g_pool, l_block );
+         }
+      }
+   }
+}
+
+<span class="multi-line-comment">/* Tâche consommatrice */</span>
+<span class="keyword">void</span> <span class="function">mk_consumer</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Dans cet exemple, le producteur est plus prioritaire  */</span>
+   <span class="multi-line-comment">/* que le consommateur. */</span>
+   <span class="multi-line-comment">/* La boîte est donc déjà initialisée quand le consommateur démarre. */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
+   <span class="type">T_message</span>* l_received = <span class="define">K_MK_NULL</span>;
+
+   <span class="multi-line-comment">/* Boucle pour toujours */</span>   
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* Récupération du message */</span> 
+      l_result = <span class="function">mk_mail_pend</span> ( <span class="define">K_MK_NULL</span>, g_mail, 
+         &l_received, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+      <span class="multi-line-comment">/* Si aucune erreur ne s'est produite */</span>   
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) {
+            
+         <span class="multi-line-comment">/* Utilisation de la donnée pointée ... */</span>
+
+         <span class="multi-line-comment">/* Libération du bloc */</span>
+         l_result = <span class="function">mk_pool_freeSafe</span> ( g_pool, l_received );
+      }
+   }
+}
+</pre>
+				<br>
+				<div class="warning">
+					<p class="warning-logo">⚠️</p>
+					<div class="warning-text ">
+						<p>Le noyau ne contrôle pas la validité et le contenu du pointeur transmis. La donnée pointée
+							doit donc
+							rester valide jusqu'à ce que la tâche consommatrice ait fini de
+							l'utiliser. Elle peut être localisée dans la pile de la tâche productrice sous réserve qu'elle ne
+							soit pas
+							détruite ou écrasée avant sa lecture. La constante <span
+								class="bold-strong">K_<wbr>MK_<wbr>STATE_<wbr>SUSPENDED</span> simplifie cette
+							synchronisation.</p>
+					</div>
+				</div>
+				<br>
+				<div class="warning">
+					<p class="warning-logo">⚠️</p>
+					<div class="warning-text ">
+						<p>Pour un transfert entre une tâche privilégiée et une tâche non privilégiée, la donnée pointée
+							doit être
+							accessible à la tâche consommatrice. Une tâche privilégiée qui reçoit un pointeur d'une
+							tâche non privilégiée doit le
+							traiter
+							comme étant non fiable et vérifier qu'il désigne bien une zone non privilégiée avant de le
+							déréférencer.
+						</p>
+					</div>
+				</div>
+				<br>
+
+				<p>La fonction <span class="bold-strong">mk_mail_post</span> peut être appelée depuis un vecteur
+					d'interruption pour transférer des données à une tâche :</p>
+				<br>
+				<pre class="code">
+<span class="keyword">void</span> <span class="function">IRQHandler</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Le message est copié dans la boîte avant le retour de mk_mail_post */</span>
+   <span class="multi-line-comment">/* Une variable locale peut donc être utilisée */</span>
+   <span class="type">T_message</span> l_message = { <span class="number">2</span>, <span class="number">0</span> };
+   <span class="type">T_mkCode</span> l_result;
+
+   <span class="multi-line-comment">/* Timeout nul, l'état READY est obligatoire dans une ISR */</span>
+   l_result = <span class="function">mk_mail_post</span> ( g_mail, &l_message, <span class="define">K_MK_STATE_READY</span>, <span class="number">0</span> );
+
+   <span class="multi-line-comment">/* Si K_MK_ERROR_TIMEOUT, la boîte est pleine et le message est perdu */</span>
+   <span class="multi-line-comment">/* On ne peut pas attendre qu'un emplacement se libère dans une ISR */</span>
+   ( <span class="keyword">void</span> ) l_result;
+}
+</pre>
+
+				<br>
+				<div class="warning">
+					<p class="warning-logo">⚠️</p>
+					<div class="warning-text ">
+						<p> À noter que l'interruption doit être strictement moins prioritaire que le
+							vecteur <span class="bold-strong">SVC</span> pour pouvoir utiliser les appels système
+							(priorité numérique supérieure ou égale à <span
+								class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MASK_<wbr>PRIORITY</span>).</p>
+					</div>
+				</div>
+				<br>
+				<div class="warning">
+					<p class="warning-logo">⚠️</p>
+					<div class="warning-text ">
+						<p>Dans un vecteur d'interruption, <span class="bold-strong">mk_mail_post</span> impose un
+							timeout
+							nul et l'état <span class="bold-strong">K_<wbr>MK_<wbr>STATE_<wbr>READY</span>, sinon
+							<span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>ISR</span> est retourné.
+							Si la boîte de messages est pleine, la fonction échoue et retourne la valeur
+							<span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>TIMEOUT</span>.
+						</p>
+					</div>
+				</div>
+				<br>
+
+				<p>Étant donné que le message est
+					copié dans la boîte avant que la fonction <span class="bold-strong">mk_mail_post</span> se termine,
+					celui-ci n'a pas besoin d'être
+					dans un contexte
+					persistant. Il peut directement être stocké dans une variable locale. </p>
+
+				<br>
+
+				<p>La dernière fonction de l'<span class="bold-strong">API</span> est la fonction <span
+						class="bold-strong">mk_mail_delete</span>. Elle permet de détruire la boîte de messages en
+					demandant
+					au noyau de la désallouer :</p>
+				<br>
+				<pre class="code">
+<span class="multi-line-comment">/* Suppression de la boîte de messages */</span>
+<span class="type">T_mkCode</span> l_result = <span class="function">mk_mail_delete</span> ( g_mail );
+
+<span class="multi-line-comment">/* Si une erreur s'est produite */</span>
+<span class="keyword">if</span> ( l_result != <span class="define">K_MK_OK</span> )
+{
+   <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+   <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+}
+</pre>
+
+				<h2>4. Protéger ses boîtes de messages</h2>
+				<p>Les boîtes de messages peuvent être créées avec les attributs <span
+						class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> ou <span
+						class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span>.</p>
+				<br>
+
+				<p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> est utilisé,
+					il est impossible pour une tâche non privilégiée
+					de
+					manipuler la boîte créée. Une boîte non protégée
+					doit être utilisée pour échanger des données entre les mondes privilégié et non privilégié.</p>
+				<br>
+				<p>Les règles de placement mémoire de la boîte ainsi que les erreurs de
+					dimensionnement à éviter
+					sont
+					détaillées dans l'article <a href="./mpu.html"><span class="bold-strong">Protéger son programme avec
+							Mk</span></a>. Les points suivants sont à retenir :</p>
+				<ul>
+					<li><span class="gray">✔</span>Les buffers fournis par une tâche non
+						privilégiée
+						doivent
+						être situés en mémoire non privilégiée afin de ne pas faire échouer l'appel système.</li>
+					<li><span class="gray">✔</span>Les buffers fournis par une tâche privilégiée ne sont pas contrôlés
+						par le noyau. Leur
+						taille
+						doit être au moins égale à celle d'un message pour ne pas ouvrir une faille de sécurité.</li>
+				</ul>
+
+				<p>Le tableau ci-dessous résume les règles de placement d'une boîte de messages non protégée :</p>
+				<div class="table-scroll-container">
+					<table class="fixed">
+						<colgroup>
+							<col style="width: 16%"> <!-- Créateur -->
+							<col style="width: 18%"> <!-- Sens -->
+							<col style="width: 19%"> <!-- Buffer de la boîte -->
+							<col style="width: 15%"> <!-- Pointeur de la boîte -->
+							<col style="width: 16%"> <!-- Source du post -->
+							<col style="width: 18%"> <!-- Destination du pend -->
+						</colgroup>
+						<thead>
+							<tr>
+								<th>Créateur</th>
+								<th>Sens</th>
+								<th>Buffer de la boîte</th>
+								<th>Pointeur de la boîte</th>
+								<th>Source du <span class="bold-strong">post</span></th>
+								<th>Destination du <span class="bold-strong">pend</span></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Tâche privilégiée</td>
+								<td>Privilégiée post / non privilégiée pend</td>
+								<td>Privilégié recommandé ou non privilégié</td>
+								<td>Privilégié (RO)</td>
+								<td>Non contrôlée</td>
+								<td>Zone non privilégiée</td>
+							</tr>
+							<tr>
+								<td>Tâche privilégiée</td>
+								<td>Non privilégiée post / privilégiée pend</td>
+								<td>Privilégié recommandé ou non privilégié</td>
+								<td>Privilégié (RO)</td>
+								<td>Zone non privilégiée</td>
+								<td>Non contrôlée</td>
+							</tr>
+							<tr>
+								<td>Tâche non privilégiée</td>
+								<td>Non privilégiée post / privilégiée pend</td>
+								<td>Non privilégié (obligatoire)</td>
+								<td>Non privilégié</td>
+								<td>Zone non privilégiée</td>
+								<td>Non contrôlée</td>
+							</tr>
+							<tr>
+								<td>Tâche non privilégiée</td>
+								<td>Privilégiée post / non privilégiée pend</td>
+								<td>Non privilégié (obligatoire)</td>
+								<td>Non privilégié</td>
+								<td>Non contrôlée</td>
+								<td>Zone non privilégiée</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<br>
+
+				<br>
+				<div class="comment">
+					<p class="comment-logo">💬</p>
+					<div class="comment-text ">
+						<p>À noter qu'un vecteur d'interruption exécutant la fonction <span
+								class="bold-strong">mk_<wbr>mail_<wbr>post</span> peut écrire des messages
+							dans une boîte protégée.</p>
+					</div>
+				</div>
+				<br>
+
+
+
+				<h2>5. API</h2>
+
+				<!-- 5.1 mk_mail_create -->
+				<details open>
+					<summary>
+						<span class="subtitle" id="mk_mail_create">5.1. La fonction mk_mail_create()</span>
+					</summary>
+					<div class="prototype">
+						<p>Cette fonction crée une boîte de messages.</p>
+						<br>
+						<p><span class="underline">Prototype</span> :</p>
+						<br>
+						<pre class="code">
+<span class="type">T_mkCode</span> mk_mail_create ( <span class="type">T_mkMail**</span> p_mkMail, <span class="type">uint32_t</span> p_mkAreaType, 
+   <span class="type">T_mkPoolArea*</span> p_mkMsgArea, <span class="type">uint32_t</span> p_mkMsgSize, 
+	<span class="type">uint32_t</span> p_mkMsgNumber );
+                  </pre>
+						<p><span class="underline">Paramètres</span> :</p>
+						<ul>
+							<li><span class="bold-green">p_mkMail</span> <span class="italic">[out]</span>
+								<p>Adresse d'un pointeur de type <span class="bold-strong">T_mkMail*</span>.</p><br>
+							</li>
+							<li><span class="bold-green">p_mkAreaType</span> <span class="italic">[in]</span>
+								<p>Type de la boîte. Les valeurs possibles sont les suivantes :</p>
+								<ul>
+									<li><span class="bold-strong">K_MK_AREA_PROTECTED</span> : la boîte est protégée, elle ne
+										peut
+										pas être manipulée par des tâches non privilégiées.</li>
+									<li><span class="bold-strong">K_MK_AREA_UNPROTECTED</span> : la boîte n'est pas protégée,
+										elle
+										peut être manipulée par des tâches privilégiées ou non privilégiées.</li>
+								</ul>
+							</li>
+							<li><span class="bold-green">p_mkMsgArea</span> <span class="italic">[in]</span>
+								<p>Adresse d'une structure de type <span class="bold-strong">T_mkPoolArea</span>.</p>
+								<br>
+							</li>
+							<li><span class="bold-green">p_mkMsgSize</span> <span class="italic">[in]</span>
+								<p>Taille d'un message (en multiple de mots 32 bits).</p><br>
+							</li>
+							<li><span class="bold-green">p_mkMsgNumber</span> <span class="italic">[in]</span>
+								<p>Nombre de messages de la boîte.</p>
+							</li>
+						</ul>
+						<p><span class="underline">Retour</span> :</p>
+						<ul>
+							<li><span class="bold-strong">K_MK_OK</span> : la boîte a été créée.</li>
+							<li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la boîte n'a pas été créée car
+								au
+								moins un paramètre est invalide ou car la taille de la zone mémoire <span
+									class="bold-strong">p_mkMsgArea</span> est
+								insuffisante.</li>
+							<li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : la boîte n'a pas été créée
+								car le nombre maximal de boîtes ou le nombre maximal de messages (items) pouvant être alloués a
+								été atteint.</li>
+
+							<li><span class="bold-strong">K_MK_ERROR_ISR</span> : la boîte n'a pas été créée car
+								cette
+								fonction a été exécutée dans un vecteur d'interruption.</li>
+							<li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la boîte n'a pas été créée car
+								une
+								tâche non privilégiée ne peut pas créer une boîte située dans un buffer privilégié ou créer une
+								boîte protégée.
+							</li>
+						</ul>
+						<p><span class="underline">Note</span> :</p>
+						<ul>
+							<li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+							<li>La taille du buffer de la boîte est configurée avec la fonction <span
+									class="bold-strong">mk_<wbr>pool_<wbr>initArea</span>. Elle doit
+								être
+								au moins égale à <span class="bold-strong">p_mkMsgNumber</span> x <span
+									class="bold-strong">p_mkMsgSize</span> mots 32 bits.</li>
+							<li>La mémoire réservée dans la structure <span class="bold-strong">T_mkPoolArea</span>
+								n'est
+								jamais restituée, y compris après la suppression de la boîte. Elle ne peut pas être réutilisée
+								pour créer de nouvelles boîtes.</li>
+							<li>Les constantes <a href="#K_MK_SCHEDULER_MAX_NUMBER_OF_MAILS"><span
+										class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>MAILS</span></a>
+								et <a href="#K_MK_SCHEDULER_MAX_NUMBER_OF_ITEMS"><span
+										class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>ITEMS</span></a>
+								définissent le
+								nombre
+								maximal de boîtes et le nombre maximal de messages pouvant être créés.</li>
+						</ul>
+					</div>
+				</details>
+
+				<!-- 5.2 mk_mail_post -->
+				<details open>
+					<summary>
+						<span class="subtitle" id="mk_mail_post">5.2. La fonction mk_mail_post()</span>
+					</summary>
+					<div class="prototype">
+						<p>Cette fonction poste un message dans une boîte. Le contenu du message est copié dans l'espace
+							mémoire de la boîte.</p>
+						<br>
+						<p><span class="underline">Prototype</span> :</p>
+						<br>
+						<pre class="code">
+<span class="type">T_mkCode</span> mk_mail_post ( <span class="type">T_mkMail*</span> p_mkMail, <span class="type">T_mkAddr</span> p_mkMessage, 
+	<span class="type">uint32_t</span> p_mkState, <span class="type">uint32_t</span> p_mkTick );
+                  </pre>
+						<p><span class="underline">Paramètres</span> :</p>
+						<ul>
+							<li><span class="bold-green">p_mkMail</span> <span class="italic">[in, out]</span>
+								<p>Adresse d'une structure de type <span class="bold-strong">T_mkMail</span>.</p><br>
+							</li>
+							<li><span class="bold-green">p_mkMessage</span> <span class="italic">[in]</span>
+								<p>Adresse du message à poster.</p><br>
+							</li>
+							<li><span class="bold-green">p_mkState</span> <span class="italic">[in]</span>
+								<p>État de la tâche suite à l'écriture du message (modifié seulement si l'écriture
+									réussit) :
+								</p>
+								<ul>
+									<li><span class="bold-strong">K_MK_STATE_READY</span> : la tâche reste prête à être
+										exécutée.</li>
+									<li><span class="bold-strong">K_MK_STATE_SUSPENDED</span> : la tâche est suspendue.
+									</li>
+								</ul>
+							</li>
+							<li><span class="bold-green">p_mkTick</span> <span class="italic">[in]</span>
+								<p>Durée maximale de blocage de la tâche. Les valeurs possibles sont les suivantes :</p>
+								<ul>
+									<li><span class="bold-strong">0x0</span> : la fonction retourne immédiatement si
+										aucun
+										emplacement n'est disponible.</li>
+									<li><span class="bold-strong">0x1 à 0xFFFFFFFE</span> : la tâche est bloquée pendant
+										la
+										durée spécifiée (en multiple de tick) tant que le message n'a pas été écrit.
+									</li>
+									<li><span class="bold-strong">0xFFFFFFFF</span> (<span
+											class="bold-strong">K_MK_TASK_WAIT_FOREVER</span>) : la tâche est bloquée
+										tant que le
+										message n'a pas été écrit.</li>
+								</ul>
+							</li>
+						</ul>
+						<p><span class="underline">Retour</span> :</p>
+						<ul>
+							<li><span class="bold-strong">K_MK_OK</span> : le message a été posté.</li>
+							<li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le message n'a pas été posté car au
+								moins
+								un paramètre est invalide.</li>
+							<li><span class="bold-strong">K_MK_ERROR_TIMEOUT</span> : le message n'a pas été posté car
+								aucun
+								emplacement ne s'est libéré dans le délai imparti.</li>
+							<li><span class="bold-strong">K_MK_ERROR_ISR</span> : le message n'a pas été posté car la
+								fonction
+								a été exécutée dans un vecteur d'interruption avec un timeout non nul ou un état non
+								valide.</li>
+							<li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le message n'a pas été posté car une
+								tâche non privilégiée ne peut pas manipuler une boîte protégée.</li>
+						</ul>
+						<p><span class="underline">Note</span> :</p>
+						<ul>
+							<li>Cette fonction peut être exécutée dans un vecteur d'interruption. </li>
+							<li>Lorsque cette fonction est exécutée dans un vecteur d'interruption, le paramètre <span
+									class="bold-strong">p_mkState</span> doit prendre la valeur <span
+									class="bold-strong">K_<wbr>MK_<wbr>STATE_<wbr>READY</span> et le paramètre <span
+									class="bold-strong">p_mkTick</span> la valeur 0. </li>
+						</ul>
+						<p><span class="underline">Attention</span> :</p>
+						<div class="prototype-comment">
+							<p class="prototype-logo">⚠️</p>
+							<div class="prototype-text ">
+								<ul>
+									<li>La taille du buffer source contenant le message à poster doit être au moins égale à la
+										taille d'un message de la boîte.</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</details>
+
+				<!-- 5.3 mk_mail_pend -->
+				<details open>
+					<summary>
+						<span class="subtitle" id="mk_mail_pend">5.3. La fonction mk_mail_pend()</span>
+					</summary>
+					<div class="prototype">
+						<p>Cette fonction lit un message dans une boîte. Le contenu du message est copié intégralement
+							dans l'espace mémoire de l'utilisateur.</p>
+						<br>
+						<p><span class="underline">Prototype</span> :</p>
+						<br>
+						<pre class="code">
+<span class="type">T_mkCode</span> mk_mail_pend ( <span class="type">T_mkTask**</span> p_mkTask, <span class="type">T_mkMail*</span> p_mkMail, 
+	<span class="type">T_mkAddr</span> p_mkMessage, <span class="type">uint32_t</span> p_mkTick );
+                  </pre>
+						<p><span class="underline">Paramètres</span> :</p>
+						<ul>
+							<li><span class="bold-green">p_mkTask</span> <span class="italic">[out]</span>
+								<p>Adresse de la tâche qui a posté le message. Ce paramètre est optionnel et peut
+									prendre la
+									valeur <span class="bold-strong">K_MK_NULL</span>.</p><br>
+							</li>
+							<li><span class="bold-green">p_mkMail</span> <span class="italic">[in, out]</span>
+								<p>Adresse d'une structure de type <span class="bold-strong">T_mkMail</span>.</p><br>
+							</li>
+							<li><span class="bold-green">p_mkMessage</span> <span class="italic">[in]</span>
+								<p>Adresse du buffer de destination où le message lu doit être copié.</p><br>
+							</li>
+							<li><span class="bold-green">p_mkTick</span> <span class="italic">[in]</span>
+								<p>Durée maximale de blocage de la tâche. Les valeurs possibles sont les suivantes :</p>
+								<ul>
+									<li><span class="bold-strong">0x0</span> : la fonction retourne immédiatement si
+										aucun message n'est disponible.</li>
+									<li><span class="bold-strong">0x1 à 0xFFFFFFFE</span> : la tâche est bloquée pendant
+										la
+										durée spécifiée (en multiple de tick) tant qu'aucun message n'est disponible.
+									</li>
+									<li><span class="bold-strong">0xFFFFFFFF</span> (<span
+											class="bold-strong">K_MK_TASK_WAIT_FOREVER</span>) : la tâche est bloquée
+										tant
+										qu'aucun message n'est disponible.</li>
+								</ul>
+							</li>
+						</ul>
+						<p><span class="underline">Retour</span> :</p>
+						<ul>
+							<li><span class="bold-strong">K_MK_OK</span> : le message a été copié à l'adresse <span
+									class="bold-strong">p_mkMessage</span>.</li>
+							<li><span class="bold-strong">K_MK_ERROR_PARAM</span> : aucun message n'a été lu car au
+								moins un
+								paramètre est invalide.</li>
+							<li><span class="bold-strong">K_MK_ERROR_TIMEOUT</span> : aucun message n'a été lu car aucun
+								message n'a été posté dans le délai imparti.</li>
+							<li><span class="bold-strong">K_MK_ERROR_ISR</span> : aucun message n'a été lu car la
+								fonction a
+								été exécutée dans un vecteur d'interruption.</li>
+							<li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : aucun message n'a été lu car une
+								tâche
+								non privilégiée ne peut pas manipuler une boîte protégée.</li>
+						</ul>
+						<p><span class="underline">Note</span> :</p>
+						<ul>
+							<li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+							<li>Le paramètre
+								<span class="bold-strong">p_mkTask</span> prend la valeur <span
+									class="bold-strong">K_MK_NULL</span> lorsque le message lu a été posté depuis un vecteur
+								d'interruption.
+							</li>
+						</ul>
+						<p><span class="underline">Attention</span> :</p>
+						<div class="prototype-comment">
+							<p class="prototype-logo">⚠️</p>
+							<div class="prototype-text ">
+								<ul>
+									<li>Le buffer de destination doit avoir une taille au moins égale à celle des messages de la
+										boîte.</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</details>
+
+				<!-- 5.4 mk_mail_delete -->
+				<details open>
+					<summary>
+						<span class="subtitle" id="mk_mail_delete">5.4. La fonction mk_mail_delete()</span>
+					</summary>
+					<div class="prototype">
+						<p>Cette fonction détruit une boîte de messages.</p>
+						<br>
+						<p><span class="underline">Prototype</span> :</p>
+						<br>
+						<pre class="code">
+<span class="type">T_mkCode</span> mk_mail_delete ( <span class="type">T_mkMail*</span> p_mkMail );
+                  </pre>
+						<p><span class="underline">Paramètres</span> :</p>
+						<ul>
+							<li><span class="bold-green">p_mkMail</span> <span class="italic">[in, out]</span>
+								<p>Adresse d'une structure de type <span class="bold-strong">T_mkMail</span>.</p>
+							</li>
+						</ul>
+						<p><span class="underline">Retour</span> :</p>
+						<ul>
+							<li><span class="bold-strong">K_MK_OK</span> : la boîte a été détruite.</li>
+							<li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la boîte n'a pas été détruite car
+								le
+								paramètre est invalide.</li>
+							<li><span class="bold-strong">K_MK_ERROR_ISR</span> : la boîte n'a pas été détruite car la
+								fonction a été exécutée dans un vecteur d'interruption.</li>
+							<li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la boîte n'a pas été détruite car
+								une
+								tâche non privilégiée ne peut pas manipuler une boîte protégée.</li>
+						</ul>
+						<p><span class="underline">Note</span> :</p>
+						<ul>
+							<li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+							<li>La mémoire réservée dans la structure <span class="bold-strong">T_mkPoolArea</span> lors
+								de la
+								création de la boîte n'est pas restituée.</li>
+						</ul>
+						<p><span class="underline">Attention</span> :</p>
+						<div class="prototype-comment">
+							<p class="prototype-logo">⚠️</p>
+							<div class="prototype-text ">
+								<ul>
+									<li>Les tâches bloquées par les fonctions <a href="#mk_mail_post"><span
+												class="bold-strong">mk_<wbr>mail_<wbr>post</span></a> et <a
+											href="#mk_mail_pend"><span class="bold-strong">mk_<wbr>mail_<wbr>pend</span></a> ne
+										sont
+										pas
+										réveillées
+										lorsque la boîte est détruite. <br>L'application doit donc s'assurer qu'aucune
+										tâche n'est en attente d'un message avant de détruire sa boîte.</li>
+									<li>Après la destruction de la boîte, les messages non lus sont perdus.</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</details>
+
+				<!-- 5.5 Les définitions -->
+				<details open>
+					<summary>
+						<span class="subtitle">5.5. Les définitions</span>
+					</summary>
+					<p>Le module <span class="bold-strong">mail</span> peut être configuré à l'aide des définitions
+						suivantes :</p>
+					<div class="table-scroll-container">
+						<table>
+							<thead>
+								<tr>
+									<th>Définition</th>
+									<th>Description</th>
+									<th>Valeur</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr id="K_MK_SCHEDULER_MAX_NUMBER_OF_MAILS">
+									<td><span
+											class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>MAILS</span>
+									</td>
+									<td>Cette constante définit le nombre de boîtes de messages pouvant être créées.
+										Elle ne
+										peut pas être nulle.</td>
+									<td class="center">32</td>
+								</tr>
+								<tr id="K_MK_SCHEDULER_MAX_NUMBER_OF_ITEMS">
+									<td><span
+											class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>ITEMS</span>
+									</td>
+									<td>Cette constante définit le nombre total de messages disponibles, toutes boîtes
+										confondues. Elle ne peut pas être nulle et doit être supérieure à <span
+											class="bold-strong">K_MK_SCHEDULER_MAX_NUMBER_OF_MAILS</span>. La création
+										d'une boîte
+										échoue lorsque le nombre de messages restants est insuffisant.</td>
+									<td class="center">128</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</details>
+
+			</div>
+		</section>
+
+		<section>
+			<div class="button-article">
+				<a href="./pool.html">
+					<div>
+						<p>&lt;</p>
+						<p>Allouer des blocs de taille fixe avec les Pools</p>
+					</div>
+				</a> <a href="../progress/progress.html">
+					<div>
+						<p>Partager les ressources critiques avec les Sémaphores</p>
+						<p>></p>
+					</div>
+				</a>
+			</div>
+		</section>
+	</main>
+
+	<footer>
+		<div>
+			<p>La Fabrique du MCU.</p>
+			<p>Copyright © 2024-2026, All rights reserved.</p>
+		</div>
+	</footer>
+
+</body>
+
+</html>

@@ -176,6 +176,13 @@
          "anchor": "task.html#mk_task_getLoad"
       },
       {
+         "name": "K_MK_SCHEDULER_MAX_NUMBER_OF_TASKS",
+         "module": "Task",
+         "submodule": "Scheduler",
+         "description": "Constante définissant le nombre maximal de tâches pouvant être créées.",
+         "anchor": "task.html#K_MK_SCHEDULER_MAX_NUMBER_OF_TASKS"
+      },
+      {
          "name": "Pool",
          "module": "Module",
          "submodule": "",
@@ -244,6 +251,62 @@
          "submodule": "",
          "description": "Fonction permettant de supprimer une pool mémoire.",
          "anchor": "pool.html#mk_pool_delete"
+      },
+      {
+         "name": "K_MK_SCHEDULER_MAX_NUMBER_OF_POOLS",
+         "module": "Pool",
+         "submodule": "Scheduler",
+         "description": "Constante définissant le nombre maximal de pools pouvant être créées.",
+         "anchor": "pool.html#K_MK_SCHEDULER_MAX_NUMBER_OF_POOLS"
+      },
+      {
+         "name": "Mail",
+         "module": "Module",
+         "submodule": "",
+         "description": "Description du module Mail.",
+         "anchor": "mail.html"
+      },
+      {
+         "name": "mk_mail_create",
+         "module": "Mail",
+         "submodule": "",
+         "description": "Fonction permettant de créer une boîte de messages.",
+         "anchor": "mail.html#mk_mail_create"
+      },
+      {
+         "name": "mk_mail_post",
+         "module": "Mail",
+         "submodule": "",
+         "description": "Fonction permettant de poster un message dans une boîte.",
+         "anchor": "mail.html#mk_mail_post"
+      },
+      {
+         "name": "mk_mail_pend",
+         "module": "Mail",
+         "submodule": "",
+         "description": "Fonction permettant de lire un message dans une boîte.",
+         "anchor": "mail.html#mk_mail_pend"
+      },
+      {
+         "name": "mk_mail_delete",
+         "module": "Mail",
+         "submodule": "",
+         "description": "Fonction permettant de supprimer une boîte de messages.",
+         "anchor": "mail.html#mk_mail_delete"
+      },
+      {
+         "name": "K_MK_SCHEDULER_MAX_NUMBER_OF_MAILS",
+         "module": "Mail",
+         "submodule": "Scheduler",
+         "description": "Constante définissant le nombre maximal de boîtes de messages pouvant être créées.",
+         "anchor": "mail.html#K_MK_SCHEDULER_MAX_NUMBER_OF_MAILS"
+      },
+      {
+         "name": "K_MK_SCHEDULER_MAX_NUMBER_OF_ITEMS",
+         "module": "Mail",
+         "submodule": "Scheduler",
+         "description": "Constante définissant le nombre total de messages disponibles, toutes boîtes confondues.",
+         "anchor": "mail.html#K_MK_SCHEDULER_MAX_NUMBER_OF_ITEMS"
       },
       {
          "name": "linker.ld",
