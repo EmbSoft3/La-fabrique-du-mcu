@@ -861,7 +861,9 @@
                   <ul>
                      <li><span class="bold-strong">K_MK_OK</span> : la pool a été créée.</li>
                      <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la pool n'a pas été créée car au moins un
-                        paramètre est invalide.</li>
+                        paramètre est invalide ou car la taille de la zone mémoire <span
+                           class="bold-strong">p_mkMsgArea</span> est
+                        insuffisante.</li>
                      <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : la pool n'a pas été créée car le nombre
                         maximal de pools pouvant être créées a été atteint.</li>
                      <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la pool n'a pas été créée car cette fonction
@@ -1205,7 +1207,6 @@
                </summary>
                <p>Le module <span class="bold-strong">pool</span> peut être configuré à l'aide des définitions
                   suivantes :</p>
-               <br>
                <div class="table-scroll-container">
                   <table id="K_MK_SCHEDULER_MAX_NUMBER_OF_POOLS">
                      <thead>
