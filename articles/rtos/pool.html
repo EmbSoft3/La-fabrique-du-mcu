@@ -487,6 +487,15 @@
 </pre>
 
             <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Les tâches bloquées en attente d'un bloc mémoire sont triées par ordre de priorité. Si plusieurs
+                     tâches attendent la libération d'un bloc alors la tâche la plus
+                     prioritaire sera réveillée en premier.</p>
+               </div>
+            </div>
+            <br>
             <p>
                Les fonctions <span class="bold-strong">mk_<wbr>pool_<wbr>available</span> et
                <span class="bold-strong">mk_<wbr>pool_<wbr>count</span> sont des fonctions utilitaires. La première
@@ -560,7 +569,8 @@
                   class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span>.</p>
             <br>
             <p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> est utilisé,
-               il est impossible pour une tâche non privilégiée de manipuler la pool créée. Dans ce cas de figure, le
+               il est impossible pour une tâche non privilégiée de créer ou de manipuler une pool. Dans ce cas de
+               figure, le
                buffer du gestionnaire d'allocation doit se situer en mémoire privilégiée pour éviter
                qu'une tâche non privilégiée vienne corrompre le buffer.</p>
 
@@ -1051,6 +1061,10 @@
                   <p><span class="underline">Note</span> :</p>
                   <ul>
                      <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Les tâches bloquées en attente d'un bloc mémoire sont triées par ordre de priorité. Si
+                        plusieurs
+                        tâches attendent la libération d'un bloc alors la tâche la plus
+                        prioritaire sera réveillée en premier.</li>
                   </ul>
                </div>
             </details>
@@ -1242,7 +1256,7 @@
                   <p>&lt;</p>
                   <p>Protéger son programme avec Mk</p>
                </div>
-            </a> <a href="../progress/progress.html">
+            </a> <a href="./mail.html">
                <div>
                   <p>Communiquer avec les boîtes de messages</p>
                   <p>></p>

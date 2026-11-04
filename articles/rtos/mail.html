@@ -231,6 +231,18 @@
 					</div>
 				</div>
 
+				<br>
+				<div class="comment">
+					<p class="comment-logo">💬</p>
+					<div class="comment-text ">
+
+						<p>Les tâches bloquées en attente d'un emplacement ou d'un message sont triées par ordre de
+							priorité. Si
+							plusieurs tâches attendent qu'un emplacement se libère ou qu'un message soit posté alors la tâche
+							la plus prioritaire sera réveillée en premier.</p>
+					</div>
+				</div>
+
 
 				<h2>3. Utilisation</h2>
 
@@ -549,7 +561,7 @@
 				<div class="warning">
 					<p class="warning-logo">⚠️</p>
 					<div class="warning-text ">
-						<p> À noter que l'interruption doit être strictement moins prioritaire que le
+						<p> À noter que l'interruption doit être moins prioritaire que le
 							vecteur <span class="bold-strong">SVC</span> pour pouvoir utiliser les appels système
 							(priorité numérique supérieure ou égale à <span
 								class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MASK_<wbr>PRIORITY</span>).</p>
@@ -603,9 +615,9 @@
 
 				<p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> est utilisé,
 					il est impossible pour une tâche non privilégiée
-					de
-					manipuler la boîte créée. Une boîte non protégée
-					doit être utilisée pour échanger des données entre les mondes privilégié et non privilégié.</p>
+					de créer ou de
+					manipuler une boîte. Une boîte non protégée
+					doit donc être utilisée pour échanger des données entre les mondes privilégié et non privilégié. </p>
 				<br>
 				<p>Les règles de placement mémoire de la boîte ainsi que les erreurs de
 					dimensionnement à éviter
@@ -853,6 +865,10 @@
 						<p><span class="underline">Note</span> :</p>
 						<ul>
 							<li>Cette fonction peut être exécutée dans un vecteur d'interruption. </li>
+							<li>Les tâches bloquées en attente d'un emplacement libre dans la boîte sont triées par ordre de
+								priorité. Si
+								plusieurs tâches attendent un emplacement alors la tâche
+								la plus prioritaire sera réveillée en premier.</li>
 							<li>Lorsque cette fonction est exécutée dans un vecteur d'interruption, le paramètre <span
 									class="bold-strong">p_mkState</span> doit prendre la valeur <span
 									class="bold-strong">K_<wbr>MK_<wbr>STATE_<wbr>READY</span> et le paramètre <span
@@ -934,6 +950,10 @@
 						<p><span class="underline">Note</span> :</p>
 						<ul>
 							<li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+							<li>Les tâches bloquées en attente d'un message sont triées par ordre de
+								priorité. Si
+								plusieurs tâches attendent un message alors la tâche
+								la plus prioritaire sera réveillée en premier.</li>
 							<li>Le paramètre
 								<span class="bold-strong">p_mkTask</span> prend la valeur <span
 									class="bold-strong">K_MK_NULL</span> lorsque le message lu a été posté depuis un vecteur
@@ -1063,7 +1083,7 @@
 						<p>&lt;</p>
 						<p>Allouer des blocs de taille fixe avec les Pools</p>
 					</div>
-				</a> <a href="../progress/progress.html">
+				</a> <a href="./semaphore.html">
 					<div>
 						<p>Partager les ressources critiques avec les Sémaphores</p>
 						<p>></p>
