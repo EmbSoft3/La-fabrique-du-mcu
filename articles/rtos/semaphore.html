@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Apprenez à créer et utiliser les sémaphores du noyau Mk pour partager des ressources critiques et synchroniser les tâches.">
+   <title>Partager les ressources critiques avec les Sémaphores</title>
+   <link rel="icon" type="image/png" href="../../favicon.png">
+   <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/semaphore.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link href="../../assets/css/fonts.css" rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./index.html">MK</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <h1 class="title-article">Partager les ressources critiques avec les Sémaphores</h1>
+            <p>Le module <span class="bold-strong">semaphore</span> permet de limiter le nombre de tâches qui accèdent
+               simultanément à une ressource. Il permet également de synchroniser tâche et interruption. Cette page
+               détaille le fonctionnement et l'utilisation des fonctions de ce module.
+            </p>
+
+            <h2>1. Synthèse des fonctions</h2>
+            <p>Les fonctions de ce module sont déclarées dans le fichier <span class="bold-strong">mk_semaphore.h</span>
+               :
+            </p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Fonction</th>
+                        <th>Description</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><a href="#mk_semaphore_create"><span class="gray">mk_<wbr>semaphore_<wbr>create</span></a>
+                        </td>
+                        <td>Crée un sémaphore.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_semaphore_take"><span class="gray">mk_<wbr>semaphore_<wbr>take</span></a></td>
+                        <td>Prend un jeton d'un sémaphore.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_semaphore_release"><span class="gray">mk_<wbr>semaphore_<wbr>release</span></a>
+                        </td>
+                        <td>Libère un jeton d'un sémaphore.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_semaphore_delete"><span class="gray">mk_<wbr>semaphore_<wbr>delete</span></a>
+                        </td>
+                        <td>Supprime un sémaphore.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+
+            <h2>2. Fonctionnement</h2>
+
+            <p>Un sémaphore est un compteur à <span class="bold-strong">jetons</span>. Le nombre de jetons est
+               défini à la création. Il correspond au nombre de tâches pouvant accéder simultanément à
+               la ressource protégée par le sémaphore. Un jeton est soit <span class="underline">disponible</span>, soit
+               <span class="underline">non disponible</span>. Quand il est non disponible, le jeton est détenu par une
+               tâche.
+            </p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Les sémaphores ne possédant qu'un jeton sont appelés sémaphores
+                     <span class="underline">binaires</span> alors que les sémaphores en possédant plusieurs sont
+                     appelés sémaphores <span class="underline">
+                        à
+                        compteur</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>La figure ci-dessous montre l'état initial d'un sémaphore constitué de 3 jetons dont seulement un est
+               utilisé :</p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-semaphore-create.jpg"
+                  alt="État initial d'un sémaphore à trois jetons lors de sa création">
+               <figcaption>
+                  <span class="underline">Figure 1</span> : État initial d'un sémaphore à trois jetons lors de sa
+                  création.
+               </figcaption>
+            </figure>
+
+            <p>Les sémaphores sont alloués par le noyau dans l'espace privilégié. Ils sont constitués d'une variable
+               stockant le nombre total de jetons (<span class="bold-strong">TokenNumber</span>), d'une variable
+               stockant le nombre de jetons
+               non disponibles (<span class="bold-strong">UsedToken</span>) et d'une liste stockant les
+               tâches en
+               attente d'un jeton (<span class="bold-strong">BlockedList</span>).
+            </p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Le nombre de sémaphores pouvant être alloués par le noyau est limité. Il est défini à la
+                     compilation par la
+                     constante <span
+                        class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>SEMAPHORES</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>Les tâches interagissent avec un sémaphore de plusieurs manières. Lors d'un <span
+                  class="bold-strong">take</span>, la tâche demande au noyau de lui attribuer un jeton.
+               Si un jeton est
+               disponible, le noyau le fournit et la tâche poursuit alors son exécution
+               :
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-semaphore-take.jpg" alt="Évolution du sémaphore après un take">
+               <figcaption>
+                  <span class="underline">Figure 2</span> : Évolution du sémaphore après un take.
+               </figcaption>
+            </figure>
+
+            <p>Lorsqu'aucun jeton n'est disponible, la tâche peut décider de se bloquer en attendant la libération d'un
+               jeton.</p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Les tâches bloquées sont insérées dans la liste d'attente du
+                     sémaphore (<span class="bold-strong">BlockedList</span>). Elles sont
+                     triées par ordre de priorité. Si plusieurs
+                     tâches attendent la libération d'un jeton alors la tâche la plus
+                     prioritaire sera réveillée en premier.</p>
+               </div>
+            </div>
+            <br>
+
+            <p>La figure ci-dessous montre la situation où trois tâches sont en attente d'un sémaphore qui n'a plus de
+               jeton :</p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-semaphore-pending.jpg" alt="Sémaphore sans jeton disponible avec trois tâches en attente
+                  d'un jeton">
+               <figcaption>
+                  <span class="underline">Figure 3</span> : Sémaphore sans jeton disponible avec trois tâches en attente
+                  d'un jeton.
+               </figcaption>
+            </figure>
+
+            <p>Les tâches 2 et 7 sont les tâches les plus prioritaires mais possèdent une priorité identique. Dans cette
+               situation, la tâche réveillée en premier sera la première à avoir été insérée dans la liste. Dans
+               l'exemple ci-dessus, le noyau réveillera d'abord la tâche 7 puis les tâches 2 et 3.
+            </p>
+            <br>
+            <p>Lors d'un <span class="bold-strong">release</span>, un jeton pris par une tâche est restitué au
+               sémaphore.
+               Si au moins une tâche est en attente de celui-ci, le noyau attribue immédiatement le jeton à la tâche la
+               plus prioritaire :
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-semaphore-release.jpg"
+                  alt="État d'un sémaphore après un release avec une tâche en attente">
+               <figcaption>
+                  <span class="underline">Figure 4</span> : Un release réveille la
+                  tâche la plus prioritaire.
+               </figcaption>
+            </figure>
+
+            <p>La tâche 7 s'est vue attribuer le jeton et a donc été retirée de la liste d'attente. La figure ci-dessous
+               montre
+               l'évolution du sémaphore après 3 <span class="bold-strong">release</span>
+               successifs :</p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-semaphore-release-1.jpg"
+                  alt="Évolution du sémaphore après plusieurs release">
+               <figcaption>
+                  <span class="underline">Figure 5</span> : Évolution du sémaphore après plusieurs release.
+               </figcaption>
+            </figure>
+
+            <p>On remarque que toutes les tâches en attente d'un jeton ont été servies et qu'un jeton supplémentaire
+               s'est
+               libéré.</p>
+
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Le nombre de jetons disponibles dans un sémaphore ne peut pas dépasser le nombre total de jetons.
+                     Un <span class="bold-strong">release</span> sur un sémaphore ne possédant que des jetons
+                     disponibles
+                     aboutit à une erreur.</p>
+               </div>
+            </div>
+
+            <h2>3. Avantages et inconvénients</h2>
+
+            <p>Un sémaphore possède les avantages suivants :
+            </p>
+            <ul>
+               <li><span class="gray">✔</span>Il permet à plusieurs tâches d'utiliser simultanément une ressource.</li>
+               <li><span class="gray">✔</span>Il permet de synchroniser tâche et vecteur d'interruption.</li>
+               <li><span class="gray">✔</span>Il n'a pas besoin de buffer applicatif.</li>
+            </ul>
+            <p>
+               Néanmoins, un sémaphore n'a pas de propriétaire. Le noyau ne sait pas quelle tâche détient les
+               jetons et
+               ne peut donc pas réaliser d'<span class="bold-strong">héritage de priorité</span>. Une tâche peu
+               prioritaire
+               détenant un jeton peut
+               alors retarder une tâche très prioritaire (<strong>inversion de priorité</strong>).
+            </p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Pour protéger l'accès exclusif à une ressource partagée entre plusieurs tâches, il est préférable
+                     d'utiliser un <span class="bold-strong">mutex</span>. Le sémaphore est plus adapté au comptage de
+                     ressources et à la
+                     synchronisation.</p>
+               </div>
+            </div>
+
+            <h2>4. Utilisation</h2>
+
+            <p>La création d'un sémaphore s'effectue avec la fonction <span
+                  class="bold-strong">mk_<wbr>semaphore_<wbr>create</span>. L'exemple ci-dessous crée un sémaphore
+               binaire ne possédant qu'un seul jeton non utilisé :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Pointeur du sémaphore */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkSemaphore</span>* g_semaphore;
+
+<span class="multi-line-comment">/* Une tâche privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result;
+
+   <span class="multi-line-comment">/* Création d'un sémaphore binaire (1 jeton au total) */</span>
+   <span class="multi-line-comment">/* Aucun jeton n'est utilisé à la création */</span>
+   <span class="multi-line-comment">/* Il est protégé et ne peut pas être manipulé par des tâches non privilégiées */</span>
+   l_result = <span class="function">mk_semaphore_create</span> ( &g_semaphore, <span class="define">K_MK_AREA_PROTECTED</span>,
+      <span class="number">1</span>, <span class="multi-line-comment">/* Nombre total de jetons */</span>
+      <span class="number">0</span> ); <span class="multi-line-comment">/* Nombre de jetons utilisés */</span>
+
+   <span class="multi-line-comment">/* ... */</span>
+   <span class="keyword">for</span> ( ;; ) ;
+}
+</pre>
+            <br>
+            <p>Après sa création, un jeton est pris avec <span class="bold-strong">mk_semaphore_take</span> et
+               restitué avec <span class="bold-strong">mk_semaphore_release</span>. Le paramètre <span
+                  class="bold-strong">p_mkTick</span> définit le comportement de la tâche lorsque le sémaphore n'a
+               plus de jeton disponible. L'exemple ci-dessous montre comment protéger
+               l'accès à une ressource unique avec un sémaphore binaire :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Une tâche privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result;
+
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* La tâche attend au maximum 10 ticks qu'un jeton se libère */</span>
+      l_result = <span class="function">mk_semaphore_take</span> ( g_semaphore, <span class="number">10</span> );
+
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) {
+         <span class="multi-line-comment">/* Le jeton a été pris, la ressource peut être utilisée ... */</span>
+
+         <span class="multi-line-comment">/* Libération du jeton */</span>
+         l_result = <span class="function">mk_semaphore_release</span> ( g_semaphore );
+      }
+      <span class="keyword">else if</span> ( l_result == <span class="define">K_MK_ERROR_TIMEOUT</span> ) {
+         <span class="multi-line-comment">/* Aucun jeton ne s'est libéré pendant 10 ticks */</span>
+      }
+      <span class="keyword">else</span> {
+         <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+         <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+      }
+   }
+}
+</pre>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Si le paramètre <span class="bold-strong">p_mkTick</span> est nul et si le sémaphore n'a plus aucun
+                     jeton disponible, la fonction <span class="bold-strong">mk_<wbr>semaphore_<wbr>take</span> retourne
+                     l'erreur <span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>TIMEOUT</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>Un sémaphore à compteur permet de limiter l'accès à des ressources identiques. L'exemple
+               ci-dessous autorise trois tâches à utiliser simultanément un des trois canaux de communication d'un
+               périphérique :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Création d'un sémaphore à compteur possédant 3 jetons disponibles */</span>
+l_result = <span class="function">mk_semaphore_create</span> ( &g_semaphore, <span class="define">K_MK_AREA_PROTECTED</span>, <span class="number">3</span>, <span class="number">0</span> );
+
+<span class="multi-line-comment">/* ... */</span>
+
+<span class="multi-line-comment">/* Dans chacune des tâches utilisatrices */</span>
+<span class="multi-line-comment">/* Les trois premières tâches obtiennent un jeton et les autres seront */</span>
+<span class="multi-line-comment">/* bloquées tant qu'aucun jeton ne s'est libéré */</span>
+l_result = <span class="function">mk_semaphore_take</span> ( g_semaphore, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+<span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) {
+   <span class="multi-line-comment">/* Utilisation d'un canal ... */</span>
+
+   <span class="multi-line-comment">/* Le jeton est libéré. Si des tâches sont en attente, la tâche */</span>
+   <span class="multi-line-comment">/* la plus prioritaire sera réveillée */</span>
+   l_result = <span class="function">mk_semaphore_release</span> ( g_semaphore );
+}
+</pre>
+            <br>
+            <p>Un sémaphore peut également synchroniser une tâche et une interruption en utilisant la fonction <span
+                  class="bold-strong">mk_semaphore_release</span>. Pour ce faire, un sémaphore binaire doit être créé
+               avec son jeton utilisé : </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Tâche de traitement */</span>
+<span class="keyword">void</span> <span class="function">mk_handler_task</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Création d'un sémaphore binaire dont le jeton est non disponible */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="function">mk_semaphore_create</span> ( &g_semaphore, 
+      <span class="define">K_MK_AREA_PROTECTED</span>,
+      <span class="number">1</span>,   <span class="multi-line-comment">/* Nombre total de jetons */</span>
+      <span class="number">1</span> ); <span class="multi-line-comment">/* Nombre de jetons utilisés */</span>
+
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* Attente infinie de l'interruption */</span>
+      l_result = <span class="function">mk_semaphore_take</span> ( g_semaphore, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) {
+         <span class="multi-line-comment">/* Traitement de l'événement ... */</span>
+      }
+   }
+}
+
+<span class="multi-line-comment">/* Vecteur d'interruption */</span>
+<span class="keyword">void</span> <span class="function">IRQHandler</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Réveil de la tâche de traitement */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="function">mk_semaphore_release</span> ( g_semaphore );
+
+   <span class="multi-line-comment">/* Si K_MK_ERROR_TIMEOUT, tous les jetons sont déjà disponibles */</span>
+   ( <span class="keyword">void</span> ) l_result;
+}
+</pre>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>L'interruption doit être moins prioritaire que le vecteur <span class="bold-strong">SVC</span> pour
+                     pouvoir utiliser les appels système (priorité numérique
+                     supérieure ou égale à <span
+                        class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MASK_<wbr>PRIORITY</span>).</p>
+               </div>
+            </div>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Un schéma identique à celui ci-dessus peut être utilisé pour synchroniser deux tâches plutôt qu'une
+                     tâche
+                     et un vecteur d'interruption.</p>
+               </div>
+            </div>
+
+            <br>
+
+            <p>La dernière fonction de l'<span class="bold-strong">API</span> est la fonction <span
+                  class="bold-strong">mk_semaphore_delete</span>. Elle permet de détruire le sémaphore en demandant
+               au noyau de le désallouer :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Suppression du sémaphore */</span>
+<span class="type">T_mkCode</span> l_result = <span class="function">mk_semaphore_delete</span> ( g_semaphore );
+
+<span class="multi-line-comment">/* Si une erreur s'est produite */</span>
+<span class="keyword">if</span> ( l_result != <span class="define">K_MK_OK</span> )
+{
+   <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+   <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+}
+</pre>
+
+            <h2>5. Protéger ses sémaphores</h2>
+            <p>Les sémaphores peuvent être créés avec les attributs <span
+                  class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> ou <span
+                  class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span>.</p>
+            <br>
+
+            <p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> est utilisé, il
+               est impossible pour une tâche non privilégiée de créer ou de manipuler un sémaphore. Un sémaphore non
+               protégé doit donc être utilisé pour synchroniser des tâches privilégiées avec des tâches non
+               privilégiées.
+            </p>
+            <br>
+            <p>Du fait de leur niveau d'exécution, l'ensemble des règles de protection ne s'applique pas aux vecteurs
+               d'interruption. La fonction <span class="bold-strong">mk_<wbr>semaphore_<wbr>release</span> peut donc
+               libérer
+               les jetons d'un
+               sémaphore protégé lorsqu'elle est exécutée dans un vecteur d'interruption.</p>
+            <br>
+            <p>Les sémaphores étant alloués par le noyau dans l'espace privilégié, aucune règle de placement ne
+               s'applique. Seules les variables stockant leurs adresses doivent être accessibles aux
+               tâches qui
+               les utilisent. Les règles de placement de ces variables sont détaillées dans l'article <a
+                  href="./mpu.html"><span class="bold-strong">Protéger son programme avec Mk</span></a>.</p>
+
+            <h2>6. API</h2>
+
+            <!-- 6.1 mk_semaphore_create -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_semaphore_create">6.1. La fonction mk_semaphore_create()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction crée un sémaphore.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_semaphore_create ( <span class="type">T_mkSemaphore**</span> p_mkSemaphore, 
+   <span class="type">uint32_t</span> p_mkAreaType, <span class="type">uint32_t</span> p_mkTokenNumber, 
+   <span class="type">uint32_t</span> p_mkInitialTokenNumber );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkSemaphore</span> <span class="italic">[out]</span>
+                        <p>Adresse d'un pointeur de type <span class="bold-strong">T_mkSemaphore*</span>.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkAreaType</span> <span class="italic">[in]</span>
+                        <p>Type du sémaphore. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">K_MK_AREA_PROTECTED</span> : le sémaphore est protégé, il
+                              ne peut pas être manipulé par des tâches non privilégiées.</li>
+                           <li><span class="bold-strong">K_MK_AREA_UNPROTECTED</span> : le sémaphore n'est pas
+                              protégé, il peut être manipulé par des tâches privilégiées ou non privilégiées.</li>
+                        </ul>
+                     </li>
+                     <li><span class="bold-green">p_mkTokenNumber</span> <span class="italic">[in]</span>
+                        <p>Nombre total de jetons du sémaphore. Ce paramètre ne peut pas être nul.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkInitialTokenNumber</span> <span class="italic">[in]</span>
+                        <p>Nombre de jetons non disponibles à la création du sémaphore. Ce paramètre doit être
+                           inférieur ou égal à <span class="bold-strong">p_mkTokenNumber</span>.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le sémaphore a été créé.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le sémaphore n'a pas été créé car au
+                        moins un paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : le sémaphore n'a pas été créé car le
+                        nombre maximal de sémaphores pouvant être alloués a été atteint.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le sémaphore n'a pas été créé car cette
+                        fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le sémaphore n'a pas été créé car une
+                        tâche non privilégiée ne peut pas créer un sémaphore protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>La constante <a href="#K_MK_SCHEDULER_MAX_NUMBER_OF_SEMAPHORES"><span
+                              class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>SEMAPHORES</span></a>
+                        définit le nombre maximal de sémaphores pouvant être créés.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 6.2 mk_semaphore_take -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_semaphore_take">6.2. La fonction mk_semaphore_take()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction prend un jeton dans un sémaphore. Si aucun jeton n'est disponible, la tâche peut
+                     être bloquée en attendant qu'un jeton soit libéré.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_semaphore_take ( <span class="type">T_mkSemaphore*</span> p_mkSemaphore, 
+   <span class="type">uint32_t</span> p_mkTick );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkSemaphore</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkSemaphore</span>.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkTick</span> <span class="italic">[in]</span>
+                        <p>Durée maximale de blocage de la tâche. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">0x0</span> : la fonction retourne immédiatement si aucun
+                              jeton n'est disponible.</li>
+                           <li><span class="bold-strong">0x1 à 0xFFFFFFFE</span> : la tâche est bloquée pendant la
+                              durée spécifiée (en multiple de tick) tant qu'aucun jeton n'est disponible.</li>
+                           <li><span class="bold-strong">0xFFFFFFFF</span> (<span
+                                 class="bold-strong">K_MK_TASK_WAIT_FOREVER</span>) : la tâche est bloquée tant
+                              qu'aucun jeton n'est disponible.</li>
+                        </ul>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : un jeton a été pris par la tâche.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : aucun jeton n'a été pris car le
+                        paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_TIMEOUT</span> : aucun jeton n'a été pris car aucun jeton
+                        ne s'est libéré dans le délai imparti.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : aucun jeton n'a été pris car la fonction
+                        a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : aucun jeton n'a été pris car une tâche
+                        non privilégiée ne peut pas manipuler un sémaphore protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Lorsque plusieurs tâches sont bloquées sur le même sémaphore, le jeton libéré est attribué
+                        à la tâche la plus prioritaire.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 6.3 mk_semaphore_release -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_semaphore_release">6.3. La fonction mk_semaphore_release()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction libère un jeton d'un sémaphore. Si une tâche est en attente du sémaphore, elle est
+                     réveillée et le
+                     jeton lui est attribué.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_semaphore_release ( <span class="type">T_mkSemaphore*</span> p_mkSemaphore );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkSemaphore</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkSemaphore</span>.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : un jeton a été libéré.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : aucun jeton n'a été libéré car le
+                        paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_TIMEOUT</span> : aucun jeton n'a été libéré car le
+                        sémaphore a déjà libéré tous ses jetons.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : aucun jeton n'a été libéré car une
+                        tâche non privilégiée ne peut pas manipuler un sémaphore protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction peut être exécutée dans un vecteur d'interruption.</li>
+                     <li>Cette fonction peut libérer un jeton qui n'a pas été pris par la tâche appelante.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 6.4 mk_semaphore_delete -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_semaphore_delete">6.4. La fonction mk_semaphore_delete()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction détruit un sémaphore.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_semaphore_delete ( <span class="type">T_mkSemaphore*</span> p_mkSemaphore );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkSemaphore</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkSemaphore</span>.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le sémaphore a été détruit.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le sémaphore n'a pas été détruit car
+                        le paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le sémaphore n'a pas été détruit car la
+                        fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le sémaphore n'a pas été détruit car
+                        une tâche non privilégiée ne peut pas manipuler un sémaphore protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                  </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Les tâches bloquées par la fonction <span
+                                 class="bold-strong">mk_<wbr>semaphore_<wbr>take</span> ne sont pas réveillées
+                              lorsque le sémaphore est détruit. </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+            </details>
+
+            <!-- 6.5 Les définitions -->
+            <details open>
+               <summary>
+                  <span class="subtitle">6.5. Les définitions</span>
+               </summary>
+               <p>Le module <span class="bold-strong">semaphore</span> peut être configuré à l'aide des définitions
+                  suivantes :</p>
+               <div class="table-scroll-container">
+                  <table>
+                     <thead>
+                        <tr>
+                           <th>Définition</th>
+                           <th>Description</th>
+                           <th>Valeur</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        <tr id="K_MK_SCHEDULER_MAX_NUMBER_OF_SEMAPHORES">
+                           <td><span
+                                 class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>SEMAPHORES</span>
+                           </td>
+                           <td>Cette constante définit le nombre de sémaphores pouvant être créés. Elle ne peut pas
+                              être nulle.</td>
+                           <td class="center">32</td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </div>
+            </details>
+
+         </div>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <a href="./mail.html">
+               <div>
+                  <p>&lt;</p>
+                  <p>Communiquer avec les boîtes de messages</p>
+               </div>
+            </a> <a href="../progress/progress.html">
+               <div>
+                  <p>Prévenir les accès concurrents avec les Mutex</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>

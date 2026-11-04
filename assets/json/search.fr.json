@@ -221,7 +221,7 @@
          "name": "mk_pool_allocSafe",
          "module": "Pool",
          "submodule": "",
-         "description": "Fonction permettant de d'allouer un bloc mémoire (thread safe).",
+         "description": "Fonction permettant d'allouer un bloc mémoire (thread safe).",
          "anchor": "pool.html#mk_pool_allocSafe"
       },
       {
@@ -309,6 +309,48 @@
          "anchor": "mail.html#K_MK_SCHEDULER_MAX_NUMBER_OF_ITEMS"
       },
       {
+         "name": "Semaphore",
+         "module": "Module",
+         "submodule": "",
+         "description": "Description du module Semaphore.",
+         "anchor": "semaphore.html"
+      },
+      {
+         "name": "mk_semaphore_create",
+         "module": "Semaphore",
+         "submodule": "",
+         "description": "Fonction permettant de créer un sémaphore.",
+         "anchor": "semaphore.html#mk_semaphore_create"
+      },
+      {
+         "name": "mk_semaphore_take",
+         "module": "Semaphore",
+         "submodule": "",
+         "description": "Fonction permettant de prendre un jeton d'un sémaphore.",
+         "anchor": "semaphore.html#mk_semaphore_take"
+      },
+      {
+         "name": "mk_semaphore_release",
+         "module": "Semaphore",
+         "submodule": "",
+         "description": "Fonction permettant de libérer un jeton d'un sémaphore.",
+         "anchor": "semaphore.html#mk_semaphore_release"
+      },
+      {
+         "name": "mk_semaphore_delete",
+         "module": "Semaphore",
+         "submodule": "",
+         "description": "Fonction permettant de supprimer un sémaphore.",
+         "anchor": "semaphore.html#mk_semaphore_delete"
+      },
+      {
+         "name": "K_MK_SCHEDULER_MAX_NUMBER_OF_SEMAPHORES",
+         "module": "Semaphore",
+         "submodule": "Scheduler",
+         "description": "Constante définissant le nombre maximal de sémaphores pouvant être créés.",
+         "anchor": "semaphore.html#K_MK_SCHEDULER_MAX_NUMBER_OF_SEMAPHORES"
+      },
+      {
          "name": "linker.ld",
          "module": "Linker",
          "submodule": "",
@@ -344,7 +386,7 @@
          "anchor": "mpu.html#K_MK_UNPRIVILEGED_BSS_MEMORY"
       },
       {
-         "name": "K_MK_UNPRIVILEGED_BSS_MEMORY ",
+         "name": "K_MK_UNPRIVILEGED_BSS_MEMORY",
          "module": "Linker",
          "submodule": "Memory",
          "description": "Constante permettant d'allouer une variable dans la section .mk_unprivileged_bss_memory.",
@@ -358,7 +400,7 @@
          "anchor": "mpu.html#K_MK_UNPRIVILEGED_BSS_MEMORY"
       },
       {
-         "name": "K_MK_UNPRIVILEGED_DATA_MEMORY  ",
+         "name": "K_MK_UNPRIVILEGED_DATA_MEMORY",
          "module": "Linker",
          "submodule": "Memory",
          "description": "Constante permettant d'allouer une variable dans la section .mk_unprivileged_data_memory.",

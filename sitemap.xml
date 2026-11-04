@@ -56,7 +56,19 @@
   </url>
   <url>
     <loc>https://lafabriquedumcu.com/articles/rtos/pool.html</loc>
-    <lastmod>2026-10-26</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lafabriquedumcu.com/articles/rtos/mail.html</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lafabriquedumcu.com/articles/rtos/semaphore.html</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
