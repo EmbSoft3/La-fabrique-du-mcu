@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Apprenez à créer et utiliser les mutex du noyau Mk pour protéger l'accès exclusif à une ressource partagée et éviter les inversions de priorité.">
+   <title>Prévenir les accès concurrents avec les Mutex</title>
+   <link rel="icon" type="image/png" href="../../favicon.png">
+   <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/mutex.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link href="../../assets/css/fonts.css" rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./index.html">MK</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <h1 class="title-article">Prévenir les accès concurrents avec les Mutex</h1>
+            <p>Le module <span class="bold-strong">mutex</span> garantit l'accès exclusif d'une tâche à une
+               ressource partagée. Contrairement aux sémaphores, un <span class="bold-strong">mutex</span> possède un
+               propriétaire, le noyau peut donc résoudre les inversions de priorité. Cette page détaille le
+               fonctionnement et l'utilisation des
+               fonctions de ce module.
+            </p>
+
+            <h2>1. Synthèse des fonctions</h2>
+            <p>Les fonctions de ce module sont déclarées dans le fichier <span class="bold-strong">mk_mutex.h</span> :
+            </p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Fonction</th>
+                        <th>Description</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><a href="#mk_mutex_create"><span class="gray">mk_<wbr>mutex_<wbr>create</span></a></td>
+                        <td>Crée un mutex.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_mutex_take"><span class="gray">mk_<wbr>mutex_<wbr>take</span></a></td>
+                        <td>Prend le jeton d'un mutex.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_mutex_release"><span class="gray">mk_<wbr>mutex_<wbr>release</span></a></td>
+                        <td>Libère le jeton d'un mutex.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_mutex_delete"><span class="gray">mk_<wbr>mutex_<wbr>delete</span></a></td>
+                        <td>Supprime un mutex.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+
+            <h2>2. Fonctionnement</h2>
+
+            <p>Un mutex (<span class="italic">mutual exclusion</span>) est un verrou à un seul <span
+                  class="bold-strong">jeton</span>. Le jeton est soit <span class="underline">verrouillé</span>, soit
+               <span class="underline">déverrouillé</span>. Lorsqu'il a été verrouillé par une tâche, celle-ci en
+               devient la <span class="bold-strong">propriétaire</span>. Tant que la tâche ne l'a pas
+               libéré, aucune autre tâche ne peut accéder à la ressource protégée.
+            </p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Un mutex se comporte comme un sémaphore binaire auquel on aurait ajouté la notion de
+                     <span class="underline">propriétaire</span>. C'est cette information qui permet au noyau de
+                     réaliser l'héritage de priorité.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>La figure ci-dessous montre l'état initial d'un mutex après sa création :</p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-mutex-create.jpg" alt="État initial d'un mutex lors de sa création">
+               <figcaption>
+                  <span class="underline">Figure 1</span> : État initial d'un mutex lors de sa création.
+               </figcaption>
+            </figure>
+
+            <p>Les mutex sont alloués par le noyau dans
+               l'espace privilégié. Ils sont constitués d'une variable
+               stockant l'état du jeton (<span class="bold-strong">Lock</span>), d'une variable pointant vers la tâche
+               propriétaire (<span class="bold-strong">Owner</span>) et d'une liste stockant les tâches en attente du
+               mutex (<span class="bold-strong">BlockedList</span>). À sa création, le mutex est déverrouillé et ne
+               possède pas de propriétaire.
+            </p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Le nombre de mutex pouvant être alloués par le noyau est limité. Il est défini à la
+                     compilation par la constante <span
+                        class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>MUTEX</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>Lors d'un <span class="bold-strong">take</span>, une tâche demande au noyau de prendre le mutex.
+               S'il est déverrouillé, la tâche en devient la propriétaire et poursuit son exécution :
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-mutex-take.jpg" alt="Évolution du mutex après un take">
+               <figcaption>
+                  <span class="underline">Figure 2</span> : Évolution du mutex après un take.
+               </figcaption>
+            </figure>
+
+            <p>Lorsque le mutex est déjà verrouillé, la tâche peut décider de se bloquer en attendant sa libération.
+               Les tâches bloquées sont insérées dans la liste d'attente du mutex (<span
+                  class="bold-strong">BlockedList</span>).
+            </p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Les tâches de la liste d'attente sont triées par ordre de priorité. Si plusieurs tâches attendent
+                     le jeton, la tâche la plus prioritaire sera réveillée en premier. Lorsque plusieurs tâches
+                     possèdent la même priorité, la première tâche à avoir été insérée dans la liste est réveillée.</p>
+               </div>
+            </div>
+            <br>
+
+            <p>Lors d'un <span class="bold-strong">release</span>, le propriétaire libère le mutex. Si au
+               moins une tâche est en attente de celui-ci, le noyau réveille la tâche la plus prioritaire et lui
+               transmet la propriété. Le mutex reste alors verrouillé. Les figures ci-dessous montrent l'évolution
+               du mutex suite à un <span class="bold-strong">release</span> :
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-mutex-release.jpg" alt="Mutex verrouillé avec trois tâches en attente">
+               <figcaption>
+                  <span class="underline">Figure 3</span> : Mutex verrouillé avec trois tâches en attente.
+               </figcaption>
+            </figure>
+
+            <figure>
+               <img src="../../images/rtos/rtos-mutex-release-1.jpg"
+                  alt="Évolution de l'état du mutex après un release">
+               <figcaption>
+                  <span class="underline">Figure 4</span> : Évolution de l'état du mutex après un release.
+               </figcaption>
+            </figure>
+
+            <p>Si aucune tâche n'est en attente, le mutex redevient libre et ne possède plus de
+               propriétaire.
+            </p>
+
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Seule la tâche propriétaire peut libérer un mutex. Un <span class="bold-strong">release</span>
+                     exécuté par une autre tâche ou sur un mutex dont le jeton est disponible aboutit à une erreur.</p>
+               </div>
+            </div>
+            <br>
+
+            <h3>L'héritage de priorité</h3>
+
+            <p>Considérons trois tâches : une tâche peu prioritaire <span class="bold-strong">T_L</span>, une tâche de
+               priorité intermédiaire <span class="bold-strong">T_M</span> et une tâche très prioritaire <span
+                  class="bold-strong">T_H</span>. </p>
+            <p>Si <span class="bold-strong">T_L</span> détient un mutex et si <span class="bold-strong">T_H</span> se
+               bloque en attendant ce mutex, alors <span class="bold-strong">T_H</span> dépend de <span
+                  class="bold-strong">T_L</span>. Sans mécanisme
+               particulier, <span class="bold-strong">T_M</span> peut s'exécuter à la place de <span
+                  class="bold-strong">T_L</span> et retarder indéfiniment la libération du mutex. La tâche la plus
+               prioritaire est alors bloquée par une tâche moins prioritaire, c'est une
+               <span class="bold-strong">inversion de priorité</span> :
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-mutex-inversion.jpg"
+                  alt="Inversion de priorité : la tâche intermédiaire retarde la tâche très prioritaire">
+               <figcaption>
+                  <span class="underline">Figure 5</span> : Inversion de priorité sans héritage.
+               </figcaption>
+            </figure>
+
+            <p>Pour éviter cette situation, le noyau applique l'<span class="bold-strong">héritage de priorité</span>.
+               Dès qu'une tâche se bloque sur un mutex, son propriétaire reçoit temporairement la priorité de
+               la
+               tâche bloquée. Dans la figure ci-dessous, <span class="bold-strong">T_L</span> s'exécute avec la priorité
+               de <span class="bold-strong">T_H</span> et ne peut plus être préemptée par <span
+                  class="bold-strong">T_M</span> :
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-mutex-inheritance.jpg"
+                  alt="Héritage de priorité : le propriétaire du mutex exécute la section critique avec la priorité de la tâche bloquée">
+               <figcaption>
+                  <span class="underline">Figure 6</span> : Héritage de priorité.
+               </figcaption>
+            </figure>
+
+            <p>Lors du <span class="bold-strong">release</span>, le propriétaire retrouve sa priorité d'origine
+               et le mutex est donné à <span class="bold-strong">T_H</span>.
+            </p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Chaque tâche possède une priorité de base (<span class="bold-strong">priority</span>) et une
+                     priorité courante (<span class="bold-strong">currentPriority</span>). Seule la priorité courante
+                     est modifiée par
+                     l'héritage. Ce mécanisme est détaillé dans l'article <a href="./architecture.html"><span
+                           class="bold-strong">Architecture et caractéristiques du noyau</span></a>.</p>
+               </div>
+            </div>
+            <br>
+
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Les mutex ne sont pas récursifs et une tâche ne peut détenir qu'un seul mutex à la fois. Une tâche
+                     qui tente d'en verrouiller un second sans avoir libéré le premier obtient l'erreur <span
+                        class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>NESTED</span>. Le risque d'interblocage est alors
+                     supprimé.</p>
+               </div>
+            </div>
+
+            <h2>3. Avantages et inconvénients</h2>
+
+            <p>Un mutex possède les avantages suivants :
+            </p>
+            <ul>
+               <li><span class="gray">✔</span>Il garantit l'accès exclusif à une ressource.</li>
+               <li><span class="gray">✔</span>Il supporte l'héritage de priorité.</li>
+            </ul>
+            <p>
+               Néanmoins, il possède aussi des limitations :
+            </p>
+            <ul>
+               <li><span class="gray">✘</span>Une tâche ne peut détenir qu'un seul mutex à la fois.</li>
+               <li><span class="gray">✘</span>Il ne peut être libéré que par la tâche qui l'a pris.</li>
+               <li><span class="gray">✘</span>Il ne peut pas être utilisé dans un vecteur
+                  d'interruption.</li>
+            </ul>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Pour protéger l'accès exclusif à une ressource partagée entre plusieurs tâches, il est préférable
+                     d'utiliser un <span class="bold-strong">mutex</span>. Pour synchroniser une tâche avec une
+                     interruption ou pour compter des ressources, il vaut mieux utiliser un <a
+                        href="./semaphore.html"><span class="bold-strong">sémaphore</span></a>.</p>
+               </div>
+            </div>
+
+            <h2>4. Utilisation</h2>
+
+            <p>La création d'un mutex s'effectue avec la fonction <span
+                  class="bold-strong">mk_<wbr>mutex_<wbr>create</span>. L'exemple ci-dessous montre comment créer un
+               mutex :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Pointeur du mutex */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkMutex</span>* g_mutex;
+
+<span class="multi-line-comment">/* Une tâche privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result;
+
+   <span class="multi-line-comment">/* Création d'un mutex (le jeton est toujours disponible) */</span>
+   <span class="multi-line-comment">/* Il est protégé et ne peut pas être manipulé par des tâches */</span>
+   <span class="multi-line-comment">/* non privilégiées */</span>
+   l_result = <span class="function">mk_mutex_create</span> ( &amp;g_mutex, <span class="define">K_MK_AREA_PROTECTED</span> );
+
+   <span class="multi-line-comment">/* ... */</span>
+   <span class="keyword">for</span> ( ;; ) ;
+}
+</pre>
+            <br>
+            <p>Suite à sa création, le mutex peut être pris et libéré en utilisant les fonctions <span
+                  class="bold-strong">mk_<wbr>mutex_<wbr>take</span> et <span
+                  class="bold-strong">mk_<wbr>mutex_<wbr>release</span>. Le paramètre <span
+                  class="bold-strong">p_mkTick</span> définit le comportement de la tâche lorsque le mutex est
+               détenu par une autre tâche. L'exemple ci-dessous montre comment protéger l'accès à une ressource
+               partagée :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Une tâche privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result;
+
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* La tâche attend au maximum 10 ticks que le mutex se libère */</span>
+      l_result = <span class="function">mk_mutex_take</span> ( g_mutex, <span class="number">10</span> );
+
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) {
+         <span class="multi-line-comment">/* La tâche est propriétaire du mutex, la ressource */</span>
+         <span class="multi-line-comment">/* peut être utilisée ... */</span>
+
+         <span class="multi-line-comment">/* Libération du mutex */</span>
+         l_result = <span class="function">mk_mutex_release</span> ( g_mutex );
+      }
+      <span class="keyword">else if</span> ( l_result == <span class="define">K_MK_ERROR_TIMEOUT</span> ) {
+         <span class="multi-line-comment">/* Le mutex ne s'est pas libéré pendant 10 ticks */</span>
+      }
+      <span class="keyword">else</span> {
+         <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+         <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_NESTED */</span>
+         <span class="multi-line-comment">/* K_MK_ERROR_RIGHT */</span>
+      }
+   }
+}
+</pre>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Si le paramètre <span class="bold-strong">p_mkTick</span> est nul et si le mutex est détenu par
+                     une autre tâche, la fonction <span class="bold-strong">mk_<wbr>mutex_<wbr>take</span> retourne
+                     l'erreur <span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>TIMEOUT</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>De même, si la tâche exécutant la fonction <span
+                        class="bold-strong">mk_<wbr>mutex_<wbr>release</span>
+                     n'est pas la propriétaire du mutex, l'erreur <span
+                        class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>TIMEOUT</span> est retournée.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+
+            <p>Une tâche ne peut détenir qu'un seul mutex à la fois. L'exemple ci-dessous montre l'erreur retournée
+               lorsqu'une tâche tente de prendre un second mutex :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Prise du premier mutex */</span>
+l_result = <span class="function">mk_mutex_take</span> ( g_mutex1, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+<span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) {
+
+   <span class="multi-line-comment">/* La tâche possède déjà un mutex, la prise d'un second mutex */</span>
+   <span class="multi-line-comment">/* est refusée */</span>
+   l_result = <span class="function">mk_mutex_take</span> ( g_mutex2, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+   <span class="keyword">if</span> ( l_result == <span class="define">K_MK_ERROR_NESTED</span> ) {
+      <span class="multi-line-comment">/* Le premier mutex doit être libéré avant de prendre le second */</span>
+   }
+
+   <span class="multi-line-comment">/* Libération du premier mutex */</span>
+   l_result = <span class="function">mk_mutex_release</span> ( g_mutex1 );
+}
+</pre>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Tant qu'une tâche possède un mutex, sa priorité ne peut pas être modifiée avec la fonction <span
+                        class="bold-strong">mk_<wbr>task_<wbr>priority</span>. Il est donc recommandé de
+                     conserver la section critique la plus courte possible.</p>
+               </div>
+            </div>
+            <br>
+
+            <p>La dernière fonction de l'<span class="bold-strong">API</span> est la fonction <span
+                  class="bold-strong">mk_mutex_delete</span>. Elle permet de détruire le mutex en demandant
+               au noyau de le désallouer :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Suppression du mutex */</span>
+<span class="type">T_mkCode</span> l_result = <span class="function">mk_mutex_delete</span> ( g_mutex );
+
+<span class="multi-line-comment">/* Si une erreur s'est produite */</span>
+<span class="keyword">if</span> ( l_result != <span class="define">K_MK_OK</span> )
+{
+   <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+   <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+}
+</pre>
+
+            <h2>5. Protéger ses mutex</h2>
+            <p>Les mutex peuvent être créés avec les attributs <span
+                  class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> ou <span
+                  class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span>.</p>
+            <br>
+
+            <p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> est utilisé, il
+               est impossible pour une tâche non privilégiée de créer ou de manipuler un mutex. Un mutex non
+               protégé doit donc être utilisé pour partager l'accès à une ressource utilisée par des tâches
+               privilégiées et des
+               tâches non privilégiées.
+            </p>
+            <br>
+            <p>Les mutex étant alloués par le noyau dans l'espace privilégié, aucune règle de placement ne
+               s'applique. Seules les variables stockant leurs adresses doivent être accessibles aux
+               tâches qui les utilisent. Les règles de placement de ces variables sont détaillées dans l'article <a
+                  href="./mpu.html"><span class="bold-strong">Protéger son programme avec Mk</span></a>.</p>
+
+            <h2>6. API</h2>
+
+            <!-- 6.1 mk_mutex_create -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_mutex_create">6.1. La fonction mk_mutex_create()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction crée un mutex. Le jeton du mutex est disponible à la création.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_mutex_create ( <span class="type">T_mkMutex**</span> p_mkMutex, 
+   <span class="type">uint32_t</span> p_mkAreaType );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkMutex</span> <span class="italic">[out]</span>
+                        <p>Adresse d'un pointeur de type <span class="bold-strong">T_mkMutex*</span>.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkAreaType</span> <span class="italic">[in]</span>
+                        <p>Type du mutex. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">K_MK_AREA_PROTECTED</span> : le mutex est protégé, il
+                              ne peut pas être manipulé par des tâches non privilégiées.</li>
+                           <li><span class="bold-strong">K_MK_AREA_UNPROTECTED</span> : le mutex n'est pas
+                              protégé, il peut être manipulé par des tâches privilégiées ou non privilégiées.</li>
+                        </ul>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le mutex a été créé.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le mutex n'a pas été créé car le
+                        paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : le mutex n'a pas été créé car le
+                        nombre maximal de mutex pouvant être alloués a été atteint.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le mutex n'a pas été créé car cette
+                        fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le mutex n'a pas été créé car une
+                        tâche non privilégiée ne peut pas créer un mutex protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>La constante <a href="#K_MK_SCHEDULER_MAX_NUMBER_OF_MUTEX"><span
+                              class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>MUTEX</span></a>
+                        définit le nombre maximal de mutex pouvant être créés.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 6.2 mk_mutex_take -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_mutex_take">6.2. La fonction mk_mutex_take()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction prend le jeton d'un mutex. Si le jeton n'est pas disponible, la tâche peut
+                     être bloquée en attendant qu'il soit libéré. Lorsque la tâche obtient le mutex, elle en devient
+                     propriétaire.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_mutex_take ( <span class="type">T_mkMutex*</span> p_mkMutex, <span class="type">uint32_t</span> p_mkTick );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkMutex</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkMutex</span>.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkTick</span> <span class="italic">[in]</span>
+                        <p>Durée maximale de blocage de la tâche. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">0x0</span> : la fonction retourne immédiatement si le
+                              jeton n'est pas disponible.</li>
+                           <li><span class="bold-strong">0x1 à 0xFFFFFFFE</span> : la tâche est bloquée pendant la
+                              durée spécifiée (en multiple de tick) tant que le jeton n'est pas disponible.</li>
+                           <li><span class="bold-strong">0xFFFFFFFF</span> (<span
+                                 class="bold-strong">K_MK_TASK_WAIT_FOREVER</span>) : la tâche est bloquée tant
+                              que le jeton n'est pas disponible.</li>
+                        </ul>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le mutex a été pris par la tâche.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le mutex n'a pas été pris car le
+                        paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_TIMEOUT</span> : le mutex n'a pas été pris car il ne
+                        s'est pas libéré dans le délai imparti.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le mutex n'a pas été pris car la fonction
+                        a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_NESTED</span> : le mutex n'a pas été pris car la
+                        tâche appelante est déjà propriétaire d'un mutex.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le mutex n'a pas été pris car une tâche
+                        non privilégiée ne peut pas manipuler un mutex protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Lorsque plusieurs tâches sont bloquées sur le même mutex, la propriété du mutex est
+                        transmise à la tâche la plus prioritaire.</li>
+                     <li>Lorsqu'une tâche se bloque, le propriétaire du mutex hérite de sa priorité si celle-ci est
+                        supérieure à la sienne.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 6.3 mk_mutex_release -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_mutex_release">6.3. La fonction mk_mutex_release()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction libère le jeton d'un mutex. Si au moins une tâche est en attente du mutex, la
+                     tâche la plus prioritaire est réveillée et en devient propriétaire. Le propriétaire retrouve sa
+                     priorité d'origine.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_mutex_release ( <span class="type">T_mkMutex*</span> p_mkMutex );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkMutex</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkMutex</span>.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le mutex a été libéré.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le mutex n'a pas été libéré car le
+                        paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_TIMEOUT</span> : le mutex n'a pas été libéré car la
+                        tâche appelante n'est pas propriétaire du mutex.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le mutex n'a pas été libéré car la fonction
+                        a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le mutex n'a pas été libéré car une
+                        tâche non privilégiée ne peut pas manipuler un mutex protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Seule la tâche propriétaire peut libérer le mutex.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 6.4 mk_mutex_delete -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_mutex_delete">6.4. La fonction mk_mutex_delete()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction détruit un mutex.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_mutex_delete ( <span class="type">T_mkMutex*</span> p_mkMutex );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkMutex</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkMutex</span>.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le mutex a été détruit.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le mutex n'a pas été détruit car
+                        le paramètre est invalide ou le mutex est verrouillé.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le mutex n'a pas été détruit car la
+                        fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le mutex n'a pas été détruit car
+                        une tâche non privilégiée ne peut pas manipuler un mutex protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Un mutex verrouillé ne peut pas être détruit.</li>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                  </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Les tâches bloquées par la fonction <span
+                                 class="bold-strong">mk_<wbr>mutex_<wbr>take</span> ne sont pas réveillées
+                              lorsque le mutex est détruit.</li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+            </details>
+
+            <!-- 6.5 Les définitions -->
+            <details open>
+               <summary>
+                  <span class="subtitle">6.5. Les définitions</span>
+               </summary>
+               <p>Le module <span class="bold-strong">mutex</span> peut être configuré à l'aide des définitions
+                  suivantes :</p>
+               <div class="table-scroll-container">
+                  <table>
+                     <thead>
+                        <tr>
+                           <th>Définition</th>
+                           <th>Description</th>
+                           <th>Valeur</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        <tr id="K_MK_SCHEDULER_MAX_NUMBER_OF_MUTEX">
+                           <td><span
+                                 class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>MUTEX</span>
+                           </td>
+                           <td>Cette constante définit le nombre de mutex pouvant être créés. Elle ne peut pas
+                              être nulle.</td>
+                           <td class="center">32</td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </div>
+            </details>
+
+         </div>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <a href="./semaphore.html">
+               <div>
+                  <p>&lt;</p>
+                  <p>Partager les ressources critiques avec les Sémaphores</p>
+               </div>
+            </a> <a href="../progress/progress.html">
+               <div>
+                  <p>Synchroniser les tâches avec les champs d'événements</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>

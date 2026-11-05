@@ -154,11 +154,9 @@
             <div class="comment">
                <p class="comment-logo">💬</p>
                <div class="comment-text ">
-                  <p>Les tâches bloquées sont insérées dans la liste d'attente du
-                     sémaphore (<span class="bold-strong">BlockedList</span>). Elles sont
-                     triées par ordre de priorité. Si plusieurs
-                     tâches attendent la libération d'un jeton alors la tâche la plus
-                     prioritaire sera réveillée en premier.</p>
+                  <p>Les tâches de la liste d'attente sont triées par ordre de priorité. Si plusieurs tâches attendent
+                     un jeton, la tâche la plus prioritaire sera réveillée en premier. Lorsque plusieurs tâches
+                     possèdent la même priorité, la première tâche à avoir été insérée dans la liste est réveillée.</p>
                </div>
             </div>
             <br>
@@ -569,8 +567,8 @@ l_result = <span class="function">mk_semaphore_take</span> ( g_semaphore, <span 
                   <span class="subtitle" id="mk_semaphore_release">6.3. La fonction mk_semaphore_release()</span>
                </summary>
                <div class="prototype">
-                  <p>Cette fonction libère un jeton d'un sémaphore. Si une tâche est en attente du sémaphore, elle est
-                     réveillée et le
+                  <p>Cette fonction libère un jeton d'un sémaphore. Si au moins une tâche est en attente du sémaphore,
+                     la tâche la plus prioritaire est réveillée et le
                      jeton lui est attribué.</p>
                   <br>
                   <p><span class="underline">Prototype</span> :</p>
@@ -689,7 +687,7 @@ l_result = <span class="function">mk_semaphore_take</span> ( g_semaphore, <span 
                   <p>&lt;</p>
                   <p>Communiquer avec les boîtes de messages</p>
                </div>
-            </a> <a href="../progress/progress.html">
+            </a> <a href="./mutex.html">
                <div>
                   <p>Prévenir les accès concurrents avec les Mutex</p>
                   <p>></p>

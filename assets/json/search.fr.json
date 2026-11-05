@@ -351,6 +351,48 @@
          "anchor": "semaphore.html#K_MK_SCHEDULER_MAX_NUMBER_OF_SEMAPHORES"
       },
       {
+         "name": "Mutex",
+         "module": "Module",
+         "submodule": "",
+         "description": "Description du module Mutex.",
+         "anchor": "mutex.html"
+      },
+      {
+         "name": "mk_mutex_create",
+         "module": "Mutex",
+         "submodule": "",
+         "description": "Fonction permettant de créer un mutex.",
+         "anchor": "mutex.html#mk_mutex_create"
+      },
+      {
+         "name": "mk_mutex_take",
+         "module": "Mutex",
+         "submodule": "",
+         "description": "Fonction permettant de prendre un mutex.",
+         "anchor": "mutex.html#mk_mutex_take"
+      },
+      {
+         "name": "mk_mutex_release",
+         "module": "Mutex",
+         "submodule": "",
+         "description": "Fonction permettant de libérer un mutex.",
+         "anchor": "mutex.html#mk_mutex_release"
+      },
+      {
+         "name": "mk_mutex_delete",
+         "module": "Mutex",
+         "submodule": "",
+         "description": "Fonction permettant de supprimer un mutex.",
+         "anchor": "mutex.html#mk_mutex_delete"
+      },
+      {
+         "name": "K_MK_SCHEDULER_MAX_NUMBER_OF_MUTEX",
+         "module": "Mutex",
+         "submodule": "Scheduler",
+         "description": "Constante définissant le nombre maximal de mutex pouvant être créés.",
+         "anchor": "mutex.html#K_MK_SCHEDULER_MAX_NUMBER_OF_MUTEX"
+      },
+      {
          "name": "linker.ld",
          "module": "Linker",
          "submodule": "",
