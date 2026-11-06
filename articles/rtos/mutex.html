@@ -5,8 +5,8 @@
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="description"
-      content="Apprenez à créer et utiliser les mutex du noyau Mk pour protéger l'accès exclusif à une ressource partagée et éviter les inversions de priorité.">
-   <title>Prévenir les accès concurrents avec les Mutex</title>
+      content="Apprenez à créer et utiliser les mutex du noyau Mk pour protéger une ressource partagée et éviter les inversions de priorité.">
+   <title>L'exclusion mutuelle avec les Mutex</title>
    <link rel="icon" type="image/png" href="../../favicon.png">
    <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
    <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/mutex.html">
@@ -35,7 +35,7 @@
    <main>
       <section class="mk">
          <div>
-            <h1 class="title-article">Prévenir les accès concurrents avec les Mutex</h1>
+            <h1 class="title-article">L'exclusion mutuelle avec les Mutex</h1>
             <p>Le module <span class="bold-strong">mutex</span> garantit l'accès exclusif d'une tâche à une
                ressource partagée. Contrairement aux sémaphores, un <span class="bold-strong">mutex</span> possède un
                propriétaire, le noyau peut donc résoudre les inversions de priorité. Cette page détaille le
@@ -675,7 +675,7 @@ l_result = <span class="function">mk_mutex_take</span> ( g_mutex1, <span class="
                   <p>&lt;</p>
                   <p>Partager les ressources critiques avec les Sémaphores</p>
                </div>
-            </a> <a href="../progress/progress.html">
+            </a> <a href="./event.html">
                <div>
                   <p>Synchroniser les tâches avec les champs d'événements</p>
                   <p>></p>
