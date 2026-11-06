@@ -618,20 +618,10 @@ l_result = <span class="function">mk_mutex_take</span> ( g_mutex1, <span class="
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
-                     <li>Un mutex verrouillé ne peut pas être détruit.</li>
+                     <li>Un mutex verrouillé ne peut pas être détruit. Aucune tâche ne peut donc se bloquer sur un
+                        mutex supprimé.</li>
                      <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
                   </ul>
-                  <p><span class="underline">Attention</span> :</p>
-                  <div class="prototype-comment">
-                     <p class="prototype-logo">⚠️</p>
-                     <div class="prototype-text ">
-                        <ul>
-                           <li>Les tâches bloquées par la fonction <span
-                                 class="bold-strong">mk_<wbr>mutex_<wbr>take</span> ne sont pas réveillées
-                              lorsque le mutex est détruit.</li>
-                        </ul>
-                     </div>
-                  </div>
                </div>
             </details>
 

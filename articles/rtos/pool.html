@@ -395,6 +395,7 @@
    <span class="keyword">else</span> {
       <span class="multi-line-comment">/* Gestion des autres erreurs ...  */</span>
       <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+      <span class="multi-line-comment">/* K_MK_ERROR_UNEXPECTED */</span>
    }  
 
    <span class="multi-line-comment">/* ... */</span>
@@ -438,6 +439,7 @@
    <span class="keyword">else</span> {
       <span class="multi-line-comment">/* Gestion des autres erreurs ...  */</span>
       <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+      <span class="multi-line-comment">/* K_MK_ERROR_UNEXPECTED */</span>
    } 
 
    <span class="multi-line-comment">/* ... */</span>
@@ -479,6 +481,7 @@
    <span class="keyword">else</span> {
       <span class="multi-line-comment">/* Gestion des autres erreurs ...  */</span>
       <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+      <span class="multi-line-comment">/* K_MK_ERROR_UNEXPECTED */</span>
    } 
 
    <span class="multi-line-comment">/* ... */</span>
@@ -1057,6 +1060,8 @@
                         car cette fonction a été exécutée dans un vecteur d'interruption.</li>
                      <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la mémoire n'a pas été
                         allouée car une tâche non privilégiée ne peut pas manipuler une pool protégée.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_UNEXPECTED</span> : la mémoire n'a pas été
+                        allouée car la pool a été détruite pendant que la tâche était bloquée.</li>
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
@@ -1203,11 +1208,11 @@
                      <p class="prototype-logo">⚠️</p>
                      <div class="prototype-text ">
                         <ul>
-                           <li>Les tâches bloquées par la fonction <a href="#mk_pool_allocSafe"><span
-                                    class="bold-strong">mk_<wbr>pool_<wbr>alloc<wbr>Safe</span></a> ne sont pas
-                              réveillées
-                              lorsque la pool est détruite. <br>L'application doit donc s'assurer qu'aucune
-                              tâche n'est en attente d'un bloc mémoire avant de détruire sa pool.</li>
+                           <li>Lorsque la pool est détruite, les tâches bloquées par la fonction <a
+                                 href="#mk_pool_allocSafe"><span
+                                    class="bold-strong">mk_<wbr>pool_<wbr>alloc<wbr>Safe</span></a> sont réveillées.
+                              Elles retournent alors l'erreur <span class="bold-strong">K_MK_ERROR_UNEXPECTED</span>.
+                           </li>
                         </ul>
                      </div>
                   </div>
