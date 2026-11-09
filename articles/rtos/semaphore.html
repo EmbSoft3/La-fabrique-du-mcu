@@ -268,7 +268,8 @@
 
    <span class="multi-line-comment">/* Création d'un sémaphore binaire (1 jeton au total) */</span>
    <span class="multi-line-comment">/* Aucun jeton n'est utilisé à la création */</span>
-   <span class="multi-line-comment">/* Il est protégé et ne peut pas être manipulé par des tâches non privilégiées */</span>
+   <span class="multi-line-comment">/* Il est protégé et ne peut pas être manipulé par des tâches */</span>
+   <span class="multi-line-comment">/* non privilégiées */</span>
    l_result = <span class="function">mk_semaphore_create</span> ( &g_semaphore, <span class="define">K_MK_AREA_PROTECTED</span>,
       <span class="number">1</span>, <span class="multi-line-comment">/* Nombre total de jetons */</span>
       <span class="number">0</span> ); <span class="multi-line-comment">/* Nombre de jetons utilisés */</span>
