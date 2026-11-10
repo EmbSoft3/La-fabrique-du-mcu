@@ -393,6 +393,55 @@
          "anchor": "mutex.html#K_MK_SCHEDULER_MAX_NUMBER_OF_MUTEX"
       },
       {
+         "name": "Event",
+         "module": "Module",
+         "submodule": "",
+         "description": "Description du module Event.",
+         "anchor": "event.html"
+      },
+      {
+         "name": "mk_event_create",
+         "module": "Event",
+         "submodule": "",
+         "description": "Fonction permettant de créer un champ d'événements.",
+         "anchor": "event.html#mk_event_create"
+      },
+      {
+         "name": "mk_event_set",
+         "module": "Event",
+         "submodule": "",
+         "description": "Fonction permettant de positionner des événements dans un champ.",
+         "anchor": "event.html#mk_event_set"
+      },
+      {
+         "name": "mk_event_clear",
+         "module": "Event",
+         "submodule": "",
+         "description": "Fonction permettant de réinitialiser les événements d'un champ.",
+         "anchor": "event.html#mk_event_clear"
+      },
+      {
+         "name": "mk_event_wait",
+         "module": "Event",
+         "submodule": "",
+         "description": "Fonction permettant d'attendre le positionnement d'un ou plusieurs événements.",
+         "anchor": "event.html#mk_event_wait"
+      },
+      {
+         "name": "mk_event_delete",
+         "module": "Event",
+         "submodule": "",
+         "description": "Fonction permettant de supprimer un champ d'événements.",
+         "anchor": "event.html#mk_event_delete"
+      },
+      {
+         "name": "K_MK_SCHEDULER_MAX_NUMBER_OF_EVENTS",
+         "module": "Event",
+         "submodule": "Scheduler",
+         "description": "Constante définissant le nombre maximal de champs d'événements pouvant être créés.",
+         "anchor": "event.html#K_MK_SCHEDULER_MAX_NUMBER_OF_EVENTS"
+      },
+      {
          "name": "linker.ld",
          "module": "Linker",
          "submodule": "",

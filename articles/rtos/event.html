@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Apprenez à créer et utiliser les champs d'événements du noyau Mk pour synchroniser les tâches et les vecteurs d'interruption.">
+   <title>Synchroniser les tâches avec les champs d'événements</title>
+   <link rel="icon" type="image/png" href="../../favicon.png">
+   <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/event.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link href="../../assets/css/fonts.css" rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./index.html">MK</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <h1 class="title-article">Synchroniser les tâches avec les champs d'événements</h1>
+            <p>Le module <span class="bold-strong">event</span> permet à une tâche d'attendre la réalisation d'une ou
+               plusieurs conditions. Cette page
+               détaille le fonctionnement et l'utilisation des fonctions de ce module.
+            </p>
+
+            <h2>1. Synthèse des fonctions</h2>
+            <p>Les fonctions de ce module sont déclarées dans le fichier <span class="bold-strong">mk_event.h</span>
+               :
+            </p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Fonction</th>
+                        <th>Description</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><a href="#mk_event_create"><span class="gray">mk_<wbr>event_<wbr>create</span></a></td>
+                        <td>Crée un champ d'événements.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_event_set"><span class="gray">mk_<wbr>event_<wbr>set</span></a></td>
+                        <td>Positionne des événements.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_event_clear"><span class="gray">mk_<wbr>event_<wbr>clear</span></a></td>
+                        <td>Réinitialise des événements.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_event_wait"><span class="gray">mk_<wbr>event_<wbr>wait</span></a></td>
+                        <td>Attend le positionnement d'un ou plusieurs événements.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_event_delete"><span class="gray">mk_<wbr>event_<wbr>delete</span></a></td>
+                        <td>Supprime un champ d'événements.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+
+            <h2>2. Fonctionnement</h2>
+
+            <p>Un champ d'événements est une variable de 32 bits dont chaque bit représente un <span
+                  class="bold-strong">événement</span>. Un événement est soit <span class="underline">positionné</span>
+               (bit à 1), soit <span class="underline">non positionné</span> (bit à 0). Seuls les bits 0 à 29 sont
+               dédiés aux événements, un champ peut donc contenir 30 événements au maximum. Les deux bits de poids fort
+               sont réservés. Ils permettent de spécifier le type d'opération à réaliser lors d'une attente (<span
+                  class="bold-strong">AND/OR</span> et <span class="bold-strong">CLEAR/NO_CLEAR</span>).
+            </p>
+            <br>
+            <p>Le sens donné à chaque bit est laissé à l'application. Un bit peut par exemple signaler la fin d'une
+               réception, une erreur de communication ou l'expiration d'un délai. La figure ci-dessous montre la
+               structure d'un champ d'événements auquel les bits <span class="bold-strong">b0</span> et <span
+                  class="bold-strong">b1</span> ont
+               été positionnés par une ou plusieurs tâches :
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-event-field.jpg"
+                  alt="Structure d'un champ d'événements constitué de 30 événements et d'une liste de tâches en attente">
+               <figcaption>
+                  <span class="underline">Figure 1</span> : Structure d'un champ d'événements.
+               </figcaption>
+            </figure>
+            <p>Les champs d'événements sont alloués par le noyau dans l'espace privilégié. Ils sont constitués d'une
+               variable stockant la valeur du champ et d'une liste stockant les
+               tâches en attente d'un ou plusieurs événements (<span class="bold-strong">BlockedList</span>).
+            </p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Le nombre de champs d'événements pouvant être alloués par le noyau est limité. Il est défini à la
+                     compilation par la constante <span
+                        class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>EVENTS</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>Deux types de champs d'événements existent. Le type est choisi à la création et ne peut plus être
+               modifié par la suite :
+            </p>
+            <ul>
+               <li><span class="bold-strong">K_<wbr>MK_<wbr>ID_<wbr>EVENT_<wbr>SINGLE</span> : ce type impose qu'une
+                  seule tâche soit en
+                  attente du
+                  champ d'événements
+                  à un instant donné. La tâche en attente n'est jamais
+                  modifiée
+                  peu importe la priorité des tâches qui souhaitent prendre possession du champ d'événements.</li>
+               <li><span class="bold-strong">K_<wbr>MK_<wbr>ID_<wbr>EVENT_<wbr>MULTI</span> : ce type permet à un
+                  nombre illimité de
+                  tâches
+                  d'être
+                  en attente du champ d'événements à un instant donné.</li>
+            </ul>
+
+            <h3>Attendre des événements</h3>
+
+            <p>Lors d'un <span class="bold-strong">wait</span>, la tâche indique au noyau les événements qu'elle
+               attend et comment les évaluer. Ce mode d'attente est décrit par deux
+               options combinées avec le masque d'événements :
+            </p>
+
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Option</th>
+                        <th>Description</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="bold-strong">K_MK_<wbr>EVENT_<wbr>AND</span></td>
+                        <td>La tâche est débloquée lorsque <span class="underline">tous</span> les événements attendus
+                           sont positionnés (<span class="bold-strong">b31=1</span>).
+                        </td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">K_MK_<wbr>EVENT_<wbr>OR</span></td>
+                        <td>La tâche est débloquée dès <span class="underline">qu'au moins un</span> des événements
+                           attendus est positionné (<span class="bold-strong">b31=0</span>).</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">K_MK_<wbr>EVENT_<wbr>CLEAR</span></td>
+                        <td>Les événements attendus par la tâche sont remis à zéro dans le champ lorsque la condition
+                           est satisfaite (<span class="bold-strong">b30=1</span>).</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">K_MK_<wbr>EVENT_<wbr>NO_<wbr>CLEAR</span></td>
+                        <td>Les événements attendus par la tâche restent positionnés dans le champ lorsque la
+                           condition est satisfaite (<span class="bold-strong">b30=0</span>).</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+
+            <p>Si la condition est déjà satisfaite lorsque la tâche appelle la fonction, la tâche n'est pas bloquée et
+               poursuit immédiatement son exécution. Dans le cas contraire, la tâche peut décider de se bloquer en
+               attendant que les événements soient positionnés. </p>
+            <p>La figure ci-dessous montre deux tâches (champ <span class="bold-strong">MULTI</span>) en attente du
+               positionnement des événements <span class="bold-strong">b16</span> <span class="underline">ou</span>
+               <span class="bold-strong">b15</span>
+               pour la tâche 1 et <span class="bold-strong">b15</span> <span class="underline">et</span> <span
+                  class="bold-strong">b4</span> pour la
+               tâche
+               2 :
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-event-wait.jpg"
+                  alt="Deux tâches se bloquent dans la liste d'attente d'un champ d'événements dont la condition n'est pas satisfaite">
+               <figcaption>
+                  <span class="underline">Figure 2</span> : Deux tâches se bloquent tant que la condition n'est pas
+                  satisfaite.
+               </figcaption>
+            </figure>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>La valeur retournée par la fonction <span class="bold-strong">mk_<wbr>event_<wbr>wait</span>
+                     correspond à la valeur <span class="underline">complète</span> du champ au moment du réveil de la
+                     tâche (avant l'éventuelle remise à zéro). Elle contient donc les événements positionnés qui
+                     n'étaient pas attendus par la tâche.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <h3>Positionner des événements</h3>
+
+            <p>Lors d'un <span class="bold-strong">set</span>, les événements demandés sont positionnés dans le champ
+               sans modifier
+               les événements déjà positionnés. Le noyau examine ensuite les tâches en attente du
+               champ d'événements puis débloque celles dont les conditions sont satisfaites :
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-event-set.jpg"
+                  alt="Un set positionne des événements et réveille la tâche dont la condition est satisfaite">
+               <figcaption>
+                  <span class="underline">Figure 3</span> : Un set réveille les tâches dont la condition est satisfaite.
+               </figcaption>
+            </figure>
+            <p>Dans la figure ci-dessus, l'événement <span class="bold-strong">b16</span> a été positionné, la tâche
+               1 a donc été réveillée. L'événement reste positionné (<span class="bold-strong">NO_CLEAR</span>) et la
+               tâche 2 reste bloquée car ses conditions n'ont pas été réunies.</p>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Les tâches de la liste d'attente sont triées par ordre de priorité et examinées de la
+                     plus prioritaire à la moins prioritaire. Lorsque plusieurs tâches possèdent la même priorité, la
+                     première tâche à avoir été insérée dans la liste est examinée en premier.</p>
+               </div>
+            </div>
+            <br>
+
+            <p>Les champs de type <span class="bold-strong">MULTI</span> permettent de réveiller plusieurs tâches avec
+               un seul <span class="bold-strong">set</span>. Lorsque la tâche réveillée a demandé la remise à zéro des
+               événements attendus (<span class="bold-strong">K_<wbr>MK_<wbr>EVENT_<wbr>CLEAR</span>), ceux-ci sont
+               immédiatement
+               retirés du champ. Les tâches suivantes de la liste ne les voient plus et restent
+               alors bloquées. </p>
+            <p>Les figures ci-dessous montrent un exemple où trois tâches sont en attente dans le champ d'événements.
+               Suite au positionnement du bit <span class="bold-strong">b15</span>, une seule sera réveillée :
+            </p>
+
+            <figure>
+               <img src="../../images/rtos/rtos-event-clear.jpg"
+                  alt="Trois tâches sont bloquées en attente du positionnement d'un ou plusieurs événements. La deuxième tâche dans la liste réinitialisera ses drapeaux lorsque ses conditions seront satisfaites.">
+               <figcaption>
+                  <span class="underline">Figure 4</span> : État du champ d'événements avant le positionnement du bit
+                  b15.
+               </figcaption>
+            </figure>
+
+            <figure>
+               <img src="../../images/rtos/rtos-event-clear-1.jpg"
+                  alt="La tâche 3 reste bloquée car le bit b15 a été réinitialisé lors du déblocage de la tâche 2.">
+               <figcaption>
+                  <span class="underline">Figure 5</span> : État du champ d'événements après le positionnement du bit
+                  b15. La tâche 3 n'a pas été réveillée suite au clear.
+               </figcaption>
+            </figure>
+            <p>Le noyau examine d'abord la tâche 1 puis la tâche 2 et la tâche 3. La tâche 1 ne correspond pas aux
+               conditions, elle n'est donc pas réveillée. La tâche 3 aurait pu correspondre aux conditions mais n'a pas
+               été débloquée
+               car un <span class="bold-strong">CLEAR</span> s'est produit
+               après le réveil de la tâche 2. </p>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Pour réveiller simultanément plusieurs tâches avec les mêmes événements, celles-ci doivent
+                     utiliser l'option <span class="bold-strong">K_MK_<wbr>EVENT_<wbr>NO_<wbr>CLEAR</span>. Les
+                     événements devront alors être réinitialisés explicitement avec la fonction <span
+                        class="bold-strong">mk_<wbr>event_<wbr>clear</span>.</p>
+               </div>
+            </div>
+            <br>
+
+
+            <h2>3. Avantages et inconvénients</h2>
+
+            <p>Un champ d'événements possède les avantages suivants :
+            </p>
+            <ul>
+               <li><span class="gray">✔</span>Il permet d'attendre plusieurs conditions simultanément (opération <span
+                     class="bold-strong">OR</span> ou
+                  <span class="bold-strong">AND</span>).
+               </li>
+               <li><span class="gray">✔</span>Il permet de synchroniser tâches et vecteurs d'interruption.</li>
+               <li><span class="gray">✔</span>Il permet de réveiller plusieurs tâches simultanément (<span
+                     class="bold-strong">signal</span>).
+               </li>
+            </ul>
+            <p>
+               Néanmoins, un événement ne contient pas d'information. Positionner deux fois un événement avant qu'il ne
+               soit
+               consommé est sans effet et <span class="bold-strong">les événements ne sont
+                  pas comptabilisés</span>. En outre, un champ d'événements ne peut pas contenir plus
+               de
+               30 événements.
+            </p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Pour compter des occurrences ou limiter l'accès à une ressource, il est donc préférable d'utiliser
+                     un
+                     <span class="bold-strong">sémaphore</span>. Pour transmettre des données entre deux tâches, il est
+                     préférable d'utiliser une <span class="bold-strong">boîte de messages</span>.
+                  </p>
+               </div>
+            </div>
+
+            <h2>4. Utilisation</h2>
+
+            <p>La création d'un champ d'événements s'effectue avec la fonction <span
+                  class="bold-strong">mk_<wbr>event_<wbr>create</span>. L'exemple ci-dessous crée un champ de type
+               <span class="bold-strong">SINGLE</span> dont aucun événement n'est positionné :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Définition des événements applicatifs */</span>
+<span class="keyword">#define</span> <span class="define">K_APP_EVENT_RX_DONE</span>   ( <span class="number">1</span> &lt;&lt; <span class="number">0</span> )
+<span class="keyword">#define</span> <span class="define">K_APP_EVENT_TX_DONE</span>   ( <span class="number">1</span> &lt;&lt; <span class="number">1</span> )
+<span class="keyword">#define</span> <span class="define">K_APP_EVENT_ERROR</span>     ( <span class="number">1</span> &lt;&lt; <span class="number">2</span> )
+
+<span class="multi-line-comment">/* Pointeur du champ d'événements */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkEvent</span>* g_event;
+
+<span class="multi-line-comment">/* Une tâche privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result;
+
+   <span class="multi-line-comment">/* Création d'un champ d'événements de type SINGLE */</span>
+   <span class="multi-line-comment">/* Il est protégé et ne peut pas être manipulé par des tâches */</span>
+   <span class="multi-line-comment">/* non privilégiées */</span>
+   l_result = <span class="function">mk_event_create</span> ( &amp;g_event, 
+      <span class="define-underline">K_MK_ID_EVENT_SINGLE</span>, <span class="define">K_MK_AREA_PROTECTED</span>,
+      <span class="number">0</span> ); <span class="multi-line-comment">/* Aucun événement positionné */</span>
+
+   <span class="multi-line-comment">/* ... */</span>
+   <span class="keyword">for</span> ( ;; ) ;
+}
+</pre>
+            <br>
+            <p>Une tâche attend ensuite des événements avec la fonction <span
+                  class="bold-strong">mk_<wbr>event_<wbr>wait</span>. Le paramètre <span
+                  class="bold-strong">p_mkInFlag</span> regroupe les événements attendus et les options de contrôle. Le
+               paramètre <span class="bold-strong">p_mkTick</span> définit la durée maximale de blocage.
+               L'exemple ci-dessous attend l'un des trois événements pendant 100 ticks au maximum :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Une tâche de traitement (privilégiée) */</span>
+<span class="keyword">void</span> <span class="function">mk_task_handler</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration des variables de travail */</span>
+   <span class="type">T_mkCode</span> l_result;
+   <span class="type">uint32_t</span> l_flag;
+
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* Attente de l'un des trois événements (OR) */</span>
+      <span class="multi-line-comment">/* Les événements attendus sont remis à zéro au réveil de la tâche */</span>
+      l_result = <span class="function">mk_event_wait</span> ( g_event,
+         <span class="define">K_APP_EVENT_RX_DONE</span> | <span class="define">K_APP_EVENT_TX_DONE</span> | <span class="define">K_APP_EVENT_ERROR</span> |
+         <span class="define">K_MK_EVENT_OR</span> | <span class="define">K_MK_EVENT_CLEAR</span>, &amp;l_flag, <span class="number">100</span> );
+
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) {
+         <span class="multi-line-comment">/* Analyse des événements positionnés */</span>
+         <span class="keyword">if</span> ( ( l_flag &amp; <span class="define">K_APP_EVENT_RX_DONE</span> ) != <span class="number">0</span> ) {
+            <span class="multi-line-comment">/* Traitement de la réception ... */</span>
+         }
+         <span class="keyword">if</span> ( ( l_flag &amp; <span class="define">K_APP_EVENT_TX_DONE</span> ) != <span class="number">0</span> ) {
+            <span class="multi-line-comment">/* Traitement de la transmission ... */</span>
+         }
+         <span class="keyword">if</span> ( ( l_flag &amp; <span class="define">K_APP_EVENT_ERROR</span> ) != <span class="number">0</span> ) {
+            <span class="multi-line-comment">/* Traitement de l'erreur ... */</span>
+         }
+      }
+      <span class="keyword">else if</span> ( l_result == <span class="define">K_MK_ERROR_TIMEOUT</span> ) {
+         <span class="multi-line-comment">/* Aucun événement positionné pendant 100 ticks */</span>
+      }
+      <span class="keyword">else</span> {
+         <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+         <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_NOT_AVAILABLE */</span>
+         <span class="multi-line-comment">/* K_MK_ERROR_RIGHT, K_MK_ERROR_UNEXPECTED */</span>
+      }
+   }
+}
+</pre>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Si le paramètre <span class="bold-strong">p_mkTick</span> est nul et si aucun des événements
+                     attendus
+                     n'est positionné, la fonction <span class="bold-strong">mk_<wbr>event_<wbr>wait</span> retourne
+                     immédiatement l'erreur <span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>TIMEOUT</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>L'option <span class="bold-strong">K_MK_EVENT_AND</span> permet d'attendre que plusieurs événements
+               soient positionnés. L'exemple ci-dessous bloque la tâche jusqu'à la fin d'une réception <span
+                  class="underline">et</span> d'une transmission :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Attente de la réception ET de la transmission */</span>
+<span class="multi-line-comment">/* La tâche est bloquée indéfiniment tant que les deux événements */</span>
+<span class="multi-line-comment">/* ne sont pas positionnés */</span>
+l_result = <span class="function">mk_event_wait</span> ( g_event,
+   <span class="define">K_APP_EVENT_RX_DONE</span> | <span class="define">K_APP_EVENT_TX_DONE</span> | <span class="define">K_MK_EVENT_AND</span> | 
+   <span class="define">K_MK_EVENT_CLEAR</span>, &amp;l_flag, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+</pre>
+            <br>
+
+            <p>Les événements sont positionnés avec la fonction <span class="bold-strong">mk_<wbr>event_<wbr>set</span>.
+               Cette fonction peut être exécutée dans un vecteur
+               d'interruption, ce qui en fait le moyen privilégié pour réveiller une tâche suite à un événement
+               matériel :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Vecteur d'interruption */</span>
+<span class="keyword">void</span> <span class="function">IRQHandler</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Réveil de la tâche de traitement */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="function">mk_event_set</span> ( g_event, <span class="define">K_APP_EVENT_RX_DONE</span> );
+
+   ( <span class="keyword">void</span> ) l_result;
+}
+</pre>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>L'interruption doit être moins prioritaire que le vecteur <span class="bold-strong">SVC</span> pour
+                     pouvoir utiliser les appels système (priorité numérique
+                     supérieure ou égale à <span
+                        class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MASK_<wbr>PRIORITY</span>).</p>
+               </div>
+            </div>
+            <br>
+
+
+            <p>Un champ de type <span class="bold-strong">MULTI</span> permet de réveiller plusieurs tâches avec un seul
+               événement. Chacune des tâches ci-dessous
+               utilise l'option <span class="bold-strong">K_<wbr>MK_<wbr>EVENT_<wbr>NO_<wbr>CLEAR</span> pour que
+               les événements restent
+               positionnés pour les tâches suivantes. Ils sont ensuite remis à zéro explicitement avec la fonction <span
+                  class="bold-strong">mk_<wbr>event_<wbr>clear</span> :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Définition des événements applicatifs */</span>
+<span class="keyword">#define</span> <span class="define">K_APP_EVENT_TASK1_INIT_DONE</span> ( <span class="number">1</span> &lt;&lt; <span class="number">0</span> )
+<span class="keyword">#define</span> <span class="define">K_APP_EVENT_TASK2_INIT_DONE</span> ( <span class="number">1</span> &lt;&lt; <span class="number">1</span> )
+<span class="keyword">#define</span> <span class="define">K_APP_EVENT_TASK3_INIT_DONE</span> ( <span class="number">1</span> &lt;&lt; <span class="number">2</span> )
+
+<span class="multi-line-comment">/* Création d'un champ d'événements de type MULTI */</span>
+l_result = <span class="function">mk_event_create</span> ( &amp;g_event, <span class="define">K_MK_ID_EVENT_MULTI</span>, 
+   <span class="define">K_MK_AREA_PROTECTED</span>, <span class="number">0</span> );
+
+<span class="multi-line-comment">/* ... */</span>
+
+<span class="multi-line-comment">/* Après leur initialisation, chacune des 3 tâches indique aux autres */</span>
+<span class="multi-line-comment">/* une initialisation correcte en positionnant son événement */</span>
+l_result = <span class="function">mk_event_set</span> ( g_event, <span class="define">K_APP_EVENT_TASKx_INIT_DONE</span> );
+
+<span class="multi-line-comment">/* ... */</span>
+
+<span class="multi-line-comment">/* Chacune des 3 tâches attend ensuite la fin de l'initialisation des */</span>
+<span class="multi-line-comment">/* autres tâches */</span>
+l_result = <span class="function">mk_event_wait</span> ( g_event, 
+   <span class="define">K_APP_EVENT_TASK1_INIT_DONE</span> | <span class="define">K_APP_EVENT_TASK2_INIT_DONE</span> |
+   <span class="define">K_APP_EVENT_TASK3_INIT_DONE</span> | <span class="define">K_MK_EVENT_AND</span> | <span class="define">K_MK_EVENT_NO_CLEAR</span>,
+   &amp;l_flag, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+<span class="multi-line-comment">/* Lorsque toutes les tâches ont été servies, l'événement peut être */</span>
+<span class="multi-line-comment">/* remis à zéro partiellement ou entièrement. */</span>
+<span class="multi-line-comment">/* Quand les 3 tâches ont exécuté leur wait, on réalise le clear */</span>
+l_result = <span class="function">mk_event_clear</span> ( g_event, <span class="define">K_APP_EVENT_TASK1_INIT_DONE</span> | 
+   <span class="define">K_APP_EVENT_TASK2_INIT_DONE</span> | <span class="define">K_APP_EVENT_TASK3_INIT_DONE</span> );
+</pre>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Un champ de type <span class="bold-strong">SINGLE</span> ne peut avoir qu'une seule tâche en
+                     attente. Si une seconde tâche appelle
+                     la fonction <span class="bold-strong">mk_<wbr>event_<wbr>wait</span> sur le même champ, elle
+                     obtient l'erreur <span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>NOT_<wbr>AVAILABLE</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>La dernière fonction de l'<span class="bold-strong">API</span> est la fonction <span
+                  class="bold-strong">mk_event_delete</span>. Elle permet de détruire le champ d'événements en
+               demandant au noyau de le désallouer :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Suppression du champ d'événements */</span>
+<span class="type">T_mkCode</span> l_result = <span class="function">mk_event_delete</span> ( g_event );
+
+<span class="multi-line-comment">/* Si une erreur s'est produite */</span>
+<span class="keyword">if</span> ( l_result != <span class="define">K_MK_OK</span> )
+{
+   <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+   <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+}
+</pre>
+
+            <h2>5. Protéger ses champs d'événements</h2>
+            <p>Les champs d'événements peuvent être créés avec les attributs <span
+                  class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> ou <span
+                  class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span>.</p>
+            <br>
+
+            <p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> est utilisé, il
+               est impossible pour une tâche non privilégiée de créer ou de manipuler un champ d'événements. Un champ
+               non protégé doit donc être utilisé pour synchroniser des tâches privilégiées avec des tâches non
+               privilégiées.
+            </p>
+            <br>
+            <p>Du fait de leur niveau d'exécution, l'ensemble des règles de protection ne s'applique pas aux vecteurs
+               d'interruption. Les fonctions <span class="bold-strong">mk_<wbr>event_<wbr>set</span> et <span
+                  class="bold-strong">mk_<wbr>event_<wbr>clear</span> peuvent donc modifier un champ protégé
+               lorsqu'elles sont exécutées dans un vecteur d'interruption.</p>
+            <br>
+            <p>Les champs d'événements étant alloués par le noyau dans l'espace privilégié, aucune règle de placement ne
+               s'applique. Seules les variables stockant leurs adresses doivent être accessibles aux
+               tâches qui
+               les utilisent. Les règles de placement de ces variables sont détaillées dans l'article <a
+                  href="./mpu.html"><span class="bold-strong">Protéger son programme avec Mk</span></a>.</p>
+
+            <h2>6. API</h2>
+
+            <!-- 6.1 mk_event_create -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_event_create">6.1. La fonction mk_event_create()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction crée un champ d'événements.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_event_create ( <span class="type">T_mkEvent**</span> p_mkEvent, <span class="type">uint32_t</span> p_mkType,
+   <span class="type">uint32_t</span> p_mkAreaType, <span class="type">uint32_t</span> p_mkFlag );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkEvent</span> <span class="italic">[out]</span>
+                        <p>Adresse d'un pointeur de type <span class="bold-strong">T_mkEvent*</span>.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkType</span> <span class="italic">[in]</span>
+                        <p>Type du champ d'événements. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">K_MK_ID_EVENT_SINGLE</span> : une seule tâche peut être en
+                              attente du champ d'événements.</li>
+                           <li><span class="bold-strong">K_MK_ID_EVENT_MULTI</span> : un nombre illimité de tâches
+                              peut être en attente du champ d'événements.</li>
+                        </ul>
+                     </li>
+                     <li><span class="bold-green">p_mkAreaType</span> <span class="italic">[in]</span>
+                        <p>Niveau de protection du champ. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">K_MK_AREA_PROTECTED</span> : le champ est protégé, il
+                              ne peut pas être manipulé par des tâches non privilégiées.</li>
+                           <li><span class="bold-strong">K_MK_AREA_UNPROTECTED</span> : le champ n'est pas
+                              protégé, il peut être manipulé par des tâches privilégiées ou non privilégiées.</li>
+                        </ul>
+                     </li>
+                     <li><span class="bold-green">p_mkFlag</span> <span class="italic">[in]</span>
+                        <p>Valeur initiale du champ d'événements. Les bits 30 et 31 sont ignorés.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le champ d'événements a été créé.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le champ d'événements n'a pas été créé
+                        car au moins un paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : le champ d'événements n'a pas été créé
+                        car le nombre maximal de champs pouvant être alloués a été atteint.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le champ d'événements n'a pas été créé car
+                        cette fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le champ d'événements n'a pas été créé
+                        car une tâche non privilégiée ne peut pas créer un champ protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>La constante <a href="#K_MK_SCHEDULER_MAX_NUMBER_OF_EVENTS"><span
+                              class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>EVENTS</span></a>
+                        définit le nombre maximal de champs d'événements pouvant être créés.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 6.2 mk_event_set -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_event_set">6.2. La fonction mk_event_set()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction positionne des événements dans un champ sans modifier les événements déjà
+                     positionnés. La ou les tâches en attente d'un ou plusieurs événements dont la condition est
+                     satisfaite
+                     sont ensuite réveillées.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_event_set ( <span class="type">T_mkEvent*</span> p_mkEvent, <span class="type">uint32_t</span> p_mkFlag );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkEvent</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkEvent</span>.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkFlag</span> <span class="italic">[in]</span>
+                        <p>Masque des événements à positionner (bits 0 à 29).</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : les événements ont été positionnés.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : les événements n'ont pas été positionnés
+                        car le paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : les événements n'ont pas été positionnés
+                        car une tâche non privilégiée ne peut pas manipuler un champ protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction peut être exécutée dans un vecteur d'interruption.</li>
+                     <li>Si le paramètre <span class="bold-strong">p_mkFlag</span> est nul, le champ n'est pas modifié
+                        et la fonction retourne <span class="bold-strong">K_MK_OK</span>.</li>
+                     <li>Les valeurs des bits 30 et 31 du paramètre <span class="bold-strong">p_mkFlag</span> sont
+                        ignorées.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 6.3 mk_event_clear -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_event_clear">6.3. La fonction mk_event_clear()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction remet à zéro des événements d'un champ sans réveiller de tâche.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_event_clear ( <span class="type">T_mkEvent*</span> p_mkEvent, <span class="type">uint32_t</span> p_mkFlag );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkEvent</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkEvent</span>.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkFlag</span> <span class="italic">[in]</span>
+                        <p>Masque des événements à remettre à zéro (bits 0 à 29).</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : les événements ont été remis à zéro.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : les événements n'ont pas été remis à zéro
+                        car le paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : les événements n'ont pas été remis à zéro
+                        car une tâche non privilégiée ne peut pas manipuler un champ protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction peut être exécutée dans un vecteur d'interruption.</li>
+                     <li>Si le paramètre <span class="bold-strong">p_mkFlag</span> est nul, le champ n'est pas modifié
+                        et la fonction retourne <span class="bold-strong">K_MK_OK</span>.</li>
+                     <li>Les valeurs des bits 30 et 31 du paramètre <span class="bold-strong">p_mkFlag</span> sont
+                        ignorées.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 6.4 mk_event_wait -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_event_wait">6.4. La fonction mk_event_wait()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction attend le positionnement d'un ou plusieurs événements. Si la condition n'est pas
+                     satisfaite, la tâche peut être bloquée en attendant que les événements soient positionnés.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_event_wait ( <span class="type">T_mkEvent*</span> p_mkEvent, <span class="type">uint32_t</span> p_mkInFlag,
+   <span class="type">uint32_t*</span> p_mkOutFlag, <span class="type">uint32_t</span> p_mkTick );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkEvent</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkEvent</span>.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkInFlag</span> <span class="italic">[in]</span>
+                        <p>Masque des événements attendus (bits 0 à 29) combiné avec les options de contrôle. Ce
+                           masque doit contenir au moins un événement, les options seules ne sont pas suffisantes. Les
+                           constantes suivantes peuvent être utilisées :</p>
+                        <ul>
+                           <li><span class="bold-strong">K_MK_EVENT_OR</span> : la condition est satisfaite lorsqu'au
+                              moins un événement attendu est positionné.</li>
+                           <li><span class="bold-strong">K_MK_EVENT_AND</span> : la condition est satisfaite lorsque
+                              tous les événements attendus sont positionnés.</li>
+                           <li><span class="bold-strong">K_MK_EVENT_CLEAR</span> : les événements attendus sont remis
+                              à zéro lorsque la condition est satisfaite.</li>
+                           <li><span class="bold-strong">K_MK_EVENT_NO_CLEAR</span> : les événements attendus ne sont
+                              pas remis à zéro lorsque la condition est satisfaite.</li>
+                        </ul>
+                     </li>
+                     <li><span class="bold-green">p_mkOutFlag</span> <span class="italic">[out]</span>
+                        <p>Adresse d'une variable stockant la valeur du champ d'événements au moment où la condition
+                           a été satisfaite. </p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkTick</span> <span class="italic">[in]</span>
+                        <p>Durée maximale de blocage de la tâche. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">0x0</span> : la fonction retourne immédiatement si la
+                              condition n'est pas satisfaite.</li>
+                           <li><span class="bold-strong">0x1 à 0xFFFFFFFE</span> : la tâche est bloquée pendant la
+                              durée spécifiée (en multiple de tick) tant que la condition n'est pas satisfaite.</li>
+                           <li><span class="bold-strong">0xFFFFFFFF</span> (<span
+                                 class="bold-strong">K_MK_TASK_WAIT_FOREVER</span>) : la tâche est bloquée tant
+                              que la condition n'est pas satisfaite.</li>
+                        </ul>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : la condition a été satisfaite.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le positionnement des événements n'a pas
+                        été vérifié car au moins un paramètre est invalide ou car aucun événement n'est attendu.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_TIMEOUT</span> : la condition n'a pas été satisfaite
+                        dans le délai imparti.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le positionnement des événements n'a pas
+                        été vérifié car la fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_NOT_AVAILABLE</span> : le positionnement des événements
+                        n'a pas
+                        été vérifié car une tâche est déjà en attente du champ (champ de type <span
+                           class="bold-strong">SINGLE</span> uniquement).</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le positionnement des événements n'a pas
+                        été vérifié car une tâche non privilégiée ne peut pas manipuler un champ protégé.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_UNEXPECTED</span> : le positionnement des événements n'a
+                        pas
+                        été vérifié car le champ d'événements a été détruit pendant que la tâche était bloquée.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Lorsque plusieurs tâches sont bloquées sur le même champ (type <span
+                           class="bold-strong">MULTI</span>), elles sont
+                        examinées par ordre de priorité décroissante.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 6.5 mk_event_delete -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_event_delete">6.5. La fonction mk_event_delete()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction détruit un champ d'événements.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_event_delete ( <span class="type">T_mkEvent*</span> p_mkEvent );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkEvent</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkEvent</span>.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le champ d'événements a été détruit.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le champ d'événements n'a pas été détruit
+                        car le paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le champ d'événements n'a pas été détruit
+                        car la fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le champ d'événements n'a pas été détruit
+                        car une tâche non privilégiée ne peut pas manipuler un champ protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                  </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Lorsque le champ
+                              d'événements est détruit, les tâches bloquées par la fonction <span
+                                 class="bold-strong">mk_<wbr>event_<wbr>wait</span> sont réveillées. Elles retournent
+                              alors l'erreur <span class="bold-strong">K_MK_ERROR_UNEXPECTED</span>.</li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+            </details>
+
+            <!-- 6.6 Les définitions -->
+            <details open>
+               <summary>
+                  <span class="subtitle">6.6. Les définitions</span>
+               </summary>
+               <p>Le module <span class="bold-strong">event</span> peut être configuré à l'aide des définitions
+                  suivantes :</p>
+               <div class="table-scroll-container">
+                  <table>
+                     <thead>
+                        <tr>
+                           <th>Définition</th>
+                           <th>Description</th>
+                           <th>Valeur</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        <tr id="K_MK_SCHEDULER_MAX_NUMBER_OF_EVENTS">
+                           <td><span
+                                 class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>EVENTS</span>
+                           </td>
+                           <td>Cette constante définit le nombre de champs d'événements pouvant être créés. Elle ne
+                              peut pas être nulle.</td>
+                           <td class="center">32</td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </div>
+            </details>
+
+         </div>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <a href="./mutex.html">
+               <div>
+                  <p>&lt;</p>
+                  <p>Prévenir les accès concurrents avec les Mutex</p>
+               </div>
+            </a> <a href="../progress/progress.html">
+               <div>
+                  <p>Différer l'exécution des fonctions avec les Callbacks</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>
