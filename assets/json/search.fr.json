@@ -442,6 +442,104 @@
          "anchor": "event.html#K_MK_SCHEDULER_MAX_NUMBER_OF_EVENTS"
       },
       {
+         "name": "Callback",
+         "module": "Module",
+         "submodule": "",
+         "description": "Description du module Callback.",
+         "anchor": "callback.html"
+      },
+      {
+         "name": "mk_callback_createManagers",
+         "module": "Callback",
+         "submodule": "",
+         "description": "Fonction permettant d'initialiser les managers de rappel.",
+         "anchor": "callback.html#mk_callback_createManagers"
+      },
+      {
+         "name": "mk_callback_createHandler",
+         "module": "Callback",
+         "submodule": "",
+         "description": "Fonction permettant de créer un gestionnaire de rappel.",
+         "anchor": "callback.html#mk_callback_createHandler"
+      },
+      {
+         "name": "mk_callback_create",
+         "module": "Callback",
+         "submodule": "",
+         "description": "Fonction permettant de créer une fonction de rappel.",
+         "anchor": "callback.html#mk_callback_create"
+      },
+      {
+         "name": "mk_callback_trig",
+         "module": "Callback",
+         "submodule": "",
+         "description": "Fonction permettant de déclencher l'exécution d'une fonction de rappel.",
+         "anchor": "callback.html#mk_callback_trig"
+      },
+      {
+         "name": "mk_callback_wait",
+         "module": "Callback",
+         "submodule": "",
+         "description": "Fonction permettant d'attendre l'exécution d'une ou plusieurs fonctions de rappel.",
+         "anchor": "callback.html#mk_callback_wait"
+      },
+      {
+         "name": "mk_callback_delete",
+         "module": "Callback",
+         "submodule": "",
+         "description": "Fonction permettant de supprimer une fonction de rappel.",
+         "anchor": "callback.html#mk_callback_delete"
+      },
+      {
+         "name": "mk_callback_deleteHandler",
+         "module": "Callback",
+         "submodule": "",
+         "description": "Fonction permettant de supprimer un gestionnaire de rappel.",
+         "anchor": "callback.html#mk_callback_deleteHandler"
+      },
+      {
+         "name": "K_MK_SCHEDULER_MAX_NUMBER_OF_CALLBACK_HANDLERS",
+         "module": "Callback",
+         "submodule": "Scheduler",
+         "description": "Constante définissant le nombre maximal de gestionnaires de rappel pouvant être créés.",
+         "anchor": "callback.html#K_MK_SCHEDULER_MAX_NUMBER_OF_CALLBACK_HANDLERS"
+      },
+      {
+         "name": "K_MK_SCHEDULER_MAX_NUMBER_OF_CALLBACK_FUNCTIONS",
+         "module": "Callback",
+         "submodule": "Scheduler",
+         "description": "Constante définissant le nombre maximal de fonctions de rappel pouvant être créées.",
+         "anchor": "callback.html#K_MK_SCHEDULER_MAX_NUMBER_OF_CALLBACK_FUNCTIONS"
+      },
+      {
+         "name": "K_MK_CALLBACK_STACK_SIZE",
+         "module": "Callback",
+         "submodule": "",
+         "description": "Constante définissant la taille de la pile de chaque manager de rappel.",
+         "anchor": "callback.html"
+      },
+      {
+         "name": "K_MK_CALLBACK_PRIVILEGED_PRIORITY",
+         "module": "Callback",
+         "submodule": "",
+         "description": "Constante définissant la priorité du manager privilégié.",
+         "anchor": "callback.html"
+      },
+      {
+         "name": "K_MK_CALLBACK_UNPRIVILEGED_PRIORITY",
+         "module": "Callback",
+         "submodule": "",
+         "description": "Constante définissant la priorité du manager non privilégié.",
+         "anchor": "callback.html"
+      },
+      {
+         "name": "K_MK_CALLBACK_MESSAGES_NUMBER",
+         "module": "Callback",
+         "submodule": "",
+         "description": "Constante définissant le nombre de fonctions de rappel pouvant être en attente d'exécution dans la boîte de messages de chaque manager.",
+         "anchor": "callback.html#K_MK_CALLBACK_MESSAGES_NUMBER"
+      },
+      {
          "name": "linker.ld",
          "module": "Linker",
          "submodule": "",

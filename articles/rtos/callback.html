@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Apprenez à créer et utiliser les callbacks du noyau Mk pour différer l'exécution de fonctions dans une tâche dédiée et attendre leur exécution.">
+   <title>Différer l'exécution des fonctions avec les Callbacks</title>
+   <link rel="icon" type="image/png" href="../../favicon.png">
+   <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/callback.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link href="../../assets/css/fonts.css" rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./index.html">MK</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <h1 class="title-article">Différer l'exécution des fonctions avec les Callbacks</h1>
+            <p>Le module <span class="bold-strong">callback</span> permet de différer l'exécution d'une ou plusieurs
+               fonctions dans
+               une tâche dédiée du noyau et d'attendre la fin de leur exécution. Cette page détaille le fonctionnement
+               et
+               l'utilisation des fonctions de ce module.
+            </p>
+
+            <h2>1. Synthèse des fonctions</h2>
+            <p>Les fonctions de ce module sont déclarées dans le fichier <span class="bold-strong">mk_callback.h</span>
+               :
+            </p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Fonction</th>
+                        <th>Description</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><a href="#mk_callback_createManagers"><span
+                                 class="gray">mk_<wbr>callback_<wbr>createManagers</span></a>
+                        </td>
+                        <td>Crée les deux managers de rappel.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_callback_createHandler"><span
+                                 class="gray">mk_<wbr>callback_<wbr>createHandler</span></a>
+                        </td>
+                        <td>Crée un gestionnaire de rappel.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_callback_create"><span class="gray">mk_<wbr>callback_<wbr>create</span></a>
+                        </td>
+                        <td>Crée une fonction de rappel.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_callback_trig"><span class="gray">mk_<wbr>callback_<wbr>trig</span></a></td>
+                        <td>Déclenche l'exécution d'une fonction de rappel.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_callback_wait"><span class="gray">mk_<wbr>callback_<wbr>wait</span></a></td>
+                        <td>Attend l'exécution d'une ou plusieurs fonctions de rappel.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_callback_delete"><span class="gray">mk_<wbr>callback_<wbr>delete</span></a>
+                        </td>
+                        <td>Supprime une fonction de rappel.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_callback_deleteHandler"><span
+                                 class="gray">mk_<wbr>callback_<wbr>deleteHandler</span></a>
+                        </td>
+                        <td>Supprime un gestionnaire de rappel.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+
+            <h2>2. Fonctionnement</h2>
+
+            <p>Une <span class="bold-strong">fonction de rappel</span> (<span class="bold-strong">callback</span>)
+               est une fonction dont l'exécution est <span class="underline">différée</span>. C'est-à-dire que la tâche
+               qui
+               la déclenche
+               n'attend pas qu'elle se termine. Elle est exécutée en parallèle de celle-ci dans un autre contexte du
+               noyau. Lorsque son travail est terminé, la tâche émettrice peut décider d'attendre la fin de
+               l'exécution
+               de cette fonction.
+            </p>
+            <br>
+            <p>Le module <span class="bold-strong">callback</span> repose sur deux types d'objets alloués par le noyau
+               dans l'espace privilégié :</p>
+            <ul>
+               <li><span class="gray">✔</span>Le <span class="bold-strong">gestionnaire de rappel</span> qui regroupe un
+                  ensemble de fonctions de rappel. Il est
+                  associé à un champ d'événements de type <span class="bold-strong">MULTI</span> qui permet d'attendre
+                  la fin de l'exécution de chaque fonction.</li>
+               <li><span class="gray">✔</span>La <span class="bold-strong">fonction de rappel</span> qui référence
+                  l'adresse de la fonction et le gestionnaire auquel elle appartient et qui possède
+                  un identifiant unique
+                  au sein de son gestionnaire.</li>
+            </ul>
+
+            <h3>Les managers de rappel</h3>
+
+            <p>L'exécution des fonctions de rappel est confiée à deux <span class="bold-strong">managers</span> créés
+               à l'initialisation du noyau avec la fonction <span
+                  class="bold-strong">mk_<wbr>callback_<wbr>createManagers</span>.
+               Un manager est constitué d'une tâche, de sa pile et d'une boîte de messages. Les caractéristiques des
+               deux managers sont les suivantes :
+            </p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Manager</th>
+                        <th>Tâche</th>
+                        <th>Boîte de messages</th>
+                        <th>Exécute les <br>fonctions de rappel</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="bold-strong">g_mkPrivileged<wbr>CallbackManager</span></td>
+                        <td>Privilégiée</td>
+                        <td>Protégée</td>
+                        <td>En mode privilégié</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">g_mkUnPrivileged<wbr>CallbackManager</span></td>
+                        <td>Non privilégiée</td>
+                        <td>Non protégée</td>
+                        <td>En mode non privilégié</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+            <p>Par défaut, les deux tâches possèdent la même priorité et une pile de 4 Ko. Leur type (flottant ou
+               non flottant) est choisi à l'initialisation du noyau. Une fonction de rappel utilisant la
+               <span class="bold-strong">FPU</span> impose donc d'initialiser les managers en mode flottant.
+            </p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Le nombre de gestionnaires et de fonctions de rappel pouvant être alloués par le noyau est limité.
+                     Ils sont définis à la compilation par la constante <span
+                        class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>CALLBACK_<wbr>HANDLERS</span>
+                     et la constante <span
+                        class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>CALLBACK_<wbr>FUNCTIONS</span>.
+                  </p>
+               </div>
+            </div>
+
+            <h3>Attribution d'un manager</h3>
+
+            <p>Le manager qui exécutera les fonctions d'un gestionnaire de rappel est choisi lors de la création de
+               celui-ci et
+               ne peut plus être modifié par la suite :
+            </p>
+            <ul>
+               <li><span class="gray">✔</span>Un gestionnaire <span class="underline">protégé</span> créé par une tâche
+                  privilégiée est rattaché au manager privilégié. Ses fonctions seront exécutées en mode
+                  privilégié.</li>
+               <li><span class="gray">✔</span>Dans tous les autres cas, le gestionnaire est rattaché au manager non
+                  privilégié. Ses fonctions sont exécutées en mode non privilégié et les restrictions
+                  de la <span class="bold-strong">MPU</span> s'appliquent.</li>
+            </ul>
+            <p>Plusieurs gestionnaires peuvent être rattachés au même manager. Ils partagent alors sa boîte de
+               messages et sa tâche.
+            </p>
+
+            <h3>Le mécanisme de rappel</h3>
+
+            <p>Lorsque l'exécution d'une fonction de rappel est demandée (<span
+                  class="bold-strong">mk_<wbr>callback_<wbr>trig</span>), un message est posté dans la boîte de
+               messages du manager référencé dans le gestionnaire. Ce message contient l'adresse de la fonction de
+               rappel
+               et la valeur des paramètres à lui transmettre. </p>
+            <p>Suite à la réception du message, le manager exécute la
+               fonction demandée puis positionne l'identifiant de la fonction de rappel dans le champ
+               d'événements du
+               gestionnaire. Les tâches bloquées par la fonction <span class="bold-strong">mk_callback_wait</span> sont
+               alors réveillées.</p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Une fonction de rappel peut être exécutée avant même que la tâche n'ait appelé la fonction <span
+                        class="bold-strong">mk_callback_wait</span>. Comme pour tous les champs d'événements,
+                     l'identifiant reste positionné jusqu'à ce qu'il soit consommé par un <span
+                        class="bold-strong">wait</span> ou remis à zéro explicitement.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Chaque boîte de messages d'un manager peut contenir un nombre limité de messages.
+                     Lorsque
+                     la boîte est pleine, le déclenchement d'une nouvelle fonction de rappel est temporisé jusqu'à ce
+                     qu'un emplacement se
+                     libère.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Les fonctions de rappel d'un même manager sont exécutées <span
+                        class="underline">séquentiellement</span> dans la même tâche (algorithme
+                     <span class="bold-strong">FIFO</span>). Une fonction de rappel doit
+                     donc être courte et ne jamais se bloquer indéfiniment. Elle doit aussi être compatible avec la
+                     taille
+                     de la pile
+                     de son
+                     manager.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>En cas d'erreur grave dans un manager (échec de la lecture d'un message ou du positionnement de
+                     l'événement), le noyau exécute la routine <span
+                        class="bold-strong">mk_<wbr>handler_<wbr>callbackFault</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+            <p>Les fonctions de rappel possèdent toutes le même prototype. Celui-ci est constitué de six paramètres
+               pouvant être implémentés ou non par l'application :
+            </p>
+            <br>
+            <pre class="code">
+<span class="keyword">void</span> <span class="function">callback</span> ( <span class="type">T_mkAddr</span> p_param1, <span class="type">T_mkAddr</span> p_param2, <span class="type">T_mkAddr</span> p_param3,
+   <span class="type">T_mkAddr</span> p_param4, <span class="type">T_mkAddr</span> p_param5, <span class="type">T_mkAddr</span> p_param6 );
+</pre>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Pour transmettre un volume important de données, il est préférable de passer l'adresse d'un
+                     bloc mémoire dans un des paramètres.
+                  </p>
+               </div>
+            </div>
+
+            <h2>3. Avantages et inconvénients</h2>
+
+            <p>Les fonctions de rappel possèdent les avantages suivants :
+            </p>
+            <ul>
+               <li><span class="gray">✔</span>Elles permettent de déporter un traitement dans le contexte d'une tâche
+                  plutôt que de l'exécuter dans le contexte de celui qui le déclenche.</li>
+               <li><span class="gray">✔</span>Elles permettent d'attendre l'exécution de plusieurs fonctions
+                  simultanément (opération <span class="bold-strong">OR</span> ou <span class="bold-strong">AND</span>).
+               </li>
+               <li><span class="gray">✔</span>Elles s'exécutent au niveau de privilège choisi à la création du
+                  gestionnaire.</li>
+            </ul>
+            <p>
+               Néanmoins, un gestionnaire ne peut pas référencer plus de 30 fonctions de rappel et chaque manager
+               possède un nombre de
+               messages limité.
+            </p>
+
+            <h2>4. Utilisation</h2>
+            <p>Avant de pouvoir utiliser des fonctions de rappel, il est nécessaire de créer les deux managers en
+               exécutant la
+               fonction <span class="bold-strong">mk_<wbr>callback_<wbr>createManagers</span>.</p>
+            <p>Cette
+               fonction peut par exemple
+               être exécutée dans le programme principal avant le démarrage du noyau : </p>
+
+            <br>
+            <pre class="code">
+<span class="keyword">void</span> <span class="function">mk_main</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result = <span class="define">K_MK_OK</span>;
+
+   <span class="multi-line-comment">/* Initialisation du noyau */</span>
+   l_result = <span class="function">mk_init</span> ( <span class="define">K_MK_MODE_FLOATING</span>, g_mkProcessStack,
+      <span class="define">K_MK_PROCESS_STACK_SIZE</span> );
+
+   <span class="multi-line-comment">/* Initialisation des managers de rappel en mode flottant */</span>
+   l_result |= <span class="function">mk_callback_createManagers</span> ( <span class="define">K_MK_TYPE_FLOATING</span> );
+
+   <span class="multi-line-comment">/* Initialisation de la tâche de repos */</span>
+   l_result |= <span class="function">mk_createIdle</span> ( g_mkIdleStack, <span class="define">K_MK_TASK_IDLE_STACK_SIZE</span>,
+      mk_task_idle, ( <span class="type">T_mkAddr</span> ) <span class="string">"I"</span> );
+
+   <span class="multi-line-comment">/* Lancement du noyau avec un tick de 1 ms */</span>
+   l_result |= <span class="function">mk_start</span> ( 27000 );
+
+   <span class="multi-line-comment">/* ... */</span>
+   <span class="keyword">for</span> ( ;; ) ;
+}
+</pre>
+            <br>
+
+            <p>La création des gestionnaires et des fonctions de rappel s'effectue avec les fonctions <span
+                  class="bold-strong">mk_<wbr>callback_<wbr>createHandler</span> et <span
+                  class="bold-strong">mk_<wbr>callback_<wbr>create</span>.</p>
+            <br>
+            <p>Une fonction de rappel peut recevoir jusqu'à six paramètres. Chacun d'eux occupe <span
+                  class="underline">un mot 32 bits</span>. La
+               fonction peut ne déclarer que ceux dont elle a besoin et leur donner le type de son choix (code retour,
+               entier, pointeur). </p>
+            <br>
+            <p>L'exemple ci-dessous
+               montre la création d'un gestionnaire de rappel protégé et de deux fonctions de rappel :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Pointeurs du gestionnaire et des fonctions de rappel */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkCallbackHandler</span>* g_handler;
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkCallback</span>* g_callbackAcquire;
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkCallback</span>* g_callbackSend;
+
+<span class="multi-line-comment">/* Mesure transmise à la fonction de rappel */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">uint32_t</span> g_value;
+
+<span class="multi-line-comment">/* Fonction de rappel de fin d'acquisition */</span>
+<span class="multi-line-comment">/* Le premier paramètre contient le code retour de l'acquisition, */</span>
+<span class="multi-line-comment">/* et le second l'adresse de la mesure. */</span>
+<span class="multi-line-comment">/* Les quatre autres paramètres ne sont pas utilisés. */</span>
+<span class="keyword">void</span> <span class="function">app_onAcquire</span> ( <span class="type">T_mkCode</span> p_err, <span class="type">uint32_t*</span> p_value )
+{
+   <span class="keyword">if</span> ( p_err == <span class="define">K_MK_OK</span> ) {
+      <span class="multi-line-comment">/* Traitement de la mesure ... */</span>
+   }
+   <span class="keyword">else</span> {
+      <span class="multi-line-comment">/* Gestion de l'erreur ... */</span>
+   }
+}
+
+<span class="multi-line-comment">/* Fonction de rappel de fin d'envoi */</span>
+<span class="multi-line-comment">/* Seul le code retour est utilisé. */</span>
+<span class="keyword">void</span> <span class="function">app_onSend</span> ( <span class="type">T_mkCode</span> p_err )
+{
+   <span class="multi-line-comment">/* ... */</span>
+}
+
+<span class="multi-line-comment">/* Une tâche privilégiée */</span>
+<span class="keyword">void</span> <span class="function">mk_task_privileged</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration de la variable de retour */</span>
+   <span class="type">T_mkCode</span> l_result;
+
+   <span class="multi-line-comment">/* Création d'un gestionnaire protégé */</span>
+   <span class="multi-line-comment">/* Il est rattaché au manager privilégié et ne peut être manipulé */</span>
+   <span class="multi-line-comment">/* que par des tâches privilégiées */</span>
+   l_result = <span class="function">mk_callback_createHandler</span> ( &amp;g_handler, <span class="define">K_MK_AREA_PROTECTED</span> );
+
+   <span class="multi-line-comment">/* Si le gestionnaire a été créé */</span>
+   <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
+   {
+      <span class="multi-line-comment">/* Création des deux fonctions de rappel */</span>
+      <span class="multi-line-comment">/* L'adresse de la fonction doit être convertie en T_mkAddr */</span>
+      l_result = <span class="function">mk_callback_create</span> ( g_handler, <span class="define">K_MK_AREA_PROTECTED</span>,
+         &amp;g_callbackAcquire, ( <span class="type">T_mkAddr</span> ) app_onAcquire );
+
+      l_result |= <span class="function">mk_callback_create</span> ( g_handler, <span class="define">K_MK_AREA_PROTECTED</span>,
+         &amp;g_callbackSend, ( <span class="type">T_mkAddr</span> ) app_onSend );
+   }
+
+   <span class="multi-line-comment">/* ... */</span>
+   <span class="keyword">for</span> ( ;; ) ;
+}
+</pre>
+            <br>
+
+            <p>L'exécution d'une fonction de rappel est déclenchée avec la fonction <span
+                  class="bold-strong">mk_<wbr>callback_<wbr>trig</span>. L'application place d'abord les six paramètres
+               de la fonction dans une structure de type <span class="bold-strong">T_mkCallbackParam</span> qui sera
+               copiée dans la boîte de messages du manager. La
+               fonction de rappel sera ensuite exécutée de manière différée.</p>
+            <p>
+               L'exemple ci-dessous déclenche la fonction <span class="bold-strong">app_onAcquire</span> à la fin d'une
+               acquisition :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Une tâche privilégiée qui réalise des acquisitions */</span>
+<span class="keyword">void</span> <span class="function">app_task_acquisition</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration des variables de travail */</span>
+   <span class="type">T_mkCode</span> l_result;
+   <span class="type">T_mkCode</span> l_status;
+
+   <span class="multi-line-comment">/* Déclaration de la structure contenant les paramètres de la fonction */</span>
+   <span class="multi-line-comment">/* de rappel. Elle est copiée avant le retour de mk_callback_trig,  */</span>
+   <span class="multi-line-comment">/* une variable locale peut donc être utilisée */</span>
+   <span class="type">T_mkCallbackParam</span> l_param;
+
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* Acquisition d'une mesure dans g_value ... */</span>
+      l_status = <span class="define">K_MK_OK</span>;
+
+      <span class="multi-line-comment">/* Écriture des paramètres de la fonction app_onAcquire */</span>
+      l_param.<span class="field">param1</span> = ( <span class="type">T_mkAddr</span> ) l_status;  <span class="multi-line-comment">/* Statut de l'acquisition */</span>
+      l_param.<span class="field">param2</span> = ( <span class="type">T_mkAddr</span> ) &amp;g_value;  <span class="multi-line-comment">/* Adresse de la mesure */</span>
+      l_param.<span class="field">param3</span> = <span class="define">K_MK_NULL</span>;
+      l_param.<span class="field">param4</span> = <span class="define">K_MK_NULL</span>;
+      l_param.<span class="field">param5</span> = <span class="define">K_MK_NULL</span>;
+      l_param.<span class="field">param6</span> = <span class="define">K_MK_NULL</span>;
+
+      <span class="multi-line-comment">/* Déclenchement de la fonction de rappel */</span>
+      <span class="multi-line-comment">/* Celle-ci sera exécutée de manière différée. La tâche peut donc */</span>
+      <span class="multi-line-comment">/* réaliser d'autres opérations en attendant sa complétude */</span>
+      l_result = <span class="function">mk_callback_trig</span> ( g_callbackAcquire, &amp;l_param );
+
+      <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) {
+         <span class="multi-line-comment">/* La fonction de rappel a été postée dans la boîte du manager */</span>
+      }
+      <span class="keyword">else</span> {
+         <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+         <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+      }
+   }
+}
+</pre>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Lorsque la boîte de messages du manager est pleine, la fonction <span
+                        class="bold-strong">mk_<wbr>callback_<wbr>trig</span> bloque la tâche jusqu'à ce qu'un
+                     emplacement se libère. Le nombre de fonctions pouvant être en attente est défini par la constante
+                     <a href="#K_MK_CALLBACK_MESSAGES_NUMBER"><span
+                           class="bold-strong">K_<wbr>MK_<wbr>CALLBACK_<wbr>MESSAGES_<wbr>NUMBER</span></a>.
+                  </p>
+               </div>
+            </div>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Le noyau copie la valeur des paramètres mais il ne copie pas les données qu'ils référencent.
+                     Dans l'exemple ci-dessus, la variable <span class="bold-strong">g_value</span> doit rester valide
+                     et ne pas être modifiée tant que la fonction <span class="bold-strong">app_onAcquire</span> n'a
+                     pas été exécutée. La fonction <span class="bold-strong">mk_<wbr>callback_<wbr>wait</span>
+                     permet de s'en assurer.</p>
+               </div>
+            </div>
+            <br>
+
+            <p>Une tâche attend ensuite l'exécution d'une ou plusieurs fonctions de rappel avec la fonction <span
+                  class="bold-strong">mk_callback_wait</span>. Le paramètre <span
+                  class="bold-strong">p_mkIdentifiers</span> regroupe les identifiants attendus et les options de
+               contrôle propres aux champs d'événements. Le paramètre <span class="bold-strong">p_mkTimeout</span>
+               définit la durée maximale de blocage.</p>
+            <br>
+            <p>L'exemple ci-dessous
+               complète la tâche précédente. Celle-ci a terminé son travail et attend maintenant la fin
+               de
+               l'exécution de la fonction <span class="bold-strong">app_onAcquire</span> pour recommencer un nouveau
+               cycle d'acquisition :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Suite de la tâche app_task_acquisition */</span>
+<span class="type">uint32_t</span> l_flag;
+
+<span class="multi-line-comment">/* Attente de l'exécution de la fonction app_onAcquire */</span>
+<span class="multi-line-comment">/* L'identifiant attendu est remis à zéro au réveil de la tâche */</span>
+l_result = <span class="function">mk_callback_wait</span> ( g_handler,
+   g_callbackAcquire-&gt;<span class="field">identifier</span> | <span class="define">K_MK_EVENT_OR</span> | <span class="define">K_MK_EVENT_CLEAR</span>,
+   &amp;l_flag, <span class="number">100</span> );
+
+<span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> ) {
+   <span class="multi-line-comment">/* La fonction app_onAcquire a été exécutée */</span>
+   <span class="multi-line-comment">/* La variable g_value peut être réutilisée */</span>
+}
+<span class="keyword">else if</span> ( l_result == <span class="define">K_MK_ERROR_TIMEOUT</span> ) {
+   <span class="multi-line-comment">/* La fonction n'a pas été exécutée pendant 100 ticks */</span>
+   <span class="multi-line-comment">/* La variable g_value ne doit pas être modifiée */</span>
+}
+<span class="keyword">else</span> {
+   <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+   <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+   <span class="multi-line-comment">/* K_MK_ERROR_UNEXPECTED */</span>
+}
+</pre>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Si le paramètre <span class="bold-strong">p_mkTimeout</span> est nul et si aucune des fonctions
+                     attendues n'a été exécutée alors la fonction <span
+                        class="bold-strong">mk_<wbr>callback_<wbr>wait</span>
+                     retourne immédiatement l'erreur <span class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>TIMEOUT</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Un timeout n'annule pas l'exécution de la fonction de rappel. Celle-ci reste en attente d'exécution
+                     dans la
+                     boîte de messages de son manager.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>L'option <span class="bold-strong">K_MK_EVENT_OR</span> réveille la tâche dès qu'une des fonctions
+               référencées a été exécutée et le paramètre <span class="bold-strong">p_mkOutIdentifiers</span> permet de
+               déterminer lesquelles. L'option <span class="bold-strong">K_MK_EVENT_AND</span> permet d'attendre
+               que toutes les fonctions de rappel référencées aient été exécutées. </p>
+            <p>L'exemple ci-dessous bloque la tâche
+               jusqu'à l'exécution des fonctions de fin d'acquisition <span class="underline">et</span> de fin
+               d'envoi :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Attente de l'exécution des deux fonctions de rappel (AND) */</span>
+<span class="multi-line-comment">/* La tâche est bloquée indéfiniment tant que les deux fonctions */</span>
+<span class="multi-line-comment">/* n'ont pas été exécutées */</span>
+l_result = <span class="function">mk_callback_wait</span> ( g_handler,
+   g_callbackAcquire-&gt;<span class="field">identifier</span> | g_callbackSend-&gt;<span class="field">identifier</span> |
+   <span class="define">K_MK_EVENT_AND</span> | <span class="define">K_MK_EVENT_CLEAR</span>, &amp;l_flag, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+</pre>
+            <br>
+            <p>Un gestionnaire dispose d'un champ d'événements de type <span class="bold-strong">MULTI</span>. Plusieurs
+               tâches peuvent donc attendre simultanément l'exécution de ses fonctions de rappel. Les règles de
+               réveil sont celles décrites dans l'article <a href="./event.html"><span class="bold-strong">Synchroniser
+                     les tâches avec les champs d'événements</span></a>. Pour réveiller
+               plusieurs tâches avec la même fonction de rappel, celles-ci doivent utiliser l'option <span
+                  class="bold-strong">K_MK_EVENT_NO_CLEAR</span>.
+            </p>
+            <br>
+
+
+            <p>Les dernières fonctions de l'<span class="bold-strong">API</span> sont les fonctions <span
+                  class="bold-strong">mk_callback_delete</span> et <span
+                  class="bold-strong">mk_callback_deleteHandler</span>. Elles détruisent respectivement une fonction et
+               un gestionnaire de
+               rappel en demandant au noyau de les désallouer. Les fonctions de rappel doivent obligatoirement être
+               supprimées avant leur gestionnaire :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Suppression des fonctions de rappel */</span>
+l_result  = <span class="function">mk_callback_delete</span> ( g_callbackAcquire );
+l_result |= <span class="function">mk_callback_delete</span> ( g_callbackSend );
+
+<span class="multi-line-comment">/* Suppression du gestionnaire */</span>
+<span class="multi-line-comment">/* Il ne doit plus référencer aucune fonction de rappel */</span>
+l_result |= <span class="function">mk_callback_deleteHandler</span> ( g_handler );
+
+<span class="multi-line-comment">/* Si une erreur s'est produite */</span>
+<span class="keyword">if</span> ( l_result != <span class="define">K_MK_OK</span> )
+{
+   <span class="multi-line-comment">/* Gestion des erreurs ...  */</span>
+   <span class="multi-line-comment">/* K_MK_ERROR_PARAM, K_MK_ERROR_ISR, K_MK_ERROR_RIGHT */</span>
+}
+</pre>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>La suppression d'un gestionnaire échoue avec l'erreur <span
+                        class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>PARAM</span> tant qu'il référence au moins une
+                     fonction de rappel.</p>
+               </div>
+            </div>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>La suppression d'un gestionnaire détruit son champ d'événements. Les tâches
+                     bloquées par la fonction <span class="bold-strong">mk_<wbr>callback_<wbr>wait</span> sont
+                     alors réveillées et retournent l'erreur <span
+                        class="bold-strong">K_<wbr>MK_<wbr>ERROR_<wbr>UNEXPECTED</span>.</p>
+               </div>
+            </div>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Le noyau ne vérifie pas si une fonction de rappel est en attente d'exécution dans la boîte de
+                     messages d'un manager avant de la supprimer. Il faut donc s'assurer qu'elle a bien été exécutée
+                     avant de
+                     la supprimer (fonction <span class="bold-strong">mk_<wbr>callback_<wbr>wait</span>).</p>
+               </div>
+            </div>
+
+            <br>
+            <p>
+               En effet, si une fonction de rappel est supprimée puis recréée alors que son ancien message est
+               toujours en attente, le manager ne peut pas distinguer les deux instances (le même
+               emplacement mémoire peut être réutilisé).
+               Il exécute alors la nouvelle fonction avec les paramètres de l'ancien
+               message et positionne l'identifiant de la nouvelle fonction comme si celle-ci avait été déclenchée.
+            </p>
+
+            <h2>5. Fonction synchrone ou asynchrone</h2>
+            <p>Les fonctions de rappel peuvent rendre non bloquantes les fonctions d'une <span
+                  class="bold-strong">API</span> logicielle. Pour ce faire, un modèle producteur/consommateur basé
+               sur des requêtes et une tâche de traitement
+               doit être mis en œuvre. Un paramètre
+               contenant un pointeur de type <span class="bold-strong">T_mkCallback*</span> doit alors être ajouté à
+               chaque fonction :
+            </p>
+            <ul>
+               <li><span class="gray">✔</span>Lorsque ce paramètre est nul, la fonction sera <span
+                     class="underline">bloquante</span> ou <span class="underline">synchrone</span>. La tâche sera
+                  suspendue tant que la requête n'aura pas été
+                  exécutée
+                  par la tâche de traitement.
+               </li>
+               <li><span class="gray">✔</span>Lorsque ce paramètre référence une fonction de rappel, la fonction sera
+                  <span class="underline">non bloquante</span> ou <span class="underline">asynchrone</span>. Elle
+                  retournera immédiatement et le résultat de celle-ci ne sera pas
+                  disponible.
+               </li>
+            </ul>
+
+            <p>L'exemple ci-dessous reprend ce principe de manière simplifiée. La fonction <span
+                  class="bold-strong">app_send</span> transmet d'abord une requête à la tâche de traitement par
+               l'intermédiaire d'une boîte de messages :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Boîte de messages des requêtes d'envoi */</span>
+<span class="define">K_MK_UNPRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkMail*</span> g_sendMail;
+
+<span class="multi-line-comment">/* Structure d'une requête d'envoi */</span>
+<span class="keyword">typedef struct</span> <span class="type">T_appMessage</span> <span class="type">T_appMessage</span>;
+<span class="keyword">struct</span> <span class="type">T_appMessage</span>
+{
+   <span class="type">uint32_t*</span> data;           <span class="multi-line-comment">/* Adresse des données à envoyer */</span>
+   <span class="type">uint32_t</span> size;            <span class="multi-line-comment">/* Nombre de mots à envoyer */</span>
+   <span class="type">T_mkCode*</span> result;         <span class="multi-line-comment">/* Adresse du code retour (requête bloquante) */</span>
+   <span class="type">T_mkCallback*</span> callback;   <span class="multi-line-comment">/* Fonction de rappel (requête non bloquante) */</span>
+};
+
+<span class="multi-line-comment">/* Fonction d'envoi bloquante ou non bloquante selon p_callback */</span>
+<span class="type">T_mkCode</span> <span class="function">app_send</span> ( <span class="type">uint32_t*</span> p_data, <span class="type">uint32_t</span> p_size, 
+   <span class="type">T_mkCallback*</span> p_callback )
+{
+   <span class="multi-line-comment">/* Déclaration des variables de travail */</span>
+   <span class="type">T_mkCode</span> l_result;
+   <span class="type">T_mkCode</span> l_requestResult = <span class="define">K_MK_ERROR_UNEXPECTED</span>;
+
+   <span class="multi-line-comment">/* La tâche est suspendue par défaut */</span>
+   <span class="type">uint32_t</span> l_state = <span class="define">K_MK_STATE_SUSPENDED</span>;
+
+   <span class="multi-line-comment">/* Déclaration de la requête */</span>
+   <span class="type">T_appMessage</span> l_message = { p_data, p_size, &amp;l_requestResult, p_callback };
+
+   <span class="multi-line-comment">/* Si une fonction de rappel a été référencée, la tâche ne doit pas */</span>
+   <span class="multi-line-comment">/* être suspendue */</span>
+   <span class="keyword">if</span> ( p_callback != <span class="define">K_MK_NULL</span> )
+   {
+      l_state = <span class="define">K_MK_STATE_READY</span>;
+   }
+
+   <span class="multi-line-comment">/* Transmission de la requête à la tâche de service */</span>
+   <span class="multi-line-comment">/* En mode bloquant, la tâche est suspendue jusqu'à la fin de */</span>
+   <span class="multi-line-comment">/* la requête */</span>
+   l_result = <span class="function">mk_mail_post</span> ( g_sendMail, ( <span class="type">T_mkAddr</span> ) &amp;l_message, 
+      l_state, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+   <span class="multi-line-comment">/* Si la requête s'est exécutée de manière synchrone, le résultat est */</span>
+   <span class="multi-line-comment">/* écrit dans la variable de retour */</span>
+   <span class="keyword">if</span> ( ( l_result == <span class="define">K_MK_OK</span> ) &amp;&amp; ( p_callback == <span class="define">K_MK_NULL</span> ) )
+   {
+      l_result = l_requestResult;
+   }
+
+   <span class="keyword">return</span> ( l_result );
+}
+</pre>
+            <br>
+            <p>La tâche de traitement reçoit alors le message et exécute la requête. Si une fonction de rappel a été
+               référencée,
+               elle déclenche son exécution. Dans le cas
+               contraire, elle
+               écrit
+               le
+               résultat de la requête dans le pointeur de la tâche appelante et la réactive avec la fonction <span
+                  class="bold-strong">mk_task_resume</span> :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Tâche de traitement (privilégiée) */</span>
+<span class="keyword">void</span> <span class="function">app_task_handle</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration des variables de travail */</span>
+   <span class="type">T_mkCode</span> l_result;
+   <span class="type">T_mkTask*</span> l_task = <span class="define">K_MK_NULL</span>;
+   <span class="type">T_appMessage</span> l_message;
+   <span class="type">T_mkCallbackParam</span> l_param;
+
+   <span class="keyword">while</span> ( <span class="number">1</span> )
+   {
+      <span class="multi-line-comment">/* Attente d'une requête */</span>
+      l_result = <span class="function">mk_mail_pend</span> ( &amp;l_task, 
+         g_sendMail, ( <span class="type">T_mkAddr</span> ) &amp;l_message, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+
+      <span class="multi-line-comment">/* Si une requête a été reçue */</span>
+      <span class="keyword">if</span> ( ( l_result == <span class="define">K_MK_OK</span> ) &amp;&amp; ( l_task != <span class="define">K_MK_NULL</span> ) )
+      {
+         <span class="multi-line-comment">/* Exécution de la requête */</span>
+         <span class="multi-line-comment">/* Écriture de l_message.size mots à l'adresse l_message.data ... */</span>
+         l_result = <span class="define">K_MK_OK</span>;
+
+         <span class="multi-line-comment">/* Si une fonction de rappel a été référencée (requête */</span>
+         <span class="multi-line-comment">/* non bloquante) */</span>
+         <span class="keyword">if</span> ( l_message.<span class="field">callback</span> != <span class="define">K_MK_NULL</span> )
+         {
+            <span class="multi-line-comment">/* Configuration des arguments de la fonction de rappel */</span>
+            l_param.<span class="field">param1</span> = ( <span class="type">T_mkAddr</span> ) l_result;
+            l_param.<span class="field">param2</span> = ( <span class="type">T_mkAddr</span> ) l_message.<span class="field">data</span>;
+            l_param.<span class="field">param3</span> = ( <span class="type">T_mkAddr</span> ) l_message.<span class="field">size</span>;
+            l_param.<span class="field">param4</span> = <span class="define">K_MK_NULL</span>;
+            l_param.<span class="field">param5</span> = <span class="define">K_MK_NULL</span>;
+            l_param.<span class="field">param6</span> = <span class="define">K_MK_NULL</span>;
+
+            <span class="multi-line-comment">/* Déclenchement de la fonction de rappel */</span>
+            l_result = <span class="function">mk_callback_trig</span> ( l_message.<span class="field">callback</span>, &amp;l_param );
+         }
+
+         <span class="multi-line-comment">/* Sinon (requête bloquante) */</span>
+         <span class="keyword">else</span>
+         {
+            <span class="multi-line-comment">/* Écriture du résultat de la requête */</span>
+            *l_message.<span class="field">result</span> = l_result;
+
+            <span class="multi-line-comment">/* Réactivation de la tâche appelante */</span>
+            l_result = <span class="function">mk_task_resume</span> ( l_task );
+         }
+      }
+   }
+}
+</pre>
+            <br>
+            <p>Avec cette méthode, l'applicatif a la possibilité de choisir le comportement de la fonction <span
+                  class="bold-strong">app_send</span> lors de chaque appel. En mode synchrone, la tâche est suspendue et
+               réveillée quand le travail est terminé. En mode asynchrone, la tâche n'est pas suspendue, elle doit
+               néanmoins attendre la fin de l'exécution de la fonction de rappel en utilisant <span
+                  class="bold-strong">mk_<wbr>callback_<wbr>wait</span> :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Pointeurs du gestionnaire et des fonctions de rappel */</span>
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkCallbackHandler</span>* g_handler;
+<span class="define">K_MK_PRIVILEGED_BSS_MEMORY</span> <span class="type">T_mkCallback</span>* g_callbackTransfer;
+
+<span class="multi-line-comment">/* Fonction de rappel (3 paramètres utilisés)*/</span>
+<span class="keyword">void</span> <span class="function">app_onTransfer</span> ( <span class="type">T_mkCode</span> p_err, <span class="type">uint32_t*</span> p_buf, <span class="type">uint32_t</span> p_size )
+{
+   <span class="keyword">if</span> ( p_err == <span class="define">K_MK_OK</span> ) {
+      <span class="multi-line-comment">/* Traitement ... */</span>
+   }
+   <span class="keyword">else</span> {
+      <span class="multi-line-comment">/* Gestion de l'erreur ... */</span>
+   }
+}
+
+<span class="multi-line-comment">/* Une tâche privilégiée de l'application */</span>
+<span class="keyword">void</span> <span class="function">mk_task_user</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration des variables de travail */</span>
+   <span class="type">T_mkCode</span> l_result;
+   <span class="type">uint32_t</span> l_flag;
+   <span class="type">uint32_t</span> l_data [ <span class="number">4</span> ] = { <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span> };
+
+   <span class="multi-line-comment">/* Création d'un gestionnaire protégé */</span>
+   l_result = <span class="function">mk_callback_createHandler</span> ( &amp;g_handler, <span class="define">K_MK_AREA_PROTECTED</span> );
+
+   <span class="multi-line-comment">/* Création d'une fonction de rappel protégée */</span>
+   l_result |= <span class="function">mk_callback_create</span> ( g_handler, <span class="define">K_MK_AREA_PROTECTED</span>,
+      &amp;g_callbackTransfer, ( <span class="type">T_mkAddr</span> ) app_onTransfer );
+   
+   <span class="multi-line-comment">/* Envoi bloquant : la tâche est suspendue jusqu'à la fin de la requête */</span>
+   <span class="multi-line-comment">/* Le résultat est disponible dans la variable de retour */</span>
+   l_result |= <span class="function">app_send</span> ( l_data, <span class="number">4</span>, <span class="define">K_MK_NULL</span> );
+
+   <span class="multi-line-comment">/* Envoi non bloquant : la fonction retourne dès que la requête */</span>
+   <span class="multi-line-comment">/* a été transmise. */</span>
+   l_result |= <span class="function">app_send</span> ( l_data, <span class="number">4</span>, g_callbackTransfer );
+
+   <span class="multi-line-comment">/* Si la requête a été transmise */</span>
+   <span class="keyword">if</span> ( l_result == <span class="define">K_MK_OK</span> )
+   {
+      <span class="multi-line-comment">/* La tâche peut réaliser un autre traitement ... */</span>
+
+      <span class="multi-line-comment">/* Attente de la fin de la requête */</span>
+      <span class="multi-line-comment">/* Le tableau l_data doit rester valide jusqu'à l'exécution de */</span>
+      <span class="multi-line-comment">/* app_onTransfer */</span>
+      l_result = <span class="function">mk_callback_wait</span> ( g_handler,
+         g_callbackTransfer-&gt;<span class="field">identifier</span> | <span class="define">K_MK_EVENT_OR</span> | <span class="define">K_MK_EVENT_CLEAR</span>,
+         &amp;l_flag, <span class="define">K_MK_TASK_WAIT_FOREVER</span> );
+   }
+}
+</pre>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>En mode non bloquant, la valeur de retour de la fonction <span class="bold-strong">app_send</span>
+                     indique uniquement si la requête a été transmise ou non. Le
+                     résultat de la requête est transmis à l'applicatif par le biais de la fonction <span
+                        class="bold-strong">app_onTransfer</span>
+                     et du paramètre <span class="bold-strong">p_err</span>.</p>
+               </div>
+            </div>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>En mode non bloquant, la requête est exécutée après le retour de la fonction <span
+                        class="bold-strong">app_send</span>. Les données qu'elle référence ne sont pas copiées et
+                     doivent donc rester valides jusqu'à l'exécution de la fonction de rappel.</p>
+               </div>
+            </div>
+            <br>
+            <h2>6. Protéger ses callbacks</h2>
+            <p>Les gestionnaires et les fonctions de rappel peuvent être créés avec les attributs <span
+                  class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> ou <span
+                  class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>UNPROTECTED</span>.</p>
+            <br>
+
+            <p>Lorsque l'attribut <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> est utilisé pour
+               un gestionnaire, le
+               champ d'événements et la boîte de messages du manager associés sont eux aussi protégés. Il est alors
+               impossible pour une tâche non privilégiée de créer le gestionnaire, de le supprimer, de
+               référencer, d'attendre ou de déclencher une fonction de rappel. </p>
+            <br>
+            <p>Le tableau ci-dessous résume les règles applicables à la création d'un gestionnaire :</p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Créateur</th>
+                        <th>Gestionnaire</th>
+                        <th>Manager associé</th>
+                        <th>Résultat</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td>Tâche privilégiée</td>
+                        <td>Protégé</td>
+                        <td>Privilégié</td>
+                        <td>Manipulable par les tâches privilégiées uniquement</td>
+                     </tr>
+                     <tr>
+                        <td>Tâche privilégiée</td>
+                        <td>Non protégé</td>
+                        <td>Non privilégié</td>
+                        <td>Manipulable par toutes les tâches</td>
+                     </tr>
+                     <tr>
+                        <td>Tâche non privilégiée</td>
+                        <td>Non protégé</td>
+                        <td>Non privilégié</td>
+                        <td>Manipulable par toutes les tâches</td>
+                     </tr>
+                     <tr>
+                        <td>Tâche non privilégiée</td>
+                        <td>Protégé</td>
+                        <td>-</td>
+                        <td>Erreur <span class="bold-strong">K_MK_ERROR_RIGHT</span></td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+
+            <p>Une tâche non privilégiée ne peut donc créer que des gestionnaires ou des fonctions de rappel non
+               protégés. Dans cette configuration, les fonctions de rappel s'exécutent en mode non privilégié et un
+               accès à une zone privilégiée déclenche une erreur de la <span class="bold-strong">MPU</span>.
+            </p>
+
+            <br>
+
+            <p>Les gestionnaires et les fonctions de rappel étant alloués par le noyau dans l'espace privilégié, aucune
+               règle de placement ne s'applique. Seules les variables stockant leurs adresses doivent être accessibles
+               aux tâches qui les utilisent. Les règles de placement de ces variables sont détaillées dans l'article <a
+                  href="./mpu.html"><span class="bold-strong">Protéger son programme avec Mk</span></a>.</p>
+
+            <h2>7. API</h2>
+
+            <!-- 7.1 mk_callback_createManagers -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_callback_createManagers">7.1. La fonction
+                     mk_callback_createManagers()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction initialise les deux managers de rappel privilégié et non privilégié du noyau.
+                     Chaque manager est constitué d'une tâche, de sa pile et d'une boîte de messages.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_callback_createManagers ( <span class="type">uint32_t</span> p_mkStackType );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkStackType</span> <span class="italic">[in]</span>
+                        <p>Type des tâches des deux managers. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">K_MK_TYPE_FLOATING</span> : les tâches sont de
+                              type flottant. Les fonctions de rappel peuvent utiliser la FPU.</li>
+                           <li><span class="bold-strong">K_MK_TYPE_DEFAULT</span> : les tâches des managers sont de
+                              type non flottant.</li>
+                        </ul>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : les deux managers de rappel ont été créés.
+                     </li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : les managers n'ont pas été créés
+                        car au moins un paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : les managers n'ont pas été créés
+                        car le nombre maximal de tâches, de boîtes de messages ou de messages pouvant être alloués a
+                        été atteint.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : les managers n'ont pas été créés
+                        car une tâche non privilégiée ne peut pas créer une tâche privilégiée.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_INIT</span> : les managers n'ont pas été créés car
+                        le noyau n'est pas initialisé.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : les managers n'ont pas été créés car
+                        cette fonction a été exécutée dans un vecteur d'interruption.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Cette fonction doit être exécutée après l'initialisation du noyau et avant l'utilisation de
+                        toute autre fonction du module. Elle peut être appelée avant le démarrage du noyau.</li>
+                     <li>Cette fonction consomme deux tâches, deux boîtes de messages et deux fois <a
+                           href="#K_MK_CALLBACK_MESSAGES_NUMBER"><span
+                              class="bold-strong">K_<wbr>MK_<wbr>CALLBACK_<wbr>MESSAGES_<wbr>NUMBER</span></a>
+                        messages.</li>
+                     <li>La taille de la pile et la priorité des tâches des managers sont définies à la compilation
+                        (voir les définitions).</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 7.2 mk_callback_createHandler -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_callback_createHandler">7.2. La fonction
+                     mk_callback_createHandler()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction crée un gestionnaire de rappel.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_callback_createHandler ( <span class="type">T_mkCallbackHandler**</span> p_mkHandler, 
+   <span class="type">uint32_t</span> p_mkAreaType );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkHandler</span> <span class="italic">[out]</span>
+                        <p>Adresse d'un pointeur de type <span class="bold-strong">T_mkCallbackHandler*</span>.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkAreaType</span> <span class="italic">[in]</span>
+                        <p>Type de protection du gestionnaire. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">K_MK_AREA_PROTECTED</span> : le gestionnaire est protégé, il
+                              ne peut pas être manipulé par des tâches non privilégiées. S'il est créé par une tâche
+                              privilégiée, ses fonctions de rappel sont exécutées par le manager privilégié.</li>
+                           <li><span class="bold-strong">K_MK_AREA_UNPROTECTED</span> : le gestionnaire n'est pas
+                              protégé, il peut être manipulé par des tâches privilégiées ou non privilégiées. Ses
+                              fonctions de rappel sont exécutées par le manager non privilégié.</li>
+                        </ul>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le gestionnaire de rappel a été créé.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le gestionnaire de rappel n'a pas été
+                        créé car au moins un paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : le gestionnaire de rappel n'a pas été
+                        créé car le nombre maximal de gestionnaires ou de champs d'événements pouvant être alloués a
+                        été atteint.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le gestionnaire de rappel n'a pas été créé
+                        car cette fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le gestionnaire de rappel n'a pas été
+                        créé car une tâche non privilégiée ne peut pas créer un gestionnaire protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Chaque gestionnaire consomme un champ d'événements. Les constantes <a
+                           href="#K_MK_SCHEDULER_MAX_NUMBER_OF_CALLBACK_HANDLERS"><span
+                              class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>CALLBACK_<wbr>HANDLERS</span></a>
+                        et <a href="./event.html#K_MK_SCHEDULER_MAX_NUMBER_OF_EVENTS"><span
+                              class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>EVENTS</span></a>
+                        définissent donc le nombre maximal de gestionnaires pouvant être créés.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 7.3 mk_callback_create -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_callback_create">7.3. La fonction mk_callback_create()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction crée une fonction de rappel et la référence dans un gestionnaire.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_callback_create ( <span class="type">T_mkCallbackHandler*</span> p_mkHandler, 
+   <span class="type">uint32_t</span> p_mkAreaType, <span class="type">T_mkCallback**</span> p_mkCallback, 
+   <span class="type">T_mkAddr</span> p_mkFunction );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkHandler</span> <span class="italic">[in]</span>
+                        <p>Adresse d'un gestionnaire de type <span class="bold-strong">T_mkCallbackHandler</span>.</p>
+                        <br>
+                     </li>
+                     <li><span class="bold-green">p_mkAreaType</span> <span class="italic">[in]</span>
+                        <p>Type de protection de la fonction de rappel. Les valeurs possibles sont les suivantes :
+                        </p>
+                        <ul>
+                           <li><span class="bold-strong">K_MK_AREA_PROTECTED</span> : la fonction de rappel est
+                              protégée, elle ne peut pas être manipulée par des tâches non privilégiées.</li>
+                           <li><span class="bold-strong">K_MK_AREA_UNPROTECTED</span> : la fonction de rappel n'est
+                              pas protégée, elle peut être manipulée par des tâches privilégiées ou non privilégiées.
+                           </li>
+                        </ul>
+                     </li>
+                     <li><span class="bold-green">p_mkCallback</span> <span class="italic">[out]</span>
+                        <p>Adresse d'un pointeur de type <span class="bold-strong">T_mkCallback*</span>.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkFunction</span> <span class="italic">[in]</span>
+                        <p>Adresse de la fonction à exécuter. Cette fonction peut déclarer jusqu'à six paramètres
+                           32 bits (<span class="bold-strong">T_mkCallbackFunction</span>).</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : la fonction de rappel a été créée.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la fonction de rappel n'a pas été créée
+                        car au moins un paramètre est invalide ou car le gestionnaire a été détruit.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_MALLOC</span> : la fonction de rappel n'a pas été créée
+                        car le nombre maximal de fonctions de rappel du gestionnaire (30) ou le nombre maximal de
+                        fonctions pouvant être allouées a été atteint.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la fonction de rappel n'a pas été créée car
+                        cette fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la fonction de rappel n'a pas été créée
+                        car une tâche non privilégiée ne peut pas créer une fonction protégée ou référencer une fonction
+                        dans un
+                        gestionnaire protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Un gestionnaire peut référencer 30 fonctions de rappel au maximum. La constante <a
+                           href="#K_MK_SCHEDULER_MAX_NUMBER_OF_CALLBACK_FUNCTIONS"><span
+                              class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>CALLBACK_<wbr>FUNCTIONS</span></a>
+                        définit le nombre maximal de fonctions de rappel pouvant être créées, tous gestionnaires
+                        confondus.</li>
+                     <li>Le niveau d'exécution de la fonction (privilégié ou non) est celui du manager associé au
+                        gestionnaire.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 7.4 mk_callback_trig -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_callback_trig">7.4. La fonction mk_callback_trig()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction transmet un message au manager d'une fonction de rappel pour déclencher son
+                     exécution.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_callback_trig ( <span class="type">T_mkCallback*</span> p_mkCallback, 
+   <span class="type">T_mkCallbackParam*</span> p_mkCallbackParam );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkCallback</span> <span class="italic">[in]</span>
+                        <p>Adresse de la fonction de rappel de type <span class="bold-strong">T_mkCallback</span> à
+                           exécuter.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkCallbackParam</span> <span class="italic">[in]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkCallbackParam</span>
+                           contenant la valeur des six paramètres de la fonction. Les
+                           paramètres inutilisés par la fonction de rappel peuvent prendre la valeur <span
+                              class="bold-strong">K_MK_NULL</span>.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : la demande d'exécution de la fonction de rappel a
+                        été envoyée à son manager.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la demande d'exécution n'a pas été envoyée
+                        car la fonction de rappel est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la demande d'exécution n'a pas été envoyée
+                        car la fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la demande d'exécution n'a pas été envoyée
+                        car une tâche non privilégiée ne peut pas manipuler un gestionnaire ou une fonction protégée.
+                     </li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Le contenu de la structure <span class="bold-strong">T_mkCallbackParam</span> est copié
+                        dans la boîte de messages avant le retour de la fonction. Elle peut donc être stockée dans une
+                        variable locale.</li>
+                     <li>Lorsque la boîte de messages du manager est pleine, la tâche est bloquée jusqu'à ce qu'un
+                        emplacement se libère. Le nombre total de messages est défini par la constante <a
+                           href="#K_MK_CALLBACK_MESSAGES_NUMBER"><span
+                              class="bold-strong">K_<wbr>MK_<wbr>CALLBACK_<wbr>MESSAGES_<wbr>NUMBER</span></a>.</li>
+                     <li>Les fonctions de rappel d'un même manager sont exécutées dans leur ordre d'arrivée.</li>
+                  </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Seules les valeurs des paramètres sont copiées. Les données qu'ils référencent doivent
+                              rester valides jusqu'à l'exécution de la fonction de rappel.</li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+            </details>
+
+            <!-- 7.5 mk_callback_wait -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_callback_wait">7.5. La fonction mk_callback_wait()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction attend l'exécution d'une ou plusieurs fonctions de rappel d'un gestionnaire. Si la
+                     condition n'est pas satisfaite, la tâche peut être bloquée en attendant que les fonctions soient
+                     exécutées.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_callback_wait ( <span class="type">T_mkCallbackHandler*</span> p_mkHandler, 
+   <span class="type">uint32_t</span> p_mkIdentifiers, <span class="type">uint32_t*</span> p_mkOutIdentifiers, 
+   <span class="type">uint32_t</span> p_mkTimeout );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkHandler</span> <span class="italic">[in]</span>
+                        <p>Adresse d'un gestionnaire de type <span class="bold-strong">T_mkCallbackHandler</span>.</p>
+                        <br>
+                     </li>
+                     <li><span class="bold-green">p_mkIdentifiers</span> <span class="italic">[in]</span>
+                        <p>Identifiants des fonctions de rappel attendues combinés avec les options de contrôle.
+                           Les constantes suivantes peuvent être utilisées :</p>
+                        <ul>
+                           <li><span class="bold-strong">K_MK_EVENT_OR</span> : la condition est satisfaite lorsqu'au
+                              moins une fonction attendue a été exécutée.</li>
+                           <li><span class="bold-strong">K_MK_EVENT_AND</span> : la condition est satisfaite lorsque
+                              toutes les fonctions attendues ont été exécutées.</li>
+                           <li><span class="bold-strong">K_MK_EVENT_CLEAR</span> : les identifiants attendus sont
+                              remis à zéro lorsque la condition est satisfaite.</li>
+                           <li><span class="bold-strong">K_MK_EVENT_NO_CLEAR</span> : les identifiants attendus ne
+                              sont pas remis à zéro lorsque la condition est satisfaite.</li>
+                        </ul>
+                     </li>
+                     <li><span class="bold-green">p_mkOutIdentifiers</span> <span class="italic">[out]</span>
+                        <p>Adresse d'une variable stockant les identifiants des fonctions de rappel
+                           exécutées.</p><br>
+                     </li>
+                     <li><span class="bold-green">p_mkTimeout</span> <span class="italic">[in]</span>
+                        <p>Durée maximale de blocage de la tâche. Les valeurs possibles sont les suivantes :</p>
+                        <ul>
+                           <li><span class="bold-strong">0x0</span> : la fonction retourne immédiatement si la
+                              condition n'est pas satisfaite.</li>
+                           <li><span class="bold-strong">0x1 à 0xFFFFFFFE</span> : la tâche est bloquée pendant la
+                              durée spécifiée (en multiple de tick) tant que la condition n'est pas satisfaite.</li>
+                           <li><span class="bold-strong">0xFFFFFFFF</span> (<span
+                                 class="bold-strong">K_MK_TASK_WAIT_FOREVER</span>) : la tâche est bloquée tant
+                              que la condition n'est pas satisfaite.</li>
+                        </ul>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : la ou les fonctions de rappel ont été exécutées.
+                     </li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : l'exécution des fonctions de rappel n'a
+                        pas été vérifiée car au moins un paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_TIMEOUT</span> : une ou plusieurs fonctions de rappel
+                        n'ont
+                        pas été exécutées dans le délai imparti.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : l'exécution des fonctions de rappel n'a
+                        pas été vérifiée car la fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : l'exécution des fonctions de rappel n'a
+                        pas été vérifiée car une tâche non privilégiée ne peut pas manipuler un gestionnaire
+                        protégé.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_UNEXPECTED</span> : l'exécution des fonctions de rappel
+                        n'a pas été vérifiée car le gestionnaire a été détruit pendant que la tâche était bloquée.
+                     </li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Le champ d'événements d'un gestionnaire étant de type <span class="bold-strong">MULTI</span>,
+                        plusieurs tâches peuvent être en attente de l'exécution des fonctions
+                        de rappel. Dans cette situation, elles sont examinées par ordre de priorité décroissante.</li>
+                     <li>Un timeout n'annule pas l'exécution des fonctions de rappel.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 7.6 mk_callback_delete -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_callback_delete">7.6. La fonction mk_callback_delete()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction détruit une fonction de rappel et la retire de son gestionnaire. Son identifiant
+                     peut alors être réattribué.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_callback_delete ( <span class="type">T_mkCallback*</span> p_mkCallback );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkCallback</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkCallback</span>.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : la fonction de rappel a été détruite.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : la fonction de rappel n'a pas été
+                        détruite car le paramètre est invalide.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : la fonction de rappel n'a pas été détruite
+                        car la fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : la fonction de rappel n'a pas été
+                        détruite car une tâche non privilégiée ne peut pas manipuler une fonction de rappel protégée.
+                     </li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                  </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Le noyau ne vérifie pas si la fonction de rappel est en attente d'exécution dans la
+                              boîte de messages d'un manager. Il est donc nécessaire de s'assurer qu'elle ait bien été
+                              exécutée avant de la détruire. En effet, une fonction de rappel supprimée puis recréée
+                              alors que son ancien message est toujours en attente peut être confondue avec la nouvelle.
+                           </li>
+                           <li>Étant donné que le même emplacement mémoire peut être réutilisé, le manager ne pourra pas
+                              distinguer
+                              les deux instances. Il exécutera alors la nouvelle fonction avec les
+                              paramètres de l'ancien
+                              message et positionnera l'identifiant de la nouvelle fonction comme si celle-ci avait été
+                              déclenchée.</li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+            </details>
+
+            <!-- 7.7 mk_callback_deleteHandler -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_callback_deleteHandler">7.7. La fonction
+                     mk_callback_deleteHandler()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction détruit un gestionnaire de rappel ainsi que son champ d'événements.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_callback_deleteHandler ( 
+   <span class="type">T_mkCallbackHandler*</span> p_mkCallbackHandler );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkCallbackHandler</span> <span class="italic">[in, out]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkCallbackHandler</span>.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : le gestionnaire de rappel a été détruit.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : le gestionnaire de rappel n'a pas été
+                        détruit car le paramètre est invalide ou car il référence au moins une fonction de rappel.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le gestionnaire de rappel n'a pas été
+                        détruit car la fonction a été exécutée dans un vecteur d'interruption.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le gestionnaire de rappel n'a pas été
+                        détruit car une tâche non privilégiée ne peut pas manipuler un gestionnaire protégé.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction ne peut pas être exécutée dans un vecteur d'interruption.</li>
+                     <li>Les fonctions de rappel du gestionnaire doivent être détruites avec la fonction <a
+                           href="#mk_callback_delete"><span class="bold-strong">mk_<wbr>callback_<wbr>delete</span></a>
+                        avant la destruction du
+                        gestionnaire.</li>
+                  </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Lorsque le gestionnaire est détruit, les tâches bloquées par la fonction <span
+                                 class="bold-strong">mk_<wbr>callback_<wbr>wait</span> sont réveillées. Elles
+                              retournent alors l'erreur <span class="bold-strong">K_MK_ERROR_UNEXPECTED</span>.</li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+            </details>
+
+            <!-- 7.8 Les définitions -->
+            <details open>
+               <summary>
+                  <span class="subtitle">7.8. Les définitions</span>
+               </summary>
+               <p>Le module <span class="bold-strong">callback</span> peut être configuré à l'aide des définitions
+                  suivantes :</p>
+               <div class="table-scroll-container">
+                  <table>
+                     <thead>
+                        <tr>
+                           <th>Définition</th>
+                           <th>Description</th>
+                           <th>Valeur</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        <tr id="K_MK_SCHEDULER_MAX_NUMBER_OF_CALLBACK_HANDLERS">
+                           <td><span
+                                 class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>CALLBACK_<wbr>HANDLERS</span>
+                           </td>
+                           <td>Cette constante définit le nombre de gestionnaires de rappel pouvant être créés. Elle
+                              ne peut pas être nulle.</td>
+                           <td class="center">32</td>
+                        </tr>
+                        <tr id="K_MK_SCHEDULER_MAX_NUMBER_OF_CALLBACK_FUNCTIONS">
+                           <td><span
+                                 class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>CALLBACK_<wbr>FUNCTIONS</span>
+                           </td>
+                           <td>Cette constante définit le nombre de fonctions de rappel pouvant être créées, tous
+                              gestionnaires confondus. Elle ne peut pas être nulle.</td>
+                           <td class="center">32</td>
+                        </tr>
+                        <tr>
+                           <td><span class="bold-strong">K_MK_<wbr>CALLBACK_<wbr>STACK_<wbr>SIZE</span></td>
+                           <td>Cette constante définit la taille de la pile de chaque
+                              manager de rappel (en multiple de mots 32 bits).</td>
+                           <td class="center">1024</td>
+                        </tr>
+                        <tr>
+                           <td><span class="bold-strong">K_MK_<wbr>CALLBACK_<wbr>PRIVILEGED_<wbr>PRIORITY</span></td>
+                           <td>Cette constante définit la priorité du manager privilégié.</td>
+                           <td class="center">6</td>
+                        </tr>
+                        <tr>
+                           <td><span class="bold-strong">K_MK_<wbr>CALLBACK_<wbr>UNPRIVILEGED_<wbr>PRIORITY</span></td>
+                           <td>Cette constante définit la priorité du manager non privilégié.</td>
+                           <td class="center">6</td>
+                        </tr>
+                        <tr id="K_MK_CALLBACK_MESSAGES_NUMBER">
+                           <td><span class="bold-strong">K_MK_<wbr>CALLBACK_<wbr>MESSAGES_<wbr>NUMBER</span></td>
+                           <td>Cette constante définit le nombre de fonctions de rappel pouvant être en attente
+                              d'exécution dans la boîte de messages de chaque manager. Elle ne peut pas être nulle.</td>
+                           <td class="center">8</td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </div>
+            </details>
+
+         </div>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <a href="./event.html">
+               <div>
+                  <p>&lt;</p>
+                  <p>Synchroniser les tâches avec les champs d'événements</p>
+               </div>
+            </a> <a href="./index.html">
+               <div>
+                  <p>Traiter les erreurs avec les gestionnaires</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>
