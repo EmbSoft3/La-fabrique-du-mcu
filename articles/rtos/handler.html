@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Gérez les erreurs du noyau Mk : exceptions matérielles, droits insuffisants, instances invalides ou erreurs internes. Personnalisez chaque gestionnaire avec la fonction mk_handler_set.">
+   <title>Traiter les erreurs avec les gestionnaires</title>
+   <link rel="icon" type="image/png" href="../../favicon.png">
+   <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/handler.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link href="../../assets/css/fonts.css" rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./index.html">MK</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <h1 class="title-article">Traiter les erreurs avec les gestionnaires</h1>
+            <p>Le module <span class="bold-strong">handler</span> regroupe les gestionnaires d'erreurs du
+               noyau. Il permet à l'application d'être prévenue lorsqu'une erreur interne, une exception matérielle ou
+               une violation de
+               permissions se produit.
+            </p>
+
+            <h2>1. Synthèse des fonctions</h2>
+            <p>Ce module est constitué d'un ensemble de fonctions de rappel qui peuvent être surchargées par
+               l'application. Ces fonctions sont déclarées dans les fichiers <span
+                  class="bold-strong">mk_<wbr>handler_<wbr>private.h</span> et <span
+                  class="bold-strong">mk_<wbr>handler<wbr>.h</span> :
+            </p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Fonction</th>
+                        <th>Description</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><a href="#mk_handler_nmiFault"><span class="gray">mk_<wbr>handler_<wbr>nmiFault</span></a>
+                        </td>
+                        <td>Gestionnaire d'erreur de l'exception NMI.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_handler_hardFault"><span class="gray">mk_<wbr>handler_<wbr>hardFault</span></a>
+                        </td>
+                        <td>Gestionnaire d'erreur de l'exception HardFault.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_handler_busFault"><span class="gray">mk_<wbr>handler_<wbr>busFault</span></a>
+                        </td>
+                        <td>Gestionnaire d'erreur de l'exception BusFault.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_handler_memFault"><span class="gray">mk_<wbr>handler_<wbr>memFault</span></a>
+                        </td>
+                        <td>Gestionnaire d'erreur de l'exception MemManageFault.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_handler_usageFault"><span
+                                 class="gray">mk_<wbr>handler_<wbr>usageFault</span></a></td>
+                        <td>Gestionnaire d'erreur de l'exception UsageFault.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_handler_fpuFault"><span class="gray">mk_<wbr>handler_<wbr>fpuFault</span></a>
+                        </td>
+                        <td>Gestionnaire d'erreur de l'exception FPU.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_handler_stackFault"><span
+                                 class="gray">mk_<wbr>handler_<wbr>stackFault</span></a></td>
+                        <td>Gestionnaire d'erreur de dépassement de pile.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_handler_rightFault"><span
+                                 class="gray">mk_<wbr>handler_<wbr>rightFault</span></a></td>
+                        <td>Gestionnaire d'erreur pour des droits insuffisants.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_handler_handleFault"><span
+                                 class="gray">mk_<wbr>handler_<wbr>handleFault</span></a></td>
+                        <td>Gestionnaire d'erreur pour une instance invalide.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_handler_kernelFault"><span
+                                 class="gray">mk_<wbr>handler_<wbr>kernelFault</span></a></td>
+                        <td>Gestionnaire d'erreur interne du noyau.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_handler_callbackFault"><span
+                                 class="gray">mk_<wbr>handler_<wbr>callbackFault</span></a>
+                        </td>
+                        <td>Gestionnaire d'erreur pour les managers de rappel.</td>
+                     </tr>
+                     <tr>
+                        <td><a href="#mk_handler_set"><span class="gray">mk_<wbr>handler_<wbr>set</span></a></td>
+                        <td>Référence les fonctions de rappel de l'application dans le noyau.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+
+            <h2>2. Fonctionnement</h2>
+
+            <p>Lorsqu'une erreur grave est détectée, le noyau exécute le gestionnaire <span
+                  class="bold-strong">mk_<wbr>handler_<wbr>xxxFault</span> correspondant à l'erreur. La donnée <span
+                  class="bold-strong">g_<wbr>mkKernelCallback</span> est alors analysée
+               pour
+               déterminer si
+               une fonction de rappel a été personnalisée par l'application.</p>
+            <p>Si une fonction a été personnalisée, le noyau l'exécute. Dans le cas contraire et en fonction de la
+               criticité de l'erreur, le noyau se bloque
+               ou ne réalise aucune action.
+            </p>
+
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Les gestionnaires du noyau ne sont pas modifiables. Pour personnaliser le traitement
+                     d'une erreur, l'application doit référencer ses propres routines en utilisant la fonction <span
+                        class="bold-strong">mk_<wbr>handler_<wbr>set</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>Le tableau ci-dessous liste l'ensemble des gestionnaires d'erreurs du noyau, leur comportement par défaut
+               et
+               les actions recommandées pour les traiter :
+            </p>
+
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Fonction de rappel</th>
+                        <th>Origine de l'erreur</th>
+                        <th>Comportement<br>par défaut</th>
+                        <th>Comportement<br>recommandé</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="bold-strong">nmiFault</span></td>
+                        <td>Exception matérielle NMI.</td>
+                        <td>Blocage.</td>
+                        <td>Reset.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">hardFault</span></td>
+                        <td>Exception matérielle HardFault.</td>
+                        <td>Blocage.</td>
+                        <td>Suspension de la tâche fautive ou reset.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">busFault</span></td>
+                        <td>Exception matérielle BusFault.</td>
+                        <td>Blocage.</td>
+                        <td>Suspension de la tâche fautive ou reset.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">memFault*</span></td>
+                        <td>Exception matérielle MemManageFault.</td>
+                        <td>Blocage.</td>
+                        <td>Suspension de la tâche fautive ou reset.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">usageFault</span></td>
+                        <td>Exception matérielle UsageFault.</td>
+                        <td>Blocage.</td>
+                        <td>Suspension de la tâche fautive ou reset.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">fpuFault</span></td>
+                        <td>Exception matérielle de l'unité de calcul flottant.</td>
+                        <td>Blocage.</td>
+                        <td>Suspension de la tâche fautive ou reset.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">kernelFault</span></td>
+                        <td>Erreur interne du noyau.</td>
+                        <td>Blocage.</td>
+                        <td>Reset.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">stackFault</span></td>
+                        <td>Dépassement de pile.</td>
+                        <td>Blocage.</td>
+                        <td>Suspension de la tâche fautive ou reset.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">rightFault</span></td>
+                        <td>Appel système réalisé avec un niveau de droits insuffisant.</td>
+                        <td>Aucune action.</td>
+                        <td>Déclenchement de l'exception MemManageFault.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">handleFault</span></td>
+                        <td>Appel système réalisé avec une instance invalide.</td>
+                        <td>Aucune action.</td>
+                        <td>Déclenchement de l'exception MemManageFault.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">callbackFault</span></td>
+                        <td>Erreur interne du module de fonctions de rappel.</td>
+                        <td>Aucune action.</td>
+                        <td>Suspension de la tâche fautive ou reset.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <p>* Cette exception peut être déclenchée suite à une violation d'accès détectée par la <span
+                  class="bold-strong">MPU</span> ou
+               explicitement par un autre gestionnaire.</p>
+
+            <br>
+
+            <p>Les exceptions matérielles <span class="bold-strong">nmi<wbr>Fault</span>,
+               <span class="bold-strong">hard<wbr>Fault</span>, <span class="bold-strong">bus<wbr>Fault</span>, <span
+                  class="bold-strong">mem<wbr>Fault</span>, <span class="bold-strong">usage<wbr>Fault</span> et <span
+                  class="bold-strong">fpu<wbr>Fault</span> sont directement déclenchées par le processeur. Leur adresse
+               doit être
+               référencée dans la table
+               des vecteurs d'interruption.
+            </p>
+            <br>
+            <p>Pour la majorité des erreurs, le comportement recommandé consiste à suspendre la tâche
+               fautive si celle-ci est non privilégiée ou effectuer un reset si l'erreur s'est produite dans une tâche
+               privilégiée ou dans un vecteur d'interruption.
+            </p>
+            <br>
+            <p>Pour les erreurs <span class="bold-strong">nmiFault</span> et <span
+                  class="bold-strong">kernelFault</span>, un reset est recommandé car ces erreurs sont suffisamment
+               graves pour ne pas pouvoir être récupérées, l'erreur <span class="bold-strong">NMI</span> signifiant
+               l'échec d'une des exceptions logicielles et une
+               <span class="bold-strong">kernelFault</span> une corruption critique du noyau.
+            </p>
+            <br>
+            <p>
+               L'erreur <span class="bold-strong">stackFault</span> peut provoquer une corruption des données et
+               déclencher des dysfonctionnements à la chaîne. Un reset doit donc être réalisé lorsqu'un dépassement se
+               produit sur une pile privilégiée. Pour les tâches non privilégiées, une suspension est tolérée car les
+               données privilégiées sont protégées en continu par la
+               <span class="bold-strong">MPU</span> d'une corruption non privilégiée.
+            </p>
+            <br>
+            <p>
+               L'erreur <span class="bold-strong">callbackFault</span> se déclenche lorsque les
+               gestionnaires ou les
+               fonctions de
+               rappel n'ont pas été correctement supprimés par l'application ou lorsque les données des managers
+               ont été corrompues par un dépassement de pile. Cette erreur peut être gérée par reset ou par suspension
+               du
+               manager fautif.
+            </p>
+            <br>
+            <p>
+               Enfin, les erreurs <span class="bold-strong">rightFault</span> et <span
+                  class="bold-strong">handleFault</span>
+               sont déclenchées directement par le noyau pendant les appels système. L'application ne peut donc pas
+               gérer l'erreur en réalisant un autre appel système.
+            </p>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>L'exécution d'appels système est interdite dans les fonctions de rappel <span
+                        class="bold-strong">rightFault</span> et <span class="bold-strong">handleFault</span>. La
+                     suspension de la tâche fautive doit être déléguée au vecteur d'interruption <span
+                        class="bold-strong">MemManageFault</span>. Cette méthode est détaillée dans l'article <a
+                        href="./mpu.html"><span class="bold-strong">Protéger son programme avec Mk</span></a>.</p>
+               </div>
+            </div>
+
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Une exception matérielle qui n'est pas traitée se déclenche de nouveau dès la fin de son
+                     vecteur d'interruption. Le blocage permet de stopper cette répétition intempestive.</p>
+               </div>
+            </div>
+            <br>
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Les fonctions de rappel sont exécutées en mode privilégié. Elles doivent donc être courtes et ne
+                     jamais se bloquer.</p>
+               </div>
+            </div>
+            <br>
+
+            <h2>3. Utilisation</h2>
+
+            <p>Les fonctions de rappel peuvent être référencées avec la fonction <span
+                  class="bold-strong">mk_handler_set</span>. Cette fonction copie une structure <span
+                  class="bold-strong">T_mkKernelCallback</span> dans la donnée du noyau
+               <span class="bold-strong">g_<wbr>mkKernelCallback</span>. L'exemple ci-dessous montre comment
+               l'utiliser :
+            </p>
+            <br>
+            <pre class="code">
+
+<span class="type">T_mkCode</span> <span class="function">mk_fault_initHandlers</span> ( <span class="keyword">void</span> )
+{
+   <span class="type">T_mkCode</span> l_result;
+   <span class="multi-line-comment">/* Initialisation de la structure */</span>
+   <span class="multi-line-comment">/* La valeur K_MK_NULL permet de conserver le comportement par défaut */</span>
+   <span class="multi-line-comment">/* du noyau (boucle infinie ou aucune action)  */</span>
+   <span class="type">T_mkKernelCallback</span> l_kernelCallbackHandler = { <span class="define">K_MK_NULL</span> };
+   l_kernelCallbackHandler.<span class="field">busFault</span> = mk_busFault;
+   l_kernelCallbackHandler.<span class="field">callbackFault</span> = mk_callbackFault;
+   l_kernelCallbackHandler.<span class="field">fpuFault</span> = mk_fpuFault;
+   l_kernelCallbackHandler.<span class="field">handleFault</span> = mk_handleFault;
+   l_kernelCallbackHandler.<span class="field">hardFault</span> = mk_hardFault;
+   l_kernelCallbackHandler.<span class="field">kernelFault</span> = mk_kernelFault;
+   l_kernelCallbackHandler.<span class="field">memFault</span> = mk_memFault;
+   l_kernelCallbackHandler.<span class="field">nmiFault</span> = mk_nmiFault;
+   l_kernelCallbackHandler.<span class="field">rightFault</span> = mk_rightFault;
+   l_kernelCallbackHandler.<span class="field">stackFault</span> = mk_stackFault;
+   l_kernelCallbackHandler.<span class="field">usageFault</span> = mk_usageFault;
+
+   <span class="multi-line-comment">/* Référencement des gestionnaires d'erreur du noyau */</span>
+   l_result = <span class="function">mk_handler_set</span> ( &amp;l_kernelCallbackHandler );
+   <span class="keyword">return</span> ( l_result );
+}</pre>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>La fonction <span class="bold-strong">mk_<wbr>handler_<wbr>set</span> ne déclenche pas d'appel
+                     système. Elle doit être exécutée depuis une tâche privilégiée ou depuis le programme principal. Une
+                     tâche non privilégiée qui l'exécute provoque une violation d'accès
+                     mémoire.</p>
+               </div>
+            </div>
+            <br>
+
+            <p>Les fonctions de rappel sont exécutées en mode privilégié. Elles doivent s'exécuter le plus rapidement
+               possible. Le code ci-dessous présente une implémentation de tous ces gestionnaires :
+            </p>
+            <br>
+            <pre class="code">
+<span class="keyword">void</span> <span class="function">mk_handleDefaultFault</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Si la tâche courante est une tâche non privilégiée */</span>
+   <span class="keyword">if</span> ( ( g_mkScheduler.statusRegister.isr == 0 ) &amp;&amp; 
+      ( g_mkScheduler.currentTask != <span class="define">K_MK_NULL</span> ) &amp;&amp;
+      ( ( g_mkScheduler.currentTask-&gt;attribute.type &amp; <span class="define">K_MK_TYPE_PRIVILEGED</span> )
+      == <span class="define">K_MK_TYPE_DEFAULT</span> ) )
+   {
+      <span class="multi-line-comment">/* On suspend la tâche qui a provoqué l'erreur */</span>
+      ( <span class="keyword">void</span> ) <span class="function">mk_task_suspend</span> ( g_mkScheduler.currentTask );
+   }
+
+   <span class="multi-line-comment">/* Sinon */</span>
+   <span class="keyword">else</span>
+   {
+      <span class="multi-line-comment">/* On reset le programme */</span>
+      <span class="function">cortex_resetSystem</span> ( );
+   }
+}
+
+<span class="keyword">void</span> <span class="function">mk_busFault</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Exécution du gestionnaire d'erreur */</span>
+   <span class="function">mk_handleDefaultFault</span> ( );
+}
+
+<span class="keyword">void</span> <span class="function">mk_memFault</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Exécution du gestionnaire d'erreur */</span>
+   <span class="function">mk_handleDefaultFault</span> ( );
+}
+
+<span class="keyword">void</span> <span class="function">mk_fpuFault</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Exécution du gestionnaire d'erreur */</span>
+   <span class="function">mk_handleDefaultFault</span> ( );
+}
+
+<span class="keyword">void</span> <span class="function">mk_usageFault</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Exécution du gestionnaire d'erreur */</span>
+   <span class="function">mk_handleDefaultFault</span> ( );
+}
+
+<span class="keyword">void</span> <span class="function">mk_hardFault</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Exécution du gestionnaire d'erreur */</span>
+   <span class="function">mk_handleDefaultFault</span> ( );
+}
+
+<span class="keyword">void</span> <span class="function">mk_nmiFault</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* On reset le programme */</span>
+   <span class="function">cortex_resetSystem</span> ( );
+}
+
+<span class="keyword">void</span> <span class="function">mk_stackFault</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Exécution du gestionnaire d'erreur */</span>
+   <span class="function">mk_handleDefaultFault</span> ( );
+}
+
+<span class="keyword">void</span> <span class="function">mk_callbackFault</span> ( <span class="type">T_mkCode</span> p_mkResult )
+{
+   <span class="multi-line-comment">/* Le paramètre p_mkResult contient la valeur du code de retour */</span>
+   <span class="multi-line-comment">/* ayant déclenché l'erreur. */</span>
+
+   <span class="multi-line-comment">/* Exécution du gestionnaire d'erreur */</span>
+   <span class="function">mk_handleDefaultFault</span> ( );
+}
+
+<span class="keyword">void</span> <span class="function">mk_handleFault</span> ( <span class="type">T_mkAddr</span> p_mkHandle )
+{
+   <span class="multi-line-comment">/* Le paramètre p_mkHandle contient l'adresse de l'instance */</span>
+   <span class="multi-line-comment">/* ayant déclenché l'erreur. */</span>
+   
+   <span class="multi-line-comment">/* L'interruption matérielle MemManageFault sera déclenchée */</span>
+   <span class="multi-line-comment">/* après la fin du changement de contexte */</span>
+   <span class="function">nvic_setPendingException</span> ( <span class="define">K_NVIC_PENDING_MEMFAULT</span> );
+}
+
+<span class="keyword">void</span> <span class="function">mk_rightFault</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* L'interruption matérielle MemManageFault sera déclenchée */</span>
+   <span class="multi-line-comment">/* après la fin du changement de contexte */</span>
+   <span class="function">nvic_setPendingException</span> ( <span class="define">K_NVIC_PENDING_MEMFAULT</span> );
+}
+
+<span class="keyword">void</span> <span class="function">mk_kernelFault</span> ( 
+   <span class="type">T_mkKernelError</span> p_mkCode, <span class="type">T_mkSVCObject*</span> p_mkObject, <span class="type">uint32_t</span> p_mkStatus )
+{
+   <span class="multi-line-comment">/* Les 3 paramètres permettent de déboguer l'erreur rencontrée */</span>
+   <span class="multi-line-comment">/* - p_mkCode contient le type de l'erreur  */</span>
+   <span class="multi-line-comment">/* - p_mkObject contient l'adresse de l'objet SVC manipulé. */</span>
+   <span class="multi-line-comment">/* - p_mkStatus indique l'origine de l'appel système (vecteur */</span>
+   <span class="multi-line-comment">/*   d'interruption ou tâche). */</span>
+   
+   <span class="multi-line-comment">/* On reset le programme */</span>
+   <span class="function">cortex_resetSystem</span> ( );
+}
+
+</pre>
+
+            <br>
+            <p>Les fonctions de rappel <span class="bold-strong">handleFault</span> et <span
+                  class="bold-strong">callbackFault</span> reçoivent chacune un paramètre. Celui-ci contient l'adresse
+               de
+               l'instance invalide pour la première et la valeur du code de retour pour la seconde fonction.</p>
+            <br>
+            <p>La fonction de rappel <span class="bold-strong">kernelFault</span> possède trois paramètres.
+               Le premier contient le code de l'erreur (<span class="bold-strong">T_mkKernelError</span>), le deuxième
+               l'adresse de l'objet <span class="bold-strong">SVC</span> décrivant
+               l'appel système en cours (<span class="bold-strong">T_<wbr>mkSVCObject</span>) et le troisième paramètre
+               indique si l'appel système a été réalisé dans un vecteur d'interruption ou non.
+            </p>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Une erreur <span class="bold-strong">kernelFault</span> signale un état incohérent des
+                     structures internes du noyau. Après
+                     l'exécution de la fonction de rappel, il est fortement conseillé
+                     de redémarrer le processeur.</p>
+               </div>
+            </div>
+            <br>
+
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Pour les exceptions matérielles, aucune information n'est transmise à la fonction de rappel.
+                     C'est à l'application de lire les registres du processeur (par exemple <span
+                        class="bold-strong">CFSR</span> ou <span class="bold-strong">MMFAR</span>) pour déterminer
+                     la source de l'erreur.</p>
+               </div>
+            </div>
+            <br>
+
+            <h2>4. API</h2>
+
+            <!-- 4.1 mk_handler_set -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_set">4.1. La fonction mk_handler_set()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction référence les fonctions de rappel de l'application dans le noyau. Elle copie la
+                     structure <span class="bold-strong">T_<wbr>mkKernelCallback</span> fournie par l'application dans
+                     la
+                     structure <span class="bold-strong">g_<wbr>mkKernelCallback</span>.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="type">T_mkCode</span> mk_handler_set ( <span class="type">T_mkKernelCallback*</span> p_kernelCallback );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_kernelCallback</span> <span class="italic">[in]</span>
+                        <p>Adresse d'une structure de type <span class="bold-strong">T_mkKernelCallback</span>.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li><span class="bold-strong">K_MK_OK</span> : les fonctions de rappel de l'application ont été
+                        référencées.</li>
+                     <li><span class="bold-strong">K_MK_ERROR_PARAM</span> : les fonctions de rappel de l'application
+                        n'ont pas été
+                        référencées car
+                        le
+                        paramètre est invalide.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Cette fonction doit être exécutée par une tâche privilégiée.</li>
+                     <li>
+                        Cette fonction copie l'intégralité de la structure. Les fonctions de rappel référencées lors
+                        d'un appel précédent sont donc écrasées.
+
+                     </li>
+                  </ul>
+               </div>
+            </details>
+
+         </div>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <a href="./callback.html">
+               <div>
+                  <p>&lt;</p>
+                  <p>Différer l'exécution des fonctions avec les Callbacks</p>
+               </div>
+            </a> <a href="../progress/progress.html">
+               <div>
+                  <p>La propriété, les tâches et les objets de synchronisation</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>

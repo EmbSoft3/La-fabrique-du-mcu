@@ -1030,7 +1030,7 @@ l_kernelCallbackHandler.handleFault = <span class="function">mk_handleFault</spa
 l_kernelCallbackHandler.memFault = <span class="function">mk_memFault</span>;
 
 <span class="multi-line-comment">/* Référencement des fonctions de rappel dans le noyau */</span>
-<span class="function">mk_handler_set</span> ( &l_kernelCallbackHandler );
+l_result = <span class="function">mk_handler_set</span> ( &l_kernelCallbackHandler );
 </pre>
             <br>
             <p>L'exécution d'appels système dans ces fonctions est interdite du fait de leur niveau
@@ -1040,16 +1040,11 @@ l_kernelCallbackHandler.memFault = <span class="function">mk_memFault</span>;
             </p>
             <br>
             <pre class="code">
-<span class="keyword">void</span> <span class="function">mk_rightFault</span> ( 
-   <span class="type">T_mkAddr</span> p_param1, <span class="type">T_mkAddr</span> p_param2, <span class="type">T_mkAddr</span> p_param3 )
+<span class="keyword">void</span> <span class="function">mk_rightFault</span> ( <span class="type">void</span> )
 {
    <span class="multi-line-comment">/* Fonction exécutée lorsque les permissions de la tâche */</span>
    <span class="multi-line-comment">/* appelante ne sont pas suffisantes */ </span>
 
-   <span class="multi-line-comment">/* Ces 3 paramètres ont toujours la valeur K_MK_NULL */</span>
-   <span class="multi-line-comment">/* pour cette callback */ </span>
-   ( <span class="keyword">void</span> ) p_param1, ( <span class="keyword">void</span> ) p_param2, ( <span class="keyword">void</span> ) p_param3;
-   
    <span class="multi-line-comment">/* L'interruption matérielle MemManageFault sera déclenchée */</span>
    <span class="multi-line-comment">/* après la fin de l'appel système */</span>
    <span class="function">nvic_setPendingException</span> ( <span class="define">K_NVIC_PENDING_MEMFAULT</span> );
@@ -1057,15 +1052,10 @@ l_kernelCallbackHandler.memFault = <span class="function">mk_memFault</span>;
    <span class="keyword">return</span>;
 }
 
-<span class="keyword">void</span> <span class="function">mk_handleFault</span> ( 
-   <span class="type">T_mkAddr</span> p_param1, <span class="type">T_mkAddr</span> p_param2, <span class="type">T_mkAddr</span> p_param3 )
+<span class="keyword">void</span> <span class="function">mk_handleFault</span> ( <span class="type">void</span> )
 {
    <span class="multi-line-comment">/* Fonction exécutée lorsque l'instance de la tâche ou de l'objet */</span>
    <span class="multi-line-comment">/* de synchronisation est invalide */ </span>
-   
-   <span class="multi-line-comment">/* Ces 3 paramètres ont toujours la valeur K_MK_NULL */</span>
-   <span class="multi-line-comment">/* pour cette callback */ </span>
-   ( <span class="keyword">void</span> ) p_param1, ( <span class="keyword">void</span> ) p_param2, ( <span class="keyword">void</span> ) p_param3;
    
    <span class="multi-line-comment">/* L'interruption matérielle MemManageFault sera déclenchée */</span>
    <span class="multi-line-comment">/* après la fin de l'appel système */</span>
@@ -1083,16 +1073,11 @@ l_kernelCallbackHandler.memFault = <span class="function">mk_memFault</span>;
             </p>
             <br>
             <pre class="code">
-<span class="keyword">void</span> <span class="function">mk_memFault</span> ( 
-   <span class="type">T_mkAddr</span> p_param1, <span class="type">T_mkAddr</span> p_param2, <span class="type">T_mkAddr</span> p_param3 )
+<span class="keyword">void</span> <span class="function">mk_memFault</span> ( <span class="type">void</span> )
 {
    <span class="multi-line-comment">/* Fonction exécutée explicitement (handleFault, rightFault) */  </span>
    <span class="multi-line-comment">/* ou lors d'une violation d'accès mémoire */ </span>
 
-   <span class="multi-line-comment">/* Ces 3 paramètres ont toujours la valeur K_MK_NULL */</span>
-   <span class="multi-line-comment">/* pour cette callback */ </span>
-   ( <span class="keyword">void</span> ) p_param1, ( <span class="keyword">void</span> ) p_param2, ( <span class="keyword">void</span> ) p_param3;
-   
    <span class="multi-line-comment">/* Les registres CFSR ou MMFAR peuvent être lus pour déterminer */</span>
    <span class="multi-line-comment">/* la source de la violation mémoire. */</span>
 
