@@ -5,7 +5,7 @@
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="description"
-      content="Gérez les erreurs du noyau Mk : exceptions matérielles, droits insuffisants, instances invalides ou erreurs internes. Personnalisez chaque gestionnaire avec la fonction mk_handler_set.">
+      content="Gérez les exceptions matérielles, les appels système invalides et les erreurs internes du noyau Mk avec les gestionnaires d'erreurs et la fonction mk_handler_set.">
    <title>Traiter les erreurs avec les gestionnaires</title>
    <link rel="icon" type="image/png" href="../../favicon.png">
    <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
@@ -43,10 +43,11 @@
             </p>
 
             <h2>1. Synthèse des fonctions</h2>
-            <p>Ce module est constitué d'un ensemble de fonctions de rappel qui peuvent être surchargées par
-               l'application. Ces fonctions sont déclarées dans les fichiers <span
+            <p>Ce module est constitué d'un ensemble de gestionnaires dont le comportement peut être
+               personnalisé par
+               l'application. Ces gestionnaires sont déclarés dans les fichiers <span
                   class="bold-strong">mk_<wbr>handler_<wbr>private.h</span> et <span
-                  class="bold-strong">mk_<wbr>handler<wbr>.h</span> :
+                  class="bold-strong">mk_<wbr>handler.h</span> :
             </p>
             <div class="table-scroll-container">
                <table>
@@ -128,22 +129,11 @@
                   class="bold-strong">g_<wbr>mkKernelCallback</span> est alors analysée
                pour
                déterminer si
-               une fonction de rappel a été personnalisée par l'application.</p>
-            <p>Si une fonction a été personnalisée, le noyau l'exécute. Dans le cas contraire et en fonction de la
-               criticité de l'erreur, le noyau se bloque
-               ou ne réalise aucune action.
+               une fonction de rappel a été référencée par l'application.</p>
+            <p>Si une fonction a été référencée, le noyau l'exécute. Dans le cas contraire et en fonction de la
+               criticité de l'erreur, le noyau se bloque ou ne réalise aucune action.
             </p>
 
-            <br>
-            <div class="comment">
-               <p class="comment-logo">💬</p>
-               <div class="comment-text ">
-                  <p>Les gestionnaires du noyau ne sont pas modifiables. Pour personnaliser le traitement
-                     d'une erreur, l'application doit référencer ses propres routines en utilisant la fonction <span
-                        class="bold-strong">mk_<wbr>handler_<wbr>set</span>.
-                  </p>
-               </div>
-            </div>
             <br>
 
             <p>Le tableau ci-dessous liste l'ensemble des gestionnaires d'erreurs du noyau, leur comportement par défaut
@@ -155,7 +145,7 @@
                <table>
                   <thead>
                      <tr>
-                        <th>Fonction de rappel</th>
+                        <th>Gestionnaire de<br>rappel</th>
                         <th>Origine de l'erreur</th>
                         <th>Comportement<br>par défaut</th>
                         <th>Comportement<br>recommandé</th>
@@ -236,7 +226,17 @@
                explicitement par un autre gestionnaire.</p>
 
             <br>
-
+            <div class="comment">
+               <p class="comment-logo">💬</p>
+               <div class="comment-text ">
+                  <p>Le comportement par défaut des gestionnaires d'erreurs n'est pas modifiable. Pour personnaliser
+                     le traitement
+                     d'une erreur, l'application peut référencer ses propres fonctions de rappel en utilisant la
+                     routine <span class="bold-strong">mk_<wbr>handler_<wbr>set</span>.
+                  </p>
+               </div>
+            </div>
+            <br>
             <p>Les exceptions matérielles <span class="bold-strong">nmi<wbr>Fault</span>,
                <span class="bold-strong">hard<wbr>Fault</span>, <span class="bold-strong">bus<wbr>Fault</span>, <span
                   class="bold-strong">mem<wbr>Fault</span>, <span class="bold-strong">usage<wbr>Fault</span> et <span
@@ -246,16 +246,15 @@
                des vecteurs d'interruption.
             </p>
             <br>
-            <p>Pour la majorité des erreurs, le comportement recommandé consiste à suspendre la tâche
-               fautive si celle-ci est non privilégiée ou effectuer un reset si l'erreur s'est produite dans une tâche
+            <p>Pour la majorité des erreurs, le comportement recommandé consiste soit à suspendre la tâche
+               fautive si celle-ci est non privilégiée soit à effectuer un reset si l'erreur s'est produite dans une
+               tâche
                privilégiée ou dans un vecteur d'interruption.
             </p>
             <br>
             <p>Pour les erreurs <span class="bold-strong">nmiFault</span> et <span
                   class="bold-strong">kernelFault</span>, un reset est recommandé car ces erreurs sont suffisamment
-               graves pour ne pas pouvoir être récupérées, l'erreur <span class="bold-strong">NMI</span> signifiant
-               l'échec d'une des exceptions logicielles et une
-               <span class="bold-strong">kernelFault</span> une corruption critique du noyau.
+               graves pour ne pas pouvoir être récupérées.
             </p>
             <br>
             <p>
@@ -263,7 +262,7 @@
                déclencher des dysfonctionnements à la chaîne. Un reset doit donc être réalisé lorsqu'un dépassement se
                produit sur une pile privilégiée. Pour les tâches non privilégiées, une suspension est tolérée car les
                données privilégiées sont protégées en continu par la
-               <span class="bold-strong">MPU</span> d'une corruption non privilégiée.
+               <span class="bold-strong">MPU</span>. Une corruption non privilégiée ne peut donc pas se produire.
             </p>
             <br>
             <p>
@@ -280,7 +279,7 @@
                Enfin, les erreurs <span class="bold-strong">rightFault</span> et <span
                   class="bold-strong">handleFault</span>
                sont déclenchées directement par le noyau pendant les appels système. L'application ne peut donc pas
-               gérer l'erreur en réalisant un autre appel système.
+               traiter l'erreur en réalisant un autre appel système.
             </p>
             <br>
             <div class="warning">
@@ -307,7 +306,7 @@
                <p class="comment-logo">💬</p>
                <div class="comment-text ">
                   <p>Les fonctions de rappel sont exécutées en mode privilégié. Elles doivent donc être courtes et ne
-                     jamais se bloquer.</p>
+                     jamais bloquer.</p>
                </div>
             </div>
             <br>
@@ -359,7 +358,7 @@
             <br>
 
             <p>Les fonctions de rappel sont exécutées en mode privilégié. Elles doivent s'exécuter le plus rapidement
-               possible. Le code ci-dessous présente une implémentation de tous ces gestionnaires :
+               possible. Le code ci-dessous présente une implémentation de toutes ces fonctions :
             </p>
             <br>
             <pre class="code">
@@ -470,7 +469,8 @@
             <p>Les fonctions de rappel <span class="bold-strong">handleFault</span> et <span
                   class="bold-strong">callbackFault</span> reçoivent chacune un paramètre. Celui-ci contient l'adresse
                de
-               l'instance invalide pour la première et la valeur du code de retour pour la seconde fonction.</p>
+               l'instance invalide pour la première et la valeur du code de retour en erreur pour la seconde fonction.
+            </p>
             <br>
             <p>La fonction de rappel <span class="bold-strong">kernelFault</span> possède trois paramètres.
                Le premier contient le code de l'erreur (<span class="bold-strong">T_mkKernelError</span>), le deuxième
@@ -537,12 +537,369 @@
                   </ul>
                   <p><span class="underline">Note</span> :</p>
                   <ul>
-                     <li>Cette fonction doit être exécutée par une tâche privilégiée.</li>
+                     <li>Cette fonction doit être exécutée par une tâche privilégiée ou par le programme principal.</li>
                      <li>
                         Cette fonction copie l'intégralité de la structure. Les fonctions de rappel référencées lors
                         d'un appel précédent sont donc écrasées.
 
                      </li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 4.2 mk_handler_nmiFault -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_nmiFault">4.2. La fonction mk_handler_nmiFault()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction est le gestionnaire d'erreur de l'exception <span class="bold-strong">NMI</span>.
+                     Si une fonction de rappel a été référencée, elle l'exécute. Dans le cas
+                     contraire, elle se bloque dans une boucle infinie.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="keyword">void</span> mk_handler_nmiFault ( <span class="keyword">void</span> );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>L'adresse de cette fonction doit être référencée dans la table des vecteurs d'interruption.
+                     </li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 4.3 mk_handler_hardFault -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_hardFault">4.3. La fonction mk_handler_hardFault()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction est le gestionnaire de l'exception <span class="bold-strong">HardFault</span>.
+                     Si une fonction de rappel a été référencée, elle l'exécute. Dans le cas
+                     contraire, elle se bloque dans une boucle infinie.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="keyword">void</span> mk_handler_hardFault ( <span class="keyword">void</span> );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>L'adresse de cette fonction doit être référencée dans la table des vecteurs d'interruption.
+                     </li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 4.4 mk_handler_busFault -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_busFault">4.4. La fonction mk_handler_busFault()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction est le gestionnaire de l'exception <span class="bold-strong">BusFault</span>.
+                     Si une fonction de rappel a été référencée, elle l'exécute. Dans le cas
+                     contraire, elle se bloque dans une boucle infinie.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="keyword">void</span> mk_handler_busFault ( <span class="keyword">void</span> );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>L'adresse de cette fonction doit être référencée dans la table des vecteurs d'interruption.
+                     </li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 4.5 mk_handler_memFault -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_memFault">4.5. La fonction mk_handler_memFault()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction est le gestionnaire de l'exception <span class="bold-strong">MemManageFault</span>.
+                     Si une fonction de rappel a été référencée, elle l'exécute. Dans le cas
+                     contraire, elle se bloque dans une boucle infinie.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="keyword">void</span> mk_handler_memFault ( <span class="keyword">void</span> );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>L'adresse de cette fonction doit être référencée dans la table des vecteurs d'interruption.
+                     </li>
+                     <li>Cette exception peut être déclenchée suite à une violation d'accès détectée par la <span
+                           class="bold-strong">MPU</span> ou explicitement par un autre gestionnaire.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 4.6 mk_handler_usageFault -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_usageFault">4.6. La fonction mk_handler_usageFault()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction est le gestionnaire de l'exception <span class="bold-strong">UsageFault</span>.
+                     Si une fonction de rappel a été référencée, elle l'exécute. Dans le cas
+                     contraire, elle se bloque dans une boucle infinie.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="keyword">void</span> mk_handler_usageFault ( <span class="keyword">void</span> );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>L'adresse de cette fonction doit être référencée dans la table des vecteurs d'interruption.
+                     </li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 4.7 mk_handler_fpuFault -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_fpuFault">4.7. La fonction mk_handler_fpuFault()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction est le gestionnaire de l'exception de l'unité de calcul flottant (<span
+                        class="bold-strong">FPU</span>). Si une fonction de rappel a été référencée, elle l'exécute.
+                     Dans le cas
+                     contraire, elle se bloque dans une boucle infinie.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="keyword">void</span> mk_handler_fpuFault ( <span class="keyword">void</span> );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>L'adresse de cette fonction doit être référencée dans la table des vecteurs d'interruption.
+                     </li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 4.8 mk_handler_stackFault -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_stackFault">4.8. La fonction mk_handler_stackFault()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction est exécutée par le noyau lorsqu'un dépassement de pile est détecté. Si une fonction
+                     de rappel a été référencée, elle l'exécute. Dans le cas
+                     contraire, elle se bloque dans une boucle infinie.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="keyword">void</span> mk_handler_stackFault ( <span class="keyword">void</span> );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 4.9 mk_handler_rightFault -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_rightFault">4.9. La fonction mk_handler_rightFault()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction est exécutée par le noyau lorsqu'un appel système a été réalisé avec un niveau de
+                     droits insuffisant. Si une fonction de rappel a été référencée, elle l'exécute. Dans le cas
+                     contraire, elle ne réalise aucune
+                     action.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="keyword">void</span> mk_handler_rightFault ( <span class="keyword">void</span> );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>L'exécution d'appels système est interdite dans la fonction de rappel <span
+                           class="bold-strong">rightFault</span>.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 4.10 mk_handler_handleFault -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_handleFault">4.10. La fonction
+                     mk_handler_handleFault()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction est exécutée par le noyau lorsqu'un appel système a été réalisé avec une instance
+                     invalide. Si une fonction de rappel a été référencée, elle l'exécute. Dans le cas
+                     contraire, elle ne réalise aucune action.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="keyword">void</span> mk_handler_handleFault ( <span class="type">T_mkAddr</span> p_mkHandle );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkHandle</span> <span class="italic">[in]</span>
+                        <p>Adresse de l'instance invalide.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>L'exécution d'appels système est interdite dans la fonction de rappel <span
+                           class="bold-strong">handleFault</span>.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 4.11 mk_handler_kernelFault -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_kernelFault">4.11. La fonction
+                     mk_handler_kernelFault()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction est exécutée par le noyau lorsqu'une erreur interne se produit. Si une fonction de
+                     rappel a été référencée, elle l'exécute. Dans le cas
+                     contraire, elle se bloque dans une boucle infinie.
+                  </p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="keyword">void</span> mk_handler_kernelFault ( <span class="type">T_mkKernelError</span> p_mkCode, 
+   <span class="type">T_mkSVCObject*</span> p_mkObject, <span class="type">uint32_t</span> p_mkStatus );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkCode</span> <span class="italic">[in]</span>
+                        <p>Code de l'erreur rencontrée. Les valeurs possibles sont listées dans le type <span
+                              class="bold-strong">T_mkKernelError</span>.</p>
+                        <br>
+                     </li>
+                     <li><span class="bold-green">p_mkObject</span> <span class="italic">[in]</span>
+                        <p>Adresse de l'objet <span class="bold-strong">T_mkSVCObject</span> contenant les
+                           paramètres de l'appel système lorsque l'erreur a été rencontrée.</p>
+                        <br>
+                     </li>
+                     <li><span class="bold-green">p_mkStatus</span> <span class="italic">[in]</span>
+                        <p>Drapeau indiquant si l'appel système a été effectué depuis un vecteur d'interruption (valeur
+                           1) ou
+                           non (valeur 0).</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+               </div>
+            </details>
+
+            <!-- 4.12 mk_handler_callbackFault -->
+            <details open>
+               <summary>
+                  <span class="subtitle" id="mk_handler_callbackFault">4.12. La fonction
+                     mk_handler_callbackFault()</span>
+               </summary>
+               <div class="prototype">
+                  <p>Cette fonction est exécutée par le noyau lorsqu'une erreur interne se produit dans un manager de
+                     rappel. Si une fonction de rappel a été référencée, elle l'exécute. Dans le cas
+                     contraire, elle ne réalise aucune action.</p>
+                  <br>
+                  <p><span class="underline">Prototype</span> :</p>
+                  <br>
+                  <pre class="code">
+<span class="keyword">void</span> mk_handler_callbackFault ( <span class="type">T_mkCode</span> p_mkResult );
+                  </pre>
+                  <p><span class="underline">Paramètres</span> :</p>
+                  <ul>
+                     <li><span class="bold-green">p_mkResult</span> <span class="italic">[in]</span>
+                        <p>Code de retour ayant provoqué l'erreur.</p>
+                     </li>
+                  </ul>
+                  <p><span class="underline">Retour</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
+                  </ul>
+                  <p><span class="underline">Note</span> :</p>
+                  <ul>
+                     <li>Sans objet.</li>
                   </ul>
                </div>
             </details>

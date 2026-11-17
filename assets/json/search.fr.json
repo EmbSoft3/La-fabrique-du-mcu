@@ -540,6 +540,104 @@
          "anchor": "callback.html#K_MK_CALLBACK_MESSAGES_NUMBER"
       },
       {
+         "name": "Handler",
+         "module": "Module",
+         "submodule": "",
+         "description": "Description du module Handler.",
+         "anchor": "handler.html"
+      },
+      {
+         "name": "mk_handler_set",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Fonction permettant de référencer les fonctions de rappel de l'application dans le noyau.",
+         "anchor": "handler.html#mk_handler_set"
+      },
+      {
+         "name": "mk_handler_nmiFault",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Gestionnaire d'erreur de l'exception NMI.",
+         "anchor": "handler.html#mk_handler_nmiFault"
+      },
+      {
+         "name": "mk_handler_hardFault",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Gestionnaire d'erreur de l'exception HardFault.",
+         "anchor": "handler.html#mk_handler_hardFault"
+      },
+      {
+         "name": "mk_handler_busFault",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Gestionnaire d'erreur de l'exception BusFault.",
+         "anchor": "handler.html#mk_handler_busFault"
+      },
+      {
+         "name": "mk_handler_memFault",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Gestionnaire d'erreur de l'exception MemManageFault.",
+         "anchor": "handler.html#mk_handler_memFault"
+      },
+      {
+         "name": "mk_handler_usageFault",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Gestionnaire d'erreur de l'exception UsageFault.",
+         "anchor": "handler.html#mk_handler_usageFault"
+      },
+      {
+         "name": "mk_handler_fpuFault",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Gestionnaire d'erreur de l'exception FPU.",
+         "anchor": "handler.html#mk_handler_fpuFault"
+      },
+      {
+         "name": "mk_handler_stackFault",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Gestionnaire d'erreur de dépassement de pile.",
+         "anchor": "handler.html#mk_handler_stackFault"
+      },
+      {
+         "name": "mk_handler_rightFault",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Gestionnaire d'erreur pour des droits insuffisants.",
+         "anchor": "handler.html#mk_handler_rightFault"
+      },
+      {
+         "name": "mk_handler_handleFault",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Gestionnaire d'erreur pour une instance invalide.",
+         "anchor": "handler.html#mk_handler_handleFault"
+      },
+      {
+         "name": "mk_handler_kernelFault",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Gestionnaire d'erreur interne du noyau.",
+         "anchor": "handler.html#mk_handler_kernelFault"
+      },
+      {
+         "name": "mk_handler_callbackFault",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Gestionnaire d'erreur pour les managers de rappel.",
+         "anchor": "handler.html#mk_handler_callbackFault"
+      },
+      {
+         "name": "T_mkKernelCallback",
+         "module": "Handler",
+         "submodule": "",
+         "description": "Type définissant la structure des fonctions de rappel de gestion d'erreurs référencées dans le noyau.",
+         "anchor": "handler.html#mk_handler_set"
+      },
+      {
          "name": "linker.ld",
          "module": "Linker",
          "submodule": "",
