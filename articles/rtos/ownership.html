@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Apprenez comment le noyau Mk associe un propriétaire aux tâches et aux objets de synchronisation pour identifier les ressources d'une application.">
+   <title>La propriété, les tâches et les objets de synchronisation</title>
+   <link rel="icon" type="image/png" href="../../favicon.png">
+   <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/ownership.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link href="../../assets/css/fonts.css" rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./index.html">MK</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <h1 class="title-article">La propriété, les tâches et les objets de synchronisation</h1>
+
+            <p>Lors de la création d'une tâche ou d'un objet de synchronisation, le noyau <span
+                  class="bold-strong">Mk</span> a la possibilité de définir un propriétaire.</p>
+            <p>
+               Ce propriétaire est stocké dans le champ <span class="bold-strong">owner</span> des tâches et
+               dans le
+               champ <span class="bold-strong">createByAddr</span>
+               des objets de synchronisation. Son but est de référencer l'ensemble des tâches et
+               l'ensemble des objets qui appartiennent à une même application. </p>
+            <p>Le tableau ci-dessous décrit quel attribut est utilisé pour stocker le propriétaire d'une tâche ou d'un
+               objet : </p>
+
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Objet</th>
+                        <th>Structure</th>
+                        <th>Attribut</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td>Tâche</td>
+                        <td><span class="gray">T_mkTask</span></td>
+                        <td><span class="bold-strong">owner</span></td>
+                     </tr>
+                     <tr>
+                        <td>Mutex</td>
+                        <td><span class="gray">T_mkMutex</span></td>
+                        <td><span class="bold-strong">createByAddr</span></td>
+                     </tr>
+                     <tr>
+                        <td>Sémaphore</td>
+                        <td><span class="gray">T_mkSemaphore</span></td>
+                        <td><span class="bold-strong">createByAddr</span></td>
+                     </tr>
+                     <tr>
+                        <td>Champ d'événements</td>
+                        <td><span class="gray">T_mkEvent</span></td>
+                        <td><span class="bold-strong">createByAddr</span></td>
+                     </tr>
+                     <tr>
+                        <td>Boîte de messages</td>
+                        <td><span class="gray">T_mkMail</span></td>
+                        <td><span class="bold-strong">createByAddr</span></td>
+                     </tr>
+                     <tr>
+                        <td>Pool</td>
+                        <td><span class="gray">T_mkPool</span></td>
+                        <td><span class="bold-strong">createByAddr</span></td>
+                     </tr>
+                     <tr>
+                        <td>Gestionnaire de rappel</td>
+                        <td><span class="gray">T_mkCallbackHandler</span></td>
+                        <td><span class="bold-strong">createByAddr</span></td>
+                     </tr>
+                     <tr>
+                        <td>Fonction de rappel</td>
+                        <td><span class="gray">T_mkCallback</span></td>
+                        <td><span class="bold-strong">createByAddr</span></td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+
+            <h2>1. Le propriétaire d'une tâche</h2>
+
+            <p>Le propriétaire d'une tâche est défini lors de sa création en utilisant le paramètre <span
+                  class="bold-strong">p_mkOwner</span> de la fonction
+               <span class="bold-strong">mk_<wbr>task_<wbr>setTaskCtrlBlock</span> :
+            </p>
+            <br>
+
+            <pre class="code">
+<span class="type">T_mkCode</span> mk_task_setTaskCtrlBlock ( <span class="type">T_mkTaskCtrlBlock</span>* p_mkAttribute, 
+   <span class="type">uint32_t</span> p_mkType, <span class="type">uint32_t</span> p_mkIdentifier, <span class="type">uint32_t</span> p_mkPriority, 
+   <span class="type">T_mkAddr</span> <span class="underline">p_mkOwner</span> );
+                  </pre>
+
+
+            <p>Ce paramètre est enregistré dans
+               l'attribut <span class="bold-strong">owner</span> de la tâche. Il est optionnel et peut prendre
+               la valeur <span class="bold-strong">K_<wbr>MK_<wbr>NULL</span> si la tâche ne nécessite pas de
+               propriétaire.
+            </p>
+            <br>
+            <p>Les propriétaires sont <span class="bold-strong">hérités</span>. Lorsqu'une tâche qui possède un
+               propriétaire en crée une autre, le paramètre <span class="bold-strong">p_mkOwner</span> est ignoré et
+               la nouvelle tâche hérite du propriétaire de la tâche créatrice. Le paramètre n'est donc pris en compte
+               que lorsque la tâche créatrice n'en possède pas déjà un.
+            </p>
+
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Cette règle n'est pas applicable aux vecteurs d'interruption. Une tâche créée depuis une
+                     interruption
+                     reçoit toujours le propriétaire passé en paramètre.</p>
+               </div>
+            </div>
+            <br>
+
+            <p>Le noyau n'interprète pas la valeur du propriétaire. Il s'agit d'une adresse quelconque, à la
+               disposition de l'utilisateur. Dans le cas d'une application, le propriétaire peut par exemple être
+               l'adresse d'une structure applicative.</p>
+            <br>
+
+
+            <p>L'héritage garantit qu'une tâche ne peut pas échapper à son application étant donné que toutes les tâches
+               créées
+               directement ou indirectement par la tâche principale de l'application partagent le même
+               propriétaire.
+            </p>
+
+            <h2>2. Le propriétaire d'un objet de synchronisation</h2>
+
+            <p>Lors de la création d'un objet, le noyau copie la valeur de l'attribut <span
+                  class="bold-strong">owner</span> de la tâche qui a exécuté l'appel système
+               dans l'attribut <span class="bold-strong">createByAddr</span>.</p>
+            <p>L'objet hérite donc du propriétaire de la tâche appelante et non de l'adresse de la tâche créatrice.
+               Deux conséquences en découlent :
+            </p>
+            <ul>
+               <li><span class="gray">✔</span>Tous les objets créés par les tâches d'une même application partagent la
+                  même valeur de <span class="bold-strong">createByAddr</span>.</li>
+               <li><span class="gray">✔</span>Si la tâche appelante n'a pas de propriétaire, l'attribut <span
+                     class="bold-strong">createByAddr</span> de l'objet est nul.</li>
+            </ul>
+
+            <h2>3. L'arbre de création</h2>
+
+            <p>La propriété est transmise par héritage. L'application attribue d'abord un propriétaire à sa tâche
+               principale qui
+               le
+               transmet aux tâches qu'elle crée et aux objets
+               qu'elle alloue. On obtient ainsi un <span class="bold-strong">arbre</span> dont la racine
+               est l'application :
+            </p>
+            <br>
+            <pre class="code">
+Application (T_mkApplication)
+ ├─ Tâche principale                  owner = Application
+ │   ├─ Mutex                         createByAddr = Application
+ │   ├─ Boîte de messages             createByAddr = Application
+ │   ├─ Tâche secondaire              owner = Application (hérité)
+ │   │   └─ Sémaphore                 createByAddr = Application
+ │   └─ Gestionnaire de rappel        createByAddr = Application
+ │       ├─ Champ d'événements        createByAddr = Application
+ │       └─ Fonction de rappel        createByAddr = Application
+ └─ ...
+</pre>
+            <br>
+            <p>Il suffit alors de comparer le propriétaire d'une tâche ou d'un objet avec l'adresse de l'application
+               pour
+               déterminer son origine. Il devient alors possible d'identifier les
+               tâches et les objets de synchronisation qui ont été créés et qui doivent être supprimés suite à la
+               fermeture d'une application.
+            </p>
+
+            <h2>4. Limitations</h2>
+            <p>Le mécanisme de propriétaire connaît les limitations suivantes : </p>
+            <ul>
+               <li><span class="gray">✔</span>Lors de la création d'un gestionnaire d'allocation mémoire ou d'une boîte
+                  de message, la zone mémoire
+                  fournie par
+                  l'utilisateur ne se voit pas attribuer de
+                  propriétaire (<span class="bold-strong">T_mkPoolArea</span>).
+               </li>
+               <li><span class="gray">✔</span>Étant donné que les fonctions de rappel sont créées séparément des
+                  gestionnaires de rappel, leur
+                  propriétaire peut être différent du gestionnaire auquel elles sont rattachées.
+               </li>
+               <li>
+                  <span class="gray">✔</span>La propriété et la protection sont deux notions distinctes. Un objet non
+                  protégé peut être manipulé
+                  par toutes
+                  les tâches, quel que soit son propriétaire.
+               </li>
+            </ul>
+
+            <h2>5. Utilisation</h2>
+
+            <p>L'exemple ci-dessous montre comment
+               attribuer un propriétaire à la tâche principale d'une application :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* On définit le type T_mkApplication pour l'exemple */</span>
+<span class="multi-line-comment">/* Celui-ci possède les attributs de la tâche principale et d'autres */</span>
+<span class="multi-line-comment">/* si nécessaire */</span>
+<span class="keyword">typedef struct</span> T_mkApplication T_mkApplication;
+<span class="keyword">struct</span> T_mkApplication
+{
+   <span class="type">T_mkTask*</span>   task;          <span class="multi-line-comment">/*!&lt; Adresse de la tâche principale. */</span>
+   <span class="type">T_mkStack</span>   stack;         <span class="multi-line-comment">/*!&lt; Caractéristiques de la pile. */</span>
+   <span class="type">uint32_t</span>    identifier;    <span class="multi-line-comment">/*!&lt; Identifiant de la tâche principale. */</span>
+   <span class="type">uint32_t</span>    type;          <span class="multi-line-comment">/*!&lt; Type de la tâche principale. */</span>
+   <span class="type">uint32_t</span>    priority;      <span class="multi-line-comment">/*!&lt; Priorité de la tâche principale. */</span>
+   <span class="type">T_mkAddress</span> entryAddr;     <span class="multi-line-comment">/*!&lt; Point d'entrée de la tâche principale. */</span>
+   <span class="type">T_mkAddr</span>    arg;           <span class="multi-line-comment">/*!&lt; Argument de la tâche principale. */</span>
+};
+
+<span class="multi-line-comment">/* Déclaration et initialisation de l'application */</span>
+<span class="type">T_mkApplication</span> g_application;
+
+<span class="multi-line-comment">/* ... */</span>
+
+<span class="multi-line-comment">/* Configuration du TCB de la tâche principale de l'application */</span>
+<span class="multi-line-comment">/* On écrit l'adresse de g_application dans le propriétaire */</span>
+<span class="type">T_mkTaskCtrlBlock</span> l_taskCtrlBlock;
+l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &amp;l_taskCtrlBlock, 
+   g_application.<span class="field">type</span>, g_application.<span class="field">identifier</span>, g_application.<span class="field">priority</span>, 
+   &g_application );
+
+<span class="multi-line-comment">/* ... */</span>
+
+<span class="multi-line-comment">/* Création de la tâche ... */</span>
+l_result |= <span class="function">mk_task_create</span> ( &amp;g_application.<span class="field">task</span>, &amp;g_application.<span class="field">stack</span>, 
+   <span class="define">K_MK_NULL</span>, &amp;l_taskCtrlBlock, g_application.<span class="field">entryAddr</span>, 
+   g_application.<span class="field">arg</span> );
+
+</pre>
+            <br>
+            <p>Suite à sa création, la tâche principale possède <span class="bold-strong">g_application</span> comme
+               propriétaire. Celui-ci se
+               propagera donc
+               à tous ses enfants :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Point d'entrée de l'application (tâche principale, owner = application) */</span>
+<span class="keyword">void</span> <span class="function">application_main</span> ( <span class="type">T_mkAddr</span> p_param )
+{
+   <span class="multi-line-comment">/* Déclaration des variables de travail */</span>
+   <span class="type">T_mkCode</span> l_result;
+   <span class="type">T_mkTaskCtrlBlock</span> l_taskCtrlBlock;
+
+   <span class="multi-line-comment">/* Création d'un mutex (createByAddr = &amp;g_application) */</span>
+   l_result = <span class="function">mk_mutex_create</span> ( &amp;g_mutex, <span class="define">K_MK_AREA_UNPROTECTED</span> );
+
+   <span class="multi-line-comment">/* Configuration d'une tâche secondaire. Le propriétaire passé en  */</span>
+   <span class="multi-line-comment">/* paramètre est ignoré car la tâche courante possède déjà */</span>
+   <span class="multi-line-comment">/* un propriétaire */</span>
+   l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &amp;l_taskCtrlBlock, 
+      <span class="define">K_MK_TYPE_DEFAULT</span>, <span class="number">10</span>, <span class="number">2</span>, <span class="define">K_MK_NULL</span> );
+
+   <span class="multi-line-comment">/* ... */</span>
+
+   <span class="multi-line-comment">/* Création de la tâche secondaire (owner = &amp;g_application) */</span>
+   l_result = <span class="function">mk_task_create</span> ( &amp;g_task, &amp;g_stack, <span class="define">K_MK_NULL</span>, 
+      &amp;l_taskCtrlBlock, application_worker, <span class="define">K_MK_NULL</span> );
+
+   <span class="multi-line-comment">/* ... */</span>
+   <span class="keyword">for</span> ( ;; ) ;
+}
+</pre>
+         </div>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <a href="./handler.html">
+               <div>
+                  <p>&lt;</p>
+                  <p>Traiter les erreurs avec les gestionnaires</p>
+               </div>
+            </a> <a href="../progress/progress.html">
+               <div>
+                  <p>Mesurer le temps de charge CPU des tâches</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>
