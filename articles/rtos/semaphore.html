@@ -601,6 +601,21 @@ l_result = <span class="function">mk_semaphore_take</span> ( g_semaphore, <span 
                      <li>Cette fonction peut être exécutée dans un vecteur d'interruption.</li>
                      <li>Cette fonction peut libérer un jeton qui n'a pas été pris par la tâche appelante.</li>
                   </ul>
+                  <p><span class="underline">Attention</span> :</p>
+                  <div class="prototype-comment">
+                     <p class="prototype-logo">⚠️</p>
+                     <div class="prototype-text ">
+                        <ul>
+                           <li>Cette fonction entre dans une section critique si elle est exécutée depuis un vecteur
+                              d'interruption. Elle masque
+                              temporairement les interruptions de priorité numérique supérieure ou égale à
+                              <span class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MASK_<wbr>PRIORITY</span>. Le
+                              masque est
+                              automatiquement levé avant d'en sortir.
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
                </div>
             </details>
 

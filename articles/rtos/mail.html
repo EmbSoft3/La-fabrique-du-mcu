@@ -885,6 +885,13 @@
 								<ul>
 									<li>La taille du buffer source contenant le message à poster doit être au moins égale à la
 										taille d'un message de la boîte.</li>
+									<li>Cette fonction entre dans une section critique si elle est exécutée depuis un vecteur
+										d'interruption. Elle masque
+										temporairement les interruptions de priorité numérique supérieure ou égale à
+										<span class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MASK_<wbr>PRIORITY</span>. Le
+										masque est
+										automatiquement levé avant d'en sortir.
+									</li>
 								</ul>
 							</div>
 						</div>
