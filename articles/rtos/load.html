@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Découvrez comment le noyau Mk mesure le taux de charge CPU des tâches via le timer SysTick, l'algorithme utilisé et ses limites.">
+   <title>Mesurer le temps de charge CPU des tâches</title>
+   <link rel="icon" type="image/png" href="../../favicon.png">
+   <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/load.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link href="../../assets/css/fonts.css" rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./index.html">MK</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <h1 class="title-article">Mesurer le temps de charge CPU des tâches</h1>
+            <p>Le noyau <span class="bold-strong">Mk</span> calcule à intervalle régulier le taux de charge <span
+                  class="bold-strong">CPU</span> de
+               toutes les tâches. Cet article décrit l'algorithme de calcul utilisé, ses limites et la méthodologie
+               que doit mettre en œuvre une application pour
+               récupérer
+               le taux de charge <span class="bold-strong">CPU</span> d'une tâche.
+            </p>
+
+            <h2>1. Principe</h2>
+            <p>La mesure repose sur le timer système (<span class="bold-strong">SysTick</span>). Ce timer est un
+               compteur 24 bits descendant qui est rechargé à chaque tick du noyau.
+            </p>
+            <br>
+            <p>Lors de chaque changement de contexte, le noyau lit la valeur du compteur et effectue une différence avec
+               celle qu'il
+               avait
+               relevée lors du changement de contexte précédent. Cette différence représente la durée
+               pendant laquelle la tâche courante a été exécutée. Elle est
+               exprimée en périodes d'horloge du timer et est ajoutée au compteur de la tâche lors de chaque changement
+               de
+               contexte.
+            </p>
+            <br>
+            <p>Le calcul des charges <span class="bold-strong">CPU</span> est réalisé par la fonction <span
+                  class="bold-strong">mk_<wbr>scheduler_<wbr>load</span>.
+               Celle-ci est
+               exécutée par le vecteur <span class="bold-strong">PendSV</span> à chaque changement de contexte
+               juste après la
+               sauvegarde des registres de la tâche courante et <span class="underline">avant</span> l'élection de la
+               prochaine tâche à exécuter.
+            </p>
+
+            <h2>2. Les registres de calcul</h2>
+            <p>Les registres de calcul du temps de charge <span class="bold-strong">CPU</span> sont regroupés dans la
+               structure <span class="bold-strong">T_mk<wbr>Load</span> de l'ordonnanceur et dans la structure <span
+                  class="bold-strong">T_mk<wbr>Task<wbr>Load</span> de chaque tâche. Ces registres sont les suivants :
+            </p>
+            <br>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Structure</th>
+                        <th>Registre</th>
+                        <th>Description</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="gray">scheduler</span></td>
+                        <td><span class="gray">load.timerRegister</span></td>
+                        <td>Valeur de rechargement du timer système. Elle est définie par
+                           l'utilisateur lors de l'appel des fonctions <span class="bold-strong">mk_start</span> et
+                           <span class="bold-strong">mk_restart</span>.
+                        </td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">scheduler</span></td>
+                        <td><span class="gray">load.usTickRegister</span></td>
+                        <td>Valeur du timer système relevée lors du dernier changement de contexte.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">scheduler</span></td>
+                        <td><span class="gray">load.usTickRegisterSum</span></td>
+                        <td>Durée écoulée depuis le début d'une fenêtre de calcul.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">scheduler</span></td>
+                        <td><span class="gray">load.usTickRegisterLastSum</span></td>
+                        <td>Durée de la dernière fenêtre de calcul.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">scheduler</span></td>
+                        <td><span class="gray">load.tickRegister</span></td>
+                        <td>Valeur du dernier tick de l'ordonnanceur mémorisé. Il permet de détecter
+                           un nouveau tick.
+                        </td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">scheduler</span></td>
+                        <td><span class="gray">load.cycleRegister</span></td>
+                        <td>Nombre de ticks écoulés dans la fenêtre de calcul courante. Il évolue de 0 à <span
+                              class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>CPU_<wbr>LOAD_<wbr>RATE</span>.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">task</span></td>
+                        <td><span class="gray">load.value</span></td>
+                        <td>Durée d'exécution cumulée de la tâche sur la fenêtre de calcul en cours.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">task</span></td>
+                        <td><span class="gray">load.lastValue</span></td>
+                        <td>Durée d'exécution de la tâche sur la dernière fenêtre de calcul.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+
+            <h2>3. Description de l'algorithme</h2>
+            <p>Lors de chaque changement de contexte, la fonction <span
+                  class="bold-strong">mk_<wbr>scheduler_<wbr>load</span>
+               réalise les opérations suivantes :
+            </p>
+            <ul>
+               <li><span class="gray">✔</span> Elle lit d'abord la valeur du timer système et la valeur du bit de
+                  débordement qui indique si le compteur a atteint la valeur 0 depuis la
+                  dernière lecture ou non.</li>
+               <li><span class="gray">✔</span> Si le compteur a débordé, la valeur relevée au changement de contexte
+                  précédent est ajoutée à la tâche courante et le point de
+                  départ de la mesure est réinitialisé avec la valeur de rechargement du timer.</li>
+               <li><span class="gray">✔</span> La fonction calcule ensuite la durée écoulée depuis le point de départ
+                  puis ajoute cette
+                  durée à la tâche courante et à la durée totale de la mesure.</li>
+               <li><span class="gray">✔</span> Si un nouveau tick est détecté, le nombre de cycles dans la fenêtre de
+                  calcul est incrémenté.</li>
+               <li><span class="gray">✔</span> Lorsque la fenêtre de calcul est terminée, c'est-à-dire lorsque <span
+                     class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>CPU_<wbr>LOAD_<wbr>RATE</span>
+                  ticks se sont écoulés, les résultats sont publiés et une nouvelle mesure démarre.</li>
+               <li><span class="gray">✔</span> La fonction mémorise alors la valeur du timer pour le prochain changement
+                  de
+                  contexte.</li>
+            </ul>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>L'algorithme ne détecte <span class="underline">qu'un seul débordement</span> entre deux
+                     changements de contexte. L'exception <span class="bold-strong">PendSV</span> ne doit donc pas être
+                     retardée de plus
+                     d'un tick par des
+                     interruptions plus
+                     prioritaires.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>L'algorithme ci-dessous est l'algorithme implémenté dans le noyau <span class="bold-strong">Mk</span>
+               pour calculer les taux de charge <span class="bold-strong">CPU</span> : </p>
+            <br>
+            <pre class="code">
+<span class="keyword">void</span> <span class="function">mk_scheduler_load</span> ( <span class="keyword">void</span> )
+{
+   <span class="multi-line-comment">/* Lecture du timer système et du bit COUNTFLAG */</span>
+   <span class="type">uint32_t</span> l_sysTickValue = <span class="function">systick_getCountValue</span> ( );
+   <span class="type">uint32_t</span> l_countFlag = <span class="function">systick_getCountFlag</span> ( );
+
+   <span class="multi-line-comment">/* Si le timer a débordé depuis le dernier changement de contexte */</span>
+   <span class="keyword">if</span> ( l_countFlag != <span class="number">0</span> )
+   {
+      <span class="multi-line-comment">/* Ajout de la durée écoulée avant le débordement */</span>
+      g_mkScheduler.currentTask-&gt;load.value += g_mkScheduler.load.usTickRegister;
+      g_mkScheduler.load.usTickRegisterSum += g_mkScheduler.load.usTickRegister;
+
+      <span class="multi-line-comment">/* Le timer a été rechargé, le point de départ devient la valeur de rechargement */</span>
+      g_mkScheduler.load.usTickRegister = g_mkScheduler.load.timerRegister;
+   }
+
+   <span class="multi-line-comment">/* Durée écoulée depuis le point de départ */</span>
+   <span class="type">uint32_t</span> l_elapsed = g_mkScheduler.load.usTickRegister - l_sysTickValue;
+   g_mkScheduler.currentTask-&gt;load.value += l_elapsed;
+   g_mkScheduler.load.usTickRegisterSum += l_elapsed;
+
+   <span class="multi-line-comment">/* Détection d'un nouveau tick */</span>
+   <span class="keyword">if</span> ( g_mkScheduler.tickRegister != g_mkScheduler.load.tickRegister )
+   {
+      g_mkScheduler.load.tickRegister += <span class="number">1</span>;
+      g_mkScheduler.load.cycleRegister += <span class="number">1</span>;
+   }
+
+   <span class="multi-line-comment">/* Fin de la mesure : publication des résultats */</span>
+   <span class="keyword">if</span> ( g_mkScheduler.load.cycleRegister == <span class="define">K_MK_SCHEDULER_CPU_LOAD_RATE</span> )
+   {
+      g_mkScheduler.load.cycleRegister = <span class="number">0</span>;
+
+      g_mkScheduler.load.usTickRegisterLastSum = g_mkScheduler.load.usTickRegisterSum;
+      g_mkScheduler.load.usTickRegisterSum = <span class="number">0</span>;
+
+      g_mkScheduler.idle.load.lastValue = g_mkScheduler.idle.load.value;
+      g_mkScheduler.idle.load.value = <span class="number">0</span>;
+
+      <span class="keyword">for</span> ( <span class="type">uint32_t</span> l_counter = <span class="number">0</span> ; l_counter &lt; <span class="define">K_MK_SCHEDULER_MAX_NUMBER_OF_TASKS</span> ; l_counter++ )
+      {
+         g_mkTaskPool.task [ l_counter ].load.lastValue = g_mkTaskPool.task [ l_counter ].load.value;
+         g_mkTaskPool.task [ l_counter ].load.value = <span class="number">0</span>;
+      }
+   }
+
+   <span class="multi-line-comment">/* Mémorisation de la valeur du timer */</span>
+   g_mkScheduler.load.usTickRegister = l_sysTickValue;
+}
+</pre>
+
+            <h2>4. Utilisation</h2>
+            <p>Les durées sont accumulées dans les registres <span class="bold-strong">value</span> des tâches pendant
+               <span class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>CPU_<wbr>LOAD_<wbr>RATE</span> ticks. À l'issue
+               de cette période, les
+               valeurs sont copiées dans les registres <span class="bold-strong">lastValue</span> de chaque tâche puis
+               réinitialisées pour débuter un nouveau cycle de calcul.
+            </p>
+            <br>
+            <p>Le taux de charge d'une tâche est calculé à la demande par la fonction <a
+                  href="./task.html#mk_task_getLoad"><span
+                     class="bold-strong">mk_<wbr>task_<wbr>get<wbr>Load</span></a>. La formule
+               suivante est utilisée :
+            </p>
+            <br>
+            <pre class="code">
+TC = ( task.<span class="field">load</span>.<span class="field">lastValue</span> * <span class="number">100</span> ) / g_mkScheduler.<span class="field">load</span>.<span class="field">usTickRegisterLastSum</span>
+</pre>
+            <br>
+            <p>Le dénominateur est la durée réellement mesurée et non la période théorique. Le calcul est
+               réalisé avec des entiers (troncature).
+            </p>
+            <br>
+            <p>L'extrait de code ci-dessous montre comment récupérer le taux de charge CPU d'une tâche :
+            </p>
+            <br>
+            <pre class="code">
+<span class="type">uint32_t</span> l_load;
+
+<span class="multi-line-comment">/* Taux de charge de la tâche courante */</span>
+l_result = <span class="function">mk_task_getLoad</span> ( <span class="function">mk_task_getCurrent</span> ( ), &amp;l_load );
+
+<span class="multi-line-comment">/* Taux de charge de la tâche de repos */</span>
+l_result |= <span class="function">mk_task_getLoad</span> ( &amp;g_mkScheduler.idle, &amp;l_load );
+</pre>
+            <br>
+            <p>Le taux de charge retourné est nul tant qu'une mesure complète n'a pas été réalisée, c'est-à-dire pendant
+               les
+               <span class="bold-strong">K_<wbr>MK_<wbr>SCHEDULER_<wbr>CPU_<wbr>LOAD_<wbr>RATE</span> premiers ticks
+               suivant
+               le démarrage du
+               noyau ou suite à la création d'une tâche pendant une fenêtre de mesure.
+            </p>
+
+            <h2>5. Limitations</h2>
+            <p>Le noyau ne relève la valeur du timer système qu'aux changements de contexte. Il ne mesure donc pas la
+               durée
+               consommée dans les vecteurs d'interruption.
+            </p>
+            <br>
+            <div class="warning">
+               <p class="warning-logo">⚠️</p>
+               <div class="warning-text ">
+                  <p>Le taux de charge des interruptions n'est pas pris en compte. Il est inclus dans le taux de
+                     charge des tâches qui s'exécutaient lorsqu'elles se sont
+                     déclenchées.
+                  </p>
+               </div>
+            </div>
+            <br>
+
+            <p>Le taux de charge d'une tâche est donc surestimé de la durée des
+               interruptions qui l'ont préemptée. En outre, le taux de charge de la tâche de repos ne fournit
+               pas
+               exactement le taux d'utilisation du processeur.</p>
+
+            <h2>6. Configuration</h2>
+            <p>La période de la mesure peut être modifiée à l'aide de la définition suivante :</p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Définition</th>
+                        <th>Description</th>
+                        <th>Valeur</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="bold-strong">K_MK_<wbr>SCHEDULER_<wbr>CPU_<wbr>LOAD_<wbr>RATE</span></td>
+                        <td>Cette constante définit la durée d'une fenêtre de mesure en multiple d'un tick système.
+                           Elle doit être différente de 0.</td>
+                        <td class="center">1000</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+            <p>Avec un tick de 1 ms, la valeur par défaut produit un nouveau résultat toutes les secondes. Une période
+               courte rend la mesure plus réactive alors qu'une période longue lisse les variations
+               de
+               charge.
+            </p>
+            <br>
+            <p>Les durées sont stockées dans des registres 32 bits et le calcul du taux de charge multiplie la
+               durée d'exécution de la tâche par 100. La durée d'une fenêtre de calcul doit donc être dimensionnée de
+               manière à
+               ne pas
+               provoquer un débordement du calcul.</p>
+
+
+         </div>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <a href="./ownership.html">
+               <div>
+                  <p>&lt;</p>
+                  <p>La propriété, les tâches et les objets de synchronisation</p>
+               </div>
+            </a> <a href="../progress/progress.html">
+               <div>
+                  <p>Modifier le noyau et créer des appels système</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>

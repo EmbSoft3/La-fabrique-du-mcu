@@ -1371,22 +1371,7 @@
                      <li><span class="bold-strong">K_MK_ERROR_ISR</span> : le taux de charge CPU de la tâche n'a pas été
                         récupéré car
                         cette fonction a été exécutée dans un vecteur d'interruption.</li>
-                     <li><span class="bold-strong">K_MK_ERROR_RIGHT</span> : le taux de charge n'a pas été récupéré
-                        car une tâche de type non privilégié ne peut pas exécuter cette fonction.</li>
                   </ul>
-                  <p><span class="underline">Attention</span> :</p>
-                  <div class="prototype-comment">
-                     <p class="prototype-logo">⚠️</p>
-                     <div class="prototype-text ">
-                        <ul>
-                           <li>Cette fonction entre dans une section critique lors de son exécution. Elle masque
-                              temporairement les interruptions de priorité numérique supérieure ou égale à
-                              <span class="bold-strong">K_MK_SCHEDULER_MASK_PRIORITY</span>. Le masque est
-                              automatiquement levé avant d'en sortir.
-                           </li>
-                        </ul>
-                     </div>
-                  </div>
                </div>
             </details>
 
