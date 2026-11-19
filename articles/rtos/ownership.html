@@ -201,14 +201,14 @@ Application (T_mkApplication)
             <p>Le mécanisme de propriétaire connaît les limitations suivantes : </p>
             <ul>
                <li><span class="gray">✔</span>Lors de la création d'un gestionnaire d'allocation mémoire ou d'une boîte
-                  de message, la zone mémoire
+                  de messages, la zone mémoire
                   fournie par
                   l'utilisateur ne se voit pas attribuer de
                   propriétaire (<span class="bold-strong">T_mkPoolArea</span>).
                </li>
                <li><span class="gray">✔</span>Étant donné que les fonctions de rappel sont créées séparément des
                   gestionnaires de rappel, leur
-                  propriétaire peut être différent du gestionnaire auquel elles sont rattachées.
+                  propriétaire peut être différent de celui du gestionnaire auquel elles sont rattachées.
                </li>
                <li>
                   <span class="gray">✔</span>La propriété et la protection sont deux notions distinctes. Un objet non
@@ -247,10 +247,11 @@ Application (T_mkApplication)
 
 <span class="multi-line-comment">/* Configuration du TCB de la tâche principale de l'application */</span>
 <span class="multi-line-comment">/* On écrit l'adresse de g_application dans le propriétaire */</span>
+<span class="type">T_mkCode</span> l_result;
 <span class="type">T_mkTaskCtrlBlock</span> l_taskCtrlBlock;
 l_result = <span class="function">mk_task_setTaskCtrlBlock</span> ( &amp;l_taskCtrlBlock, 
    g_application.<span class="field">type</span>, g_application.<span class="field">identifier</span>, g_application.<span class="field">priority</span>, 
-   &g_application );
+   &amp;g_application );
 
 <span class="multi-line-comment">/* ... */</span>
 
@@ -294,6 +295,224 @@ l_result |= <span class="function">mk_task_create</span> ( &amp;g_application.<s
    <span class="keyword">for</span> ( ;; ) ;
 }
 </pre>
+
+            <h2>6. Le stockage des tâches et des objets</h2>
+
+            <p>Les tâches et les objets de synchronisation sont déclarés statiquement à la compilation dans des
+               gestionnaires
+               d'allocation de taille fixe. Leur nombre est donc fini et une application peut parcourir
+               chaque objet
+               afin d'évaluer les liens de propriété. Le tableau ci-dessous contient la désignation de l'ensemble des
+               gestionnaires d'allocation :
+            </p>
+
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Objet</th>
+                        <th>Gestionnaire</th>
+                        <th>Tableau</th>
+                        <th>Nombre de blocs</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td>Tâche</td>
+                        <td><span class="gray">g_mk<wbr>Task<wbr>Pool</span></td>
+                        <td><span class="bold-strong">task</span></td>
+                        <td><span class="gray">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>TASKS</span>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>Mutex</td>
+                        <td><span class="gray">g_mk<wbr>Mutex<wbr>Pool</span></td>
+                        <td><span class="bold-strong">mutex</span></td>
+                        <td><span class="gray">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>MUTEX</span>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>Sémaphore</td>
+                        <td><span class="gray">g_mk<wbr>Semaphore<wbr>Pool</span></td>
+                        <td><span class="bold-strong">semaphore</span></td>
+                        <td><span
+                              class="gray">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>SEMAPHORES</span>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>Champ d'événements</td>
+                        <td><span class="gray">g_mk<wbr>Event<wbr>Pool</span></td>
+                        <td><span class="bold-strong">event</span></td>
+                        <td><span class="gray">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>EVENTS</span>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>Boîte de messages</td>
+                        <td><span class="gray">g_mk<wbr>Mail<wbr>Pool</span></td>
+                        <td><span class="bold-strong">mail</span></td>
+                        <td><span class="gray">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>MAILS</span>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>Item de boîte de messages</td>
+                        <td><span class="gray">g_mk<wbr>Mail<wbr>Item<wbr>Pool</span></td>
+                        <td><span class="bold-strong">item</span></td>
+                        <td><span class="gray">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>ITEMS</span>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>Pool</td>
+                        <td><span class="gray">g_mk<wbr>Area<wbr>Pool</span></td>
+                        <td><span class="bold-strong">poolArea</span></td>
+                        <td><span class="gray">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>POOLS</span>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>Gestionnaire de rappel</td>
+                        <td><span class="gray">g_mk<wbr>Callback<wbr>Handler<wbr>Pool</span></td>
+                        <td><span class="bold-strong">handler</span></td>
+                        <td><span
+                              class="gray">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>CALLBACK_<wbr>HANDLERS</span>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td>Fonction de rappel</td>
+                        <td><span class="gray">g_mk<wbr>Callback<wbr>Function<wbr>Pool</span></td>
+                        <td><span class="bold-strong">callback</span></td>
+                        <td><span
+                              class="gray">K_<wbr>MK_<wbr>SCHEDULER_<wbr>MAX_<wbr>NUMBER_<wbr>OF_<wbr>CALLBACK_<wbr>FUNCTIONS</span>
+                        </td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+            <p>Chaque gestionnaire est composé d'une structure <span class="bold-strong">T_mk<wbr>Pool<wbr>Area</span>
+               qui décrit
+               la zone mémoire, d'une structure <span class="bold-strong">T_mkPool</span> qui gère l'allocation et d'un
+               tableau qui contient les objets. Ces derniers peuvent être parcourus pour relier une application et les
+               objets
+               créés par celle-ci.
+            </p>
+            <br>
+            <p>L'exemple ci-dessous recherche l'ensemble des tâches créées par une application. La fonction parcourt
+               le tableau des tâches puis compare l'attribut <span class="bold-strong">owner</span> de chacune avec
+               l'adresse de l'application. Elle enregistre ensuite les tâches trouvées dans un tableau fourni par
+               l'appelant :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Fonction recherchant les tâches créées par une application */</span>
+<span class="type">uint32_t</span> <span class="function">mk_application_findTasks</span> ( <span class="type">T_mkApplication</span>* p_application, 
+   <span class="type">T_mkTask</span>** p_tasks, <span class="type">uint32_t</span> p_size )
+{
+   <span class="multi-line-comment">/* Déclaration des variables de travail */</span>
+   <span class="type">uint32_t</span> l_counter;
+   <span class="type">uint32_t</span> l_number = <span class="number">0</span>;
+
+   <span class="multi-line-comment">/* Déclaration d'un pointeur de tâche */</span>
+   <span class="type">T_mkTask</span>* l_task;
+
+   <span class="multi-line-comment">/* Entrée en section critique - masque des interruptions */</span>
+   <span class="multi-line-comment">/* Cette fonction est sans effet en mode non privilégié */</span>
+   ( <span class="keyword">void</span> ) <span class="function">_mk_scheduler_mask</span> ( <span class="define">K_MK_SCHEDULER_MASK_PRIORITY</span> );
+
+   <span class="multi-line-comment">/* Pour toutes les tâches du gestionnaire d'allocation */</span>
+   <span class="keyword">for</span> ( l_counter = <span class="number">0</span> ; 
+      l_counter &lt; <span class="define">K_MK_SCHEDULER_MAX_NUMBER_OF_TASKS</span> ; l_counter++ )
+   {
+      <span class="multi-line-comment">/* Récupération de l'adresse de la tâche */</span>
+      l_task = &amp;g_mkTaskPool.<span class="field">task</span> [ l_counter ];
+
+      <span class="multi-line-comment">/* Si la tâche est allouée et si elle appartient à l'application */</span>
+      <span class="keyword">if</span> ( ( l_task-&gt;<span class="field">owner</span> == ( <span class="type">T_mkAddr</span> ) p_application ) &amp;&amp;
+            ( l_task-&gt;<span class="field">attribute</span>.<span class="field">state</span> != <span class="define">K_MK_STATE_DELETED</span> ) )
+      {
+         <span class="multi-line-comment">/* Si le tableau de sortie peut recevoir la tâche */</span>
+         <span class="keyword">if</span> ( l_number &lt; p_size )
+         {
+            <span class="multi-line-comment">/* Enregistrement de l'adresse de la tâche */</span>
+            p_tasks [ l_number ] = l_task;
+         }
+
+         <span class="multi-line-comment">/* Actualisation du nombre de tâches trouvées */</span>
+         l_number++;
+      }
+   }
+
+   <span class="multi-line-comment">/* Sortie de la section critique - démasquage des interruptions */</span>
+   <span class="multi-line-comment">/* Cette fonction est sans effet en mode non privilégié */</span>
+   ( <span class="keyword">void</span> ) <span class="function">_mk_scheduler_unmask</span> ( <span class="define">K_MK_SCHEDULER_IDLE_PRIORITY</span> );
+
+   <span class="multi-line-comment">/* Retour */</span>
+   <span class="keyword">return</span> ( l_number );
+}
+</pre>
+            <br>
+            <p>L'exemple ci-dessous applique le même principe aux sémaphores. Lors de sa suppression, un sémaphore est
+               rempli avec la valeur <span class="bold-strong">K_<wbr>MK_<wbr>INVALID_<wbr>HANDLE</span> (à
+               l'exception du premier mot, utilisé par la pool). Son attribut <span
+                  class="bold-strong">createByAddr</span> ne peut donc pas correspondre à l'adresse d'une
+               application :
+            </p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Fonction recherchant les sémaphores créés par une application */</span>
+<span class="multi-line-comment">/* Elle retourne le nombre de sémaphores appartenant à l'application */</span>
+<span class="type">uint32_t</span> <span class="function">mk_application_findSemaphores</span> ( <span class="type">T_mkApplication</span>* p_application, 
+   <span class="type">T_mkSemaphore</span>** p_semaphores, <span class="type">uint32_t</span> p_size )
+{
+   <span class="multi-line-comment">/* Déclaration des variables de travail */</span>
+   <span class="type">uint32_t</span> l_counter;
+   <span class="type">uint32_t</span> l_number = <span class="number">0</span>;
+
+   <span class="multi-line-comment">/* Déclaration d'un pointeur de sémaphore */</span>
+   <span class="type">T_mkSemaphore</span>* l_semaphore;
+
+   <span class="multi-line-comment">/* Entrée en section critique - masque des interruptions */</span>
+   <span class="multi-line-comment">/* Cette fonction est sans effet en mode non privilégié */</span>
+   ( <span class="keyword">void</span> ) <span class="function">_mk_scheduler_mask</span> ( <span class="define">K_MK_SCHEDULER_MASK_PRIORITY</span> );
+
+   <span class="multi-line-comment">/* Pour tous les sémaphores du gestionnaire d'allocation */</span>
+   <span class="keyword">for</span> ( l_counter = <span class="number">0</span> ; 
+      l_counter &lt; <span class="define">K_MK_SCHEDULER_MAX_NUMBER_OF_SEMAPHORES</span> ; l_counter++ )
+   {
+      <span class="multi-line-comment">/* Récupération de l'adresse du sémaphore */</span>
+      l_semaphore = &amp;g_mkSemaphorePool.<span class="field">semaphore</span> [ l_counter ];
+
+      <span class="multi-line-comment">/* Si le sémaphore appartient à l'application */</span>
+      <span class="keyword">if</span> ( l_semaphore-&gt;<span class="field">createByAddr</span> == ( <span class="type">T_mkAddr</span> ) p_application )
+      {
+         <span class="multi-line-comment">/* Si le tableau de sortie peut recevoir le sémaphore */</span>
+         <span class="keyword">if</span> ( l_number &lt; p_size )
+         {
+            <span class="multi-line-comment">/* Enregistrement de l'adresse du sémaphore */</span>
+            p_semaphores [ l_number ] = l_semaphore;
+         }
+
+         <span class="multi-line-comment">/* Actualisation du nombre de sémaphores trouvés */</span>
+         l_number++;
+      }
+   }
+
+   <span class="multi-line-comment">/* Sortie de la section critique - démasquage des interruptions */</span>
+   <span class="multi-line-comment">/* Cette fonction est sans effet en mode non privilégié */</span>
+   ( <span class="keyword">void</span> ) <span class="function">_mk_scheduler_unmask</span> ( <span class="define">K_MK_SCHEDULER_IDLE_PRIORITY</span> );
+
+   <span class="multi-line-comment">/* Retour */</span>
+   <span class="keyword">return</span> ( l_number );
+}
+</pre>
+            <br>
+            <p>Les deux fonctions masquent les interruptions pendant le parcours des gestionnaires afin
+               d'empêcher le déclenchement d'un appel système par une tâche concurrente qui pourrait venir modifier ces
+               structures. La section critique doit rester la plus courte possible. Du fait des caractéristiques des
+               fonctions <span class="bold-strong">_mk_<wbr>scheduler_<wbr>mask</span> et <span
+                  class="bold-strong">_mk_<wbr>scheduler_<wbr>unmask</span>, la recherche ne peut être faite que par une
+               tâche
+               privilégiée.
+            </p>
+
          </div>
       </section>
 
