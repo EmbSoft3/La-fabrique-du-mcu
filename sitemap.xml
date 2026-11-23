@@ -85,6 +85,30 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://lafabriquedumcu.com/articles/rtos/callback.html</loc>
+    <lastmod>2026-11-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lafabriquedumcu.com/articles/rtos/handler.html</loc>
+    <lastmod>2026-11-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lafabriquedumcu.com/articles/rtos/ownership.html</loc>
+    <lastmod>2026-11-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lafabriquedumcu.com/articles/rtos/load.html</loc>
+    <lastmod>2026-11-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://lafabriquedumcu.com/articles/rtos/mk.html</loc>
     <lastmod>2026-09-15</lastmod>
     <changefreq>monthly</changefreq>
