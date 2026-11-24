@@ -5,7 +5,7 @@
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="description"
-      content="Comprendre les interruptions, le mécanisme des appels système SVC et la synchronisation des tâches (mk_call_synchronise, mk_call_unblock) pour modifier le noyau Mk et créer de nouveaux appels système.">
+      content="Comprendre les interruptions et le fonctionnement des appels système SVC pour modifier le noyau et créer de nouveaux appels système.">
    <title>Modifier le noyau et créer des appels système</title>
    <link rel="icon" type="image/png" href="../../favicon.png">
    <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
@@ -41,10 +41,10 @@
                système, créer des objets de synchronisation ou modifier des objets.
             </p>
             <br>
-            <p>Cet article est décomposé en trois parties. La première partie explique les
-               mécanismes de protection du noyau contre les accès concurrents. La
-               deuxième partie présente le mécanisme de création d'un
-               appel système et la dernière partie se concentre sur la description du mécanisme de synchronisation.</p>
+            <p>Cet article est décomposé en deux parties. La première partie explique les
+               mécanismes de protection du noyau contre les accès concurrents alors que la seconde partie
+               explique le mécanisme de création d'un
+               appel système.</p>
 
             <h2>1. La protection des accès concurrents</h2>
             <p>Le noyau s'appuie sur les trois exceptions matérielles suivantes pour gérer les accès concurrents :</p>
@@ -97,13 +97,11 @@
             </ul>
 
             <p>Par ailleurs, la modification des
-               structures du
-               noyau
-               étant centralisée dans le vecteur <span class="bold-strong">SVC</span> et dans le vecteur <span
+               structures du noyau
+               étant centralisée dans les vecteurs <span class="bold-strong">SVC</span> et <span
                   class="bold-strong">PendSV</span>, les
-               mécanismes de protection des accès concurrents se limite à un simple masque d'interruption.</p>
-            <p>Les situations où le noyau masque les interruptions pour se prémenir
-               d'un accès concurrent sont décrites ci-dessous :
+               mécanismes de protection des accès concurrents se limitent au masquage des interruptions. Ces dernières
+               sont masquées dans les situations suivantes :
             </p>
             <ul>
                <li><span class="gray">✔</span> lors d'un changement de contexte.</li>
@@ -111,10 +109,12 @@
                </li>
             </ul>
 
-            <p>Lors de la définition d'un nouvel appel système et si celui-ci peut être exécutée dans un
-               vecteur d'interruption, il est alors nécessaire d'encadrer la requête SVC par les fonctions <span
+            <p>Lors de la définition d'un nouvel appel système, si celui-ci peut être exécuté dans un
+               vecteur d'interruption, il est nécessaire d'encadrer celui-ci par les fonctions <span
                   class="bold-strong">_<wbr>mk_<wbr>scheduler_<wbr>mask<wbr>FromIsr</span> et <span
-                  class="bold-strong">_<wbr>mk_<wbr>scheduler_<wbr>unmask<wbr>FromIsr</span> :</p>
+                  class="bold-strong">_<wbr>mk_<wbr>scheduler_<wbr>unmask<wbr>FromIsr</span> afin de se prémunir des
+               accès
+               concurrents : </p>
             <br>
             <pre class="code">
 <span class="multi-line-comment">/* Entrée en section critique */</span>
@@ -128,8 +128,8 @@ l_result = <span class="function">mk_semaphore_call</span> ( p_mkSemaphore );
 </pre>
             <br>
 
-            <p>La particularité des ces deux fonctions est qu'elles sont sans
-               effet si elle n'ont pas été exécutées dans un vecteur
+            <p>La particularité de ces fonctions est qu'elles sont sans
+               effet si elles n'ont pas été exécutées dans un vecteur
                d'interruption. </p>
 
             <h2>2. Les appels système</h2>
@@ -137,7 +137,7 @@ l_result = <span class="function">mk_semaphore_call</span> ( p_mkSemaphore );
             <p>Les données du noyau sont stockées en mémoire
                privilégiée. Lorsqu'une tâche souhaite effectuer une action comme réveiller une autre tâche ou
                prendre un objet de synchronisation, celle-ci
-               doit déclencher une appel système par le biais de l'exception <span class="bold-strong">SVC</span>.
+               doit déclencher un appel système par le biais de l'exception <span class="bold-strong">SVC</span>.
                Les tâches ne modifient donc pas directement les données du noyau. Elles se contentent de
                décrire une requête, de déclencher l'exception <span class="bold-strong">SVC</span> puis de lire
                le résultat. Cette organisation garantit l'atomicité
@@ -175,10 +175,10 @@ l_result = <span class="function">mk_semaphore_call</span> ( p_mkSemaphore );
                      </tr>
                      <tr>
                         <td><span class="gray">data</span></td>
-                        <td>Données de l'appel système. La signification de chaque case dépend du type de l'appel
+                        <td>Données de l'appel système. La signification de chaque champ dépend du type de l'appel
                            système.
                            L'indice 0 est
-                           réservée au noyau.</td>
+                           réservé au noyau.</td>
                      </tr>
                      <tr>
                         <td><span class="gray">status</span></td>
@@ -199,15 +199,15 @@ l_result = <span class="function">mk_semaphore_call</span> ( p_mkSemaphore );
                </table>
             </div>
             <br>
-            <p>Les champs <span class="bold-strong">result</span> et <span class="bold-strong">handle</span> sont écrit
-               par le noyau. Le champ <span class="bold-strong">statut</span> est écrit par les fonctions <span
+            <p>Les champs <span class="bold-strong">result</span> et <span class="bold-strong">handle</span> sont écrits
+               par le noyau. Le champ <span class="bold-strong">status</span> est écrit par les fonctions <span
                   class="bold-strong">mk_svc_set</span>
                (<span class="bold-strong">FILLED</span>) et <span class="bold-strong">mk_<wbr>svc_<wbr>available</span>
-               (<span class="bold-strong">EMPTY</span>).</p>
+               (<span class="bold-strong">EMPTY</span>).
             </p>
             <p>Le champ <span class="bold-strong">data</span> est rempli à la fois par le noyau et par l'application
                conformément au <span class="bold-strong">type</span> de l'appel système
-               exécutée. La case 2 peut par exemple contenir une temporisation, une zone mémoire ou encore l'identifiant
+               exécuté. La case 2 peut par exemple contenir une temporisation, une zone mémoire ou encore l'identifiant
                d'une tâche : </p>
             <div class="table-scroll-container">
                <table>
@@ -338,9 +338,9 @@ l_result = <span class="function">mk_semaphore_call</span> ( p_mkSemaphore );
                principale, dans la donnée <span class="bold-strong">g_<wbr>mkSVCIdleObject</span> pour la tâche de repos
                ou directement dans leur pile pour les autres tâches. Une autre instance d'objet <span
                   class="bold-strong">SVC</span> est aussi partagée
-               par l'ensemble des vecteurs d'interruption (<span class="bold-strong">g_mk<wbr>SVC<wbr>Object</span>).
-               Etant donné que celle-ci
-               est commune à tous les vecteur, il devient nécessaire de masquer les interruptions lorsqu'un appel
+               pour l'ensemble des vecteurs d'interruption (<span class="bold-strong">g_mk<wbr>SVC<wbr>Object</span>).
+               Étant donné que celle-ci
+               est commune à tous les vecteurs, il est nécessaire de masquer les interruptions lorsqu'un appel
                système
                est
                réalisé depuis une <span class="bold-strong">ISR</span>.</p>
@@ -371,10 +371,10 @@ l_result = <span class="function">mk_semaphore_call</span> ( p_mkSemaphore );
             <br>
 
             <h3>Déroulement d'un appel système</h3>
-            <p>Un appel système se déroule en plusieurs étape. La première étape consiste à remplir un objet <span
+            <p>Un appel système se déroule en plusieurs étapes. La première étape consiste à remplir un objet <span
                   class="bold-strong">SVC</span> local avec les
-               informations de l'appel système. Cet objet est ensuite transmis à la fonction <span
-                  class="bold-strong">mk_svc_set</span> pour qu'il soit copier dans l'objet <span
+               informations de l'appel système. Cet objet doit être transmis à la fonction <span
+                  class="bold-strong">mk_svc_set</span> pour qu'il soit copié dans l'objet <span
                   class="bold-strong">SVC</span> correspondant à son
                contexte
                d'exécution (<span class="bold-strong">g_mkSVCObject</span> ou <span
@@ -384,20 +384,19 @@ l_result = <span class="function">mk_semaphore_call</span> ( p_mkSemaphore );
                   class="bold-strong">SVC #0</span> si l'appel système a été réalisé depuis une tâche ou diffère le
                déclenchement de cette exception si l'appel système a été réalisé depuis une interruption.
             </p>
-            <p>L'exception <span class="bold-strong">SVC</span> est alors exécutée par le biais de la fonction <span
+            <p>L'exception <span class="bold-strong">SVC</span> est ensuite exécutée par le biais de la fonction <span
                   class="bold-strong">mk_<wbr>scheduler_<wbr>handle</span>. Elle
                récupère dans un premier temps le contenu de l'objet <span class="bold-strong">SVC</span>, détermine si
                celui-ci a été réalisé depuis un vecteur d'interruption
                puis identifie
-               une fonction a exécutée selon sont type.
+               une fonction à exécuter selon son type.
             </p>
             <p>
-               La fonction de
-               traitement
-               est alors exécutée en mode privilégié. Lorsque son travail est terminé, elle renseigne les champs <span
-                  class="bold-strong">result</span> et <span class="bold-strong">handle</span> de l'objet <span
-                  class="bold-strong">SVC</span>. Elle déclenche alors un changement de contexte explicite avec la
-               fonction <span class="bold-strong">mk_<wbr>scheduler_<wbr>pend</span> si une tâche plus prioritaire que
+               Ladite fonction est alors exécutée en mode privilégié. Lorsque son travail est terminé, elle renseigne
+               les champs <span class="bold-strong">result</span> et <span class="bold-strong">handle</span> de l'objet
+               <span class="bold-strong">SVC</span>. Elle déclenche alors un changement de contexte explicite avec la
+               fonction <span class="bold-strong">mk_<wbr>scheduler_<wbr>pend</span> dans la situation où une tâche plus
+               prioritaire que
                la tâche courante doit être exécutée.
             </p>
             <p>La fonction de l'API reprend ensuite la main (parfois bien plus tard si un changement de contexte s'est
@@ -478,7 +477,7 @@ l_result = <span class="function">mk_semaphore_call</span> ( p_mkSemaphore );
                      class="bold-strong">T_<wbr>mkSVCIdentifier</span> du fichier <span
                      class="bold-strong">mk_<wbr>svc_<wbr>types.h</span>. </li>
                <li><span class="gray">✔</span> Si nécessaire, ajouter un offset dans l'énumération <span
-                     class="bold-strong">T_mkSVCOffset</span> (la case 0 est réservée au noyau).</li>
+                     class="bold-strong">T_mkSVCOffset</span> (l'indice 0 est réservé au noyau).</li>
                <li><span class="gray">✔</span> Écrire la fonction de traitement <span
                      class="bold-strong">mk_call_xxx</span> et la déclarer dans le fichier <span
                      class="bold-strong">mk_<wbr>call_<wbr>private.h</span>.</li>
@@ -518,8 +517,7 @@ l_result = <span class="function">mk_semaphore_call</span> ( p_mkSemaphore );
 </pre>
             <br>
             <p>La fonction de traitement s'exécute en mode privilégié. Elle doit donc vérifier toutes les adresses
-               transmises par l'appelant, comme le fait la fonction <span
-                  class="bold-strong">mk_<wbr>call_<wbr>createPool</span> :</p>
+               transmises par l'appelant :</p>
             <br>
             <pre class="code">
 <span class="multi-line-comment">/* mk_call_increment.c */</span>
@@ -645,501 +643,14 @@ l_result = <span class="function">mk_semaphore_call</span> ( p_mkSemaphore );
                <div class="warning-text ">
                   <p>Un appel système devant bloquer la
                      tâche
-                     appelante doit utiliser le mécanisme de synchronisation décrit dans la section suivante.</p>
+                     appelante doit utiliser le mécanisme de synchronisation décrit dans l'article <a
+                        href="./synchronisation.html"><span class="bold-strong">La synchronisation des
+                           tâches</span></a>.</p>
                </div>
             </div>
 
-            <h2>3. La synchronisation des tâches</h2>
-            <p>L'ensembles des objets de synchronisation partagent le même mécanisme de blocage et de réveil
-               des
-               tâches. Ce mécanisme n'est implémenté qu'une fois dans le noyau et chaque objet définit seulement
-               ses fonctions d'obtention et de libération. Ces fonctions sont réparties dans deux familles d'appels
-               système :</p>
-            <ul>
-               <li><span class="gray">✔</span> La famille de <span class="bold-strong">synchronisation</span>
-                  (identifiants en 4000). Elle est gérée par la fonction <span
-                     class="bold-strong">mk_<wbr>call_<wbr>synchronise</span> et regroupe les appels qui tentent
-                  d'obtenir
-                  un objet. Lorsque l'objet n'est pas disponible la tâche est bloquée.</li>
-               <li><span class="gray">✔</span> La famille de <span class="bold-strong">désynchronisation</span>
-                  (identifiants en 5000). Elle est gérée par la fonction <span
-                     class="bold-strong">mk_<wbr>call_<wbr>unblock</span> et regroupe les appels qui libèrent un objet.
-                  Si des tâches attendent cet objet, la plus prioritaire est réveillée.</li>
-            </ul>
-            <p>Chaque objet fournit une <span class="bold-strong">fonction de synchronisation</span> et une <span
-                  class="bold-strong">fonction de
-                  libération</span>. Le tableau suivant liste les fonctions utilisées par chaque appel système :
-            </p>
-            <div class="table-scroll-container">
-               <table>
-                  <thead>
-                     <tr>
-                        <th>Fonction de l'API</th>
-                        <th>Fonction de synchronisation</th>
-                        <th>Fonction de libération</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                     <tr>
-                        <td><span class="gray">mk_mutex_take</span></td>
-                        <td><span class="bold-strong">mk_mutex_lock</span></td>
-                        <td>-</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">mk_mutex_release</span></td>
-                        <td><span class="bold-strong">mk_mutex_lock</span> (réveil)</td>
-                        <td><span class="bold-strong">mk_<wbr>mutex_<wbr>unlock</span></td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">mk_semaphore_take</span></td>
-                        <td><span class="bold-strong">mk_<wbr>semaphore_<wbr>lock</span></td>
-                        <td>-</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">mk_semaphore_release</span></td>
-                        <td><span class="bold-strong">mk_<wbr>semaphore_<wbr>lock</span> (réveil)</td>
-                        <td><span class="bold-strong">mk_<wbr>semaphore_<wbr>unlock</span></td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">mk_pool_allocSafe</span></td>
-                        <td><span class="bold-strong">mk_pool_take</span></td>
-                        <td>-</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">mk_pool_freeSafe</span></td>
-                        <td><span class="bold-strong">mk_pool_take</span> (réveil)</td>
-                        <td><span class="bold-strong">mk_<wbr>pool_<wbr>release</span></td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">mk_event_wait</span></td>
-                        <td><span class="bold-strong">mk_<wbr>event_<wbr>modify</span></td>
-                        <td>-</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">mk_event_clear</span></td>
-                        <td><span class="bold-strong">mk_event_raz</span></td>
-                        <td>-</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">mk_event_set</span></td>
-                        <td><span class="bold-strong">mk_<wbr>event_<wbr>check</span> (réveil)</td>
-                        <td><span class="bold-strong">mk_<wbr>event_<wbr>write</span></td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">mk_mail_post</span></td>
-                        <td><span class="bold-strong">mk_mail_set</span></td>
-                        <td><span class="bold-strong">mk_mail_get</span> (appliquée à la tâche réveillée)</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">mk_mail_pend</span></td>
-                        <td><span class="bold-strong">mk_mail_get</span></td>
-                        <td><span class="bold-strong">mk_mail_set</span> (appliquée à la tâche réveillée)</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
-            <br>
-            <p>Les fonctions marquées « réveil » sont exécutées suite à la libération d'un objet sur les tâches bloquées
-               en attente de cet objet.</p>
-            <h3>La disposition mémoire des objets</h3>
-            <p>Le code générique du module de synchronisation ne connaît pas le type des objets
-               qu'il
-               manipule. Il doit donc accèder aux attributs des différents objets en utilisant leur position :
-            </p>
-            <ul>
-               <li><span class="gray">✔</span> le mot à l'indice 0 contient le <span class="bold-strong">type</span> de
-                  l'objet.</li>
-               <li><span class="gray">✔</span> le mot à l'indice 3 contient la <span class="bold-strong">liste des
-                     tâches
-                     bloquées</span> de l'objet.</li>
-               <li><span class="gray">✔</span> Pour un mutex, le mot à l'indice 2 contient l'adresse de la tâche <span
-                     class="bold-strong">propriétaire</span>.
-               </li>
-            </ul>
-            <p>La table ci-dessous contient les quatre premiers champs des objets de synchronisation existant :</p>
-            <div class="table-scroll-container">
-               <table>
-                  <thead>
-                     <tr>
-                        <th>Structure</th>
-                        <th>Mot 0</th>
-                        <th>Mot 1</th>
-                        <th>Mot 2</th>
-                        <th>Mot 3</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                     <tr>
-                        <td><span class="gray">T_mkMutex</span></td>
-                        <td class="center">type</td>
-                        <td class="center">lock</td>
-                        <td class="center"><span class="bold-strong">owner</span></td>
-                        <td class="center">pendingList</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">T_mkSemaphore</span></td>
-                        <td class="center">type</td>
-                        <td class="center">token</td>
-                        <td class="center">tokenNumber</td>
-                        <td class="center">pendingList</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">T_mkEvent</span></td>
-                        <td class="center">type</td>
-                        <td class="center">bypass</td>
-                        <td class="center">flag</td>
-                        <td class="center">pendingList</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">T_mkMailSynchro</span> (poster et pender)</td>
-                        <td class="center">type</td>
-                        <td class="center">item</td>
-                        <td class="center">reserved</td>
-                        <td class="center">pendingList</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">T_mkPool</span></td>
-                        <td class="center">type</td>
-                        <td class="center">current</td>
-                        <td class="center">size</td>
-                        <td class="center">pendingList</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
-            <br>
-            <p>Chaque objet de synchronisation doit donc placer correctement ses champs dans sa structure. Le
-               type doit
-               occuper le premier mot et la liste des tâches bloquées doit occuper le quatrième mot. Si un objet
-               n'utilise pas les mots deux et trois, il doit tout de même réserver leur
-               emplacement
-               (champs <span class="bold-strong">reserved</span> ou <span class="bold-strong">bypass</span>).</p>
-
-            <h3>Les types d'objet</h3>
-            <p>Le champ <span class="bold-strong">type</span> combine
-               l'identifiant des objets de synchronisation (énumération <span class="bold-strong">T_mkTaskSync</span>),
-               le bit de protection <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> et un bit de
-               statut (bit 0) indiquant que l'ensemble des tâches bloquées de la liste d'attente d'un objet de
-               synchronisation doit
-               être parcouru ou non lors
-               d'une libération. Actuellement, il
-               n'est
-               positionné que pour les champs d'événements de type <span
-                  class="bold-strong">K_<wbr>MK_<wbr>ID_<wbr>EVENT_<wbr>MULTI</span> (valeur 65), pour lesquels
-               plusieurs tâches peuvent être réveillées suite au déclenchement d'un événement.</p>
-
-            <h3>Les fonctions de synchronisation</h3>
-            <p>Toutes les fonctions de synchronisation et de libération respectent le prototype ci-dessous :</p>
-            <br>
-            <pre class="code">
-<span class="keyword">typedef</span> <span class="type">uint32_t</span> ( *<span class="type">T_mkSyncFunction</span> ) ( 
-   <span class="type">T_mkAddr</span>,   <span class="multi-line-comment">/* Adresse de la tâche */</span> 
-   <span class="type">T_mkAddr</span>,   <span class="multi-line-comment">/* Adresse de l'objet présent à l'offset K_MK_OFFSET_SYNC_HANDLE */</span>
-   <span class="type">T_mkAddr</span>,   <span class="multi-line-comment">/* Adresse de l'objet présent à l'offset K_MK_OFFSET_PARAM_OBJECT */</span>
-   <span class="type">T_mkAddr</span>,   <span class="multi-line-comment">/* Adresse de l'objet présent à l'offset K_MK_OFFSET_MESSAGE */</span>
-   <span class="type">uint32_t</span> ); <span class="multi-line-comment">/* Statut d'interruption (p_mkStatus) */</span>
-</pre>
-            <br>
-            <p>La valeur de retour appartient à l'énumération <span class="bold-strong">T_mkSVCSync</span> et possède
-               les valeurs suivantes :</p>
-            <div class="table-scroll-container">
-               <table>
-                  <thead>
-                     <tr>
-                        <th>Code</th>
-                        <th>Signification</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                     <tr>
-                        <td><span class="gray">K_MK_SYNC_KO</span></td>
-                        <td>L'objet n'a pas pu être obtenu.</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">K_MK_SYNC_OK</span></td>
-                        <td>L'objet a été obtenu (ou libéré).</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">K_MK_SYNC_INHIB</span></td>
-                        <td>Aucune synchronisation n'est requise. Ce code est utilisé lorsqu'une tâche en attente
-                           ne
-                           doit pas être réveillée.</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">K_MK_SYNC_RIGHT</span></td>
-                        <td>La fonction n'a pas été exécutée car les permissions sont insuffisantes (boîtes de
-                           messages).</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">K_MK_SYNC_PARAM</span></td>
-                        <td>La fonction n'a pas été exécutée car un paramètre est invalide (corruption d'une
-                           pool).</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
-            <br>
-            <p>Les fonctions de synchronisation doivent respecter les règles suivantes :</p>
-            <ul>
-               <li><span class="gray">✔</span> Le premier paramètre contient l'adresse de la tâche ayant déclenchée
-                  l'appel système. Celui-ci est nul lorsque
-                  l'appel provient d'un vecteur d'interruption ou lorsque la fonction exécutée est une fonction de
-                  libération.</li>
-               <li><span class="gray">✔</span> A l'exception des fonctions de libération, le résultat d'une fonction de
-                  synchronisation doit être enregistré dans
-                  le champ <span class="bold-strong">synchro.object</span> de la tâche ayant déclenchée l'appel système.
-                  Il
-                  prend comme valeur l'adresse de l'objet si celui-ci a été obtenu ou la valeur nulle en cas d'échec.
-               </li>
-               <li><span class="gray">✔</span> Lorsque le noyau réveille une tâche suite à une libération, le paramètre
-                  <span class="bold-strong">K_<wbr>MK_<wbr>OFFSET_<wbr>MESSAGE</span> de la fonction prend la
-                  valeur du champ <span class="bold-strong">synchro.message</span> de la tâche réveillée. La fonction
-                  de synchronisation peut alors terminer son opération. Par exemple, copier un message pour une boîte
-                  ou enregistrer l'adresse du bloc allouée pour une pool.
-               </li>
-            </ul>
-
-            <h3>La récupération du résultat</h3>
-            <p>Suite à l'appel système, les champs <span class="bold-strong">synchro.object</span> et <span
-                  class="bold-strong">svc.result</span> permettent de connaître le résultat de l'appel système :</p>
-            <br>
-            <div class="table-scroll-container">
-               <table>
-                  <thead>
-                     <tr>
-                        <th>Valeur de svc.result</th>
-                        <th>Valeur de synchro.object</th>
-                        <th>Signification</th>
-
-                     </tr>
-                  </thead>
-                  <tbody>
-                     <tr>
-                        <td><span class="bold-strong">K_MK_OK</span></td>
-                        <td>Adresse de l'objet</td>
-                        <td>L'objet a été obtenu.</td>
-                     </tr>
-                     <tr>
-                        <td><span class="bold-strong">K_MK_OK</span></td>
-                        <td><span class="gray">K_MK_NULL</span></td>
-                        <td>L'objet n'a pas été obtenu (tentative sans attente ou échéance de la temporisation).
-                        </td>
-                     </tr>
-                     <tr>
-                        <td><span class="bold-strong">K_MK_OK</span></td>
-                        <td><span class="gray">K_MK_INVALID_HANDLE</span></td>
-                        <td>L'objet a été supprimé pendant que la tâche était bloquée.</td>
-                     </tr>
-                     <tr>
-                        <td><span class="bold-strong">K_MK_ERROR_*</span></td>
-                        <td><span class="gray">-</span></td>
-                        <td>Une erreur s'est produite durant l'appel système.</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
-            <br>
-
-            <h3>La fonction mk_call_synchronise</h3>
-            <p>La fonction <span class="bold-strong">mk_<wbr>call_<wbr>synchronise</span> traite les appels système
-               permettant
-               d'obtenir un objet de synchronisation. L'algorithme de cette fonction est décrit dans l'organigramme
-               ci-dessous :
-            </p>
-            <figure>
-               <img src="../../images/rtos/rtos-synchronise.svg" alt="Organigramme de la fonction mk_call_synchronise"
-                  style="background:#ffffff;width: 100%;">
-               <figcaption>
-                  <span class="underline">Figure 2</span> : Organigramme de la fonction mk_call_synchronise.
-               </figcaption>
-            </figure>
-            <p>Dans un premier temps, la fonction <span class="bold-strong">mk_<wbr>call_<wbr>synchronise</span>
-               détermine l'échéance de la
-               temporisation puis identifie la fonction
-               <span class="bold-strong">mk_<wbr>call_<wbr>handleXXX</span> à exécuter. Ces dernières sont propres à
-               chaque type d'objet, elles réalisent les opérations suivantes avant de lancer la séquence de
-               synchronisation :
-            </p>
-            <ul>
-               <li><span class="gray">✔</span> Elles vérifient d'abord que l'adresse de l'objet est valide
-                  et que celui-ci n'a pas été supprimé.</li>
-               <li><span class="gray">✔</span> Elles réalisent ensuite les contrôles propres au type d'objet.</li>
-               <li><span class="gray">✔</span> Enfin, elles renseignent les adresses des fonctions et des objets de
-                  synchronisation dans l'objet <span class="bold-strong">SVC</span>.</li>
-            </ul>
-            <p>La fonction contrôle ensuite les droits de la tâche avec la routine <span
-                  class="bold-strong">mk_<wbr>call_<wbr>isProtectedArea</span> puis exécute la fonction de
-               synchronisation. Les trois situations suivantes peuvent se présenter :</p>
-            <ul>
-               <li><span class="gray">✔</span> L'objet est obtenu (<span
-                     class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>OK</span>) et
-                  la tâche poursuit son exécution. Pour une boîte de messages, le noyau réveille la tâche
-                  éventuellement en attente de l'objet antagoniste.</li>
-               <li><span class="gray">✔</span> L'objet
-                  n'est pas disponible (<span class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>KO)</span> et la
-                  temporisation est non nulle, la fonction <span class="bold-strong">mk_call_block</span> est alors
-                  exécutée.</li>
-               <li><span class="gray">✔</span>L'objet
-                  n'est pas disponible (<span class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>KO)</span> et la
-                  temporisation est nulle.</span> La tâche n'attend
-                  pas et
-                  l'appel système retourne immédiatement. Si celui-ci provient d'un vecteur d'interruption, une erreur
-                  est
-                  déclenchée.</li>
-            </ul>
-            <p>La fonction <span class="bold-strong">mk_call_block</span> réalise les opérations suivantes :</p>
-            <ul>
-               <li><span class="gray">✔</span> Elle positionne l'état de la tâche à <span
-                     class="bold-strong">K_<wbr>MK_<wbr>STATE_<wbr>BLOCKED</span> et mémorise l'adresse de l'objet
-                  dans
-                  <span class="bold-strong">synchro.object</span>, la durée, et l'échéance de la
-                  temporisation.
-               </li>
-               <li><span class="gray">✔</span> Elle retire la tâche de sa liste et actualise le
-                  registre de priorité si cette liste devient vide.</li>
-               <li><span class="gray">✔</span> Elle insère la tâche dans la liste des tâches bloquées de l'objet.</li>
-               <li><span class="gray">✔</span> Si la tâche doit être suspendue après l'envoi d'un message, elle
-                  ajoute
-                  l'état <span class="bold-strong">K_<wbr>MK_<wbr>STATE_<wbr>SUSPENDED</span>.</li>
-               <li><span class="gray">✔</span> Si la temporisation n'est pas infinie, elle ajoute l'état
-                  <span class="bold-strong">K_<wbr>MK_<wbr>STATE_<wbr>DELAYED</span> et insère la tâche dans la
-                  liste des
-                  tâches temporisées. La tâche appartient alors à deux listes distinctes.
-               </li>
-               <li><span class="gray">✔</span> Elle exécute l'héritage de priorité si l'objet est un mutex.</li>
-               <li><span class="gray">✔</span> Elle réalise un changement de contexte inconditionnel.</li>
-            </ul>
-
-            <h3>La fonction mk_call_unblock</h3>
-            <p>La fonction <span class="bold-strong">mk_<wbr>call_<wbr>unblock</span> traite les appels qui
-               libèrent un objet. Son organigramme est le suivant : </p>
-            <figure>
-               <img src="../../images/rtos/rtos-unblock.svg" alt="Organigramme de la fonction mk_call_unblock">
-               <figcaption>
-                  <span class="underline">Figure 3</span> : Organigramme de la fonction mk_call_unblock.
-               </figcaption>
-            </figure>
-            <p>Comme pour la fonction précédente, les routines <span
-                  class="bold-strong">mk_<wbr>call_<wbr>handleXXX</span> vérifient
-               les instances, contrôle les paramètres puis configure la fonction
-               de libération et la fonction
-               synchronisation appliquée aux tâches en attente de l'objet. Elles exécutent ensuite
-               lance
-               la fonction <span class="bold-strong">mk_<wbr>call_<wbr>executeUnblock</span> qui
-               réalise les opérations suivantes :</p>
-            <ul>
-               <li><span class="gray">✔</span> Elle exécute d'abord la fonction de libération afin que l'objet
-                  redevienne disponible.
-               </li>
-               <li><span class="gray">✔</span> Si nécessaire, elle restitue la priorité de base de la tâche suite à
-                  héritage de priorité.</li>
-               <li><span class="gray">✔</span> Elle analyse ensuite la première tâche dans la liste d'attente de
-                  l'objet. Si celle-ci n'est
-                  pas vide, elle exécute alors la
-                  fonction de
-                  synchronisation avec cette tâche.</li>
-               <li><span class="gray">✔</span> Si cette fonction retourne <span
-                     class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>OK</span>, la
-                  tâche obtient l'objet de synchronisation puis est soit réveillée (<span
-                     class="bold-strong">mk_<wbr>call_<wbr>wakeTask</span>),
-                  soit suspendue (<span class="bold-strong">mk_<wbr>call_<wbr>suspend</span>).
-                  Un
-                  changement de contexte est demandé si la tâche réveillée est plus prioritaire que la tâche
-                  courante.
-               </li>
-               <li><span class="gray">✔</span> Si la fonction retourne <span
-                     class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>INHIB</span>, la tâche reste bloquée et la tâche
-                  suivante est examinée.</li>
-               <li><span class="gray">✔</span> Pour les types d'objet dont le bit 0 est positionné, la boucle de
-                  synchronisation recommence
-                  tant que la liste n'a pas été entièrement parcourue. Pour les autres objets, seule la tâche la plus
-                  prioritaire est
-                  réveillée.
-               </li>
-            </ul>
-
-            <h3>Les erreurs de synchronisation</h3>
-
-            <p>Un code de retour inattendu d'une fonction de synchronisation signale une incohérence dans l'objet ou
-               dans les données du noyau. Celui-ci les traitent donc comme une erreur critique :</p>
-            <div class="table-scroll-container">
-               <table>
-                  <thead>
-                     <tr>
-                        <th>Erreur</th>
-                        <th>Origine</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                     <tr>
-                        <td><span class="gray">K_MK_ERROR_SYNC1</span></td>
-                        <td>Une tentative de synchronisation sans attente a échoué depuis un vecteur d'interruption
-                           malgrè les contrôles
-                           réalisés en amont (<span class="bold-strong">mk_<wbr>call_<wbr>synchronise</span>).</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">K_MK_ERROR_SYNC2</span></td>
-                        <td>La fonction de libération a retourné un code différent de <span
-                              class="bold-strong">K_MK_SYNC_OK</span>, <span
-                              class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>RIGHT</span> et <span
-                              class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>PARAM</span> (<span
-                              class="bold-strong">mk_<wbr>call_<wbr>unblock</span>).</td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">K_MK_ERROR_SYNC3</span></td>
-                        <td>La fonction de synchronisation appliquée à une tâche bloquée a retourné un code
-                           différent de
-                           <span class="bold-strong">K_MK_SYNC_OK</span> et <span
-                              class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>INHIB</span> (<span
-                              class="bold-strong">mk_<wbr>call_<wbr>unblock</span>).
-                        </td>
-                     </tr>
-                     <tr>
-                        <td><span class="gray">K_MK_ERROR_SYNC4</span></td>
-                        <td>Une suspension a été demandée depuis un vecteur d'interruption après l'envoi d'un
-                           message malgrè les contrôles réalisés en amont
-                           (<span class="bold-strong">mk_<wbr>call_<wbr>synchronise</span>).</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
-            <br>
-            <p>Le traitement de ces erreurs est décrit dans l'article <a href="./handler.html"><span
-                     class="bold-strong">Traiter les erreurs avec les gestionnaires</span></a>.</p>
-
-            <h3>Les objets antagonistes</h3>
-            <p>Une boîte de messages contient deux objets de synchronisation distincts qui contienne chacun leur propre
-               liste de
-               tâches bloquées (le <span class="bold-strong">poster</span> pour l'écriture et le <span
-                  class="bold-strong">pender</span> pour la lecture).
-               Un <span class="bold-strong">post</span> attend
-               un
-               emplacement libre alors qu'un <span class="bold-strong">pend</span> attend un message. Les deux
-               objets
-               sont antagonistes et chaque opération réussie peut débloquer une tâche qui attend l'autre.</p>
-            <br>
-            <p>La fonction <span class="bold-strong">mk_<wbr>call_<wbr>synchronise</span> gère ce cas de la manière
-               suivante :</p>
-            <ul>
-               <li><span class="gray">✔</span> Un <span class="bold-strong">post</span> exécute <span
-                     class="bold-strong">mk_mail_set</span> sur l'objet <span class="bold-strong">poster</span>
-                  puis si
-                  une tâche est en attente sur l'objet <span class="bold-strong">pender</span>, permute les
-                  objets et
-                  les fonctions de synchronisation (<span class="bold-strong">mk_call_swap</span>) et appelle la routine
-                  <span class="bold-strong">mk_<wbr>call_<wbr>unblock</span>. La fonction <span
-                     class="bold-strong">mk_mail_get</span> est alors appliquée à la tâche en attente.
-               </li>
-               <li><span class="gray">✔</span> Un <span class="bold-strong">pend</span> suit le chemin inverse,
-                  <span class="bold-strong">mk_mail_get</span> libère un emplacement puis <span
-                     class="bold-strong">mk_mail_set</span> est appliquée à une éventuelle tâche en attente sur
-                  l'objet
-                  <span class="bold-strong">poster</span>.
-               </li>
-            </ul>
-
-            <h2>Les fonctions utilitaires</h2>
-            <p>La table ci-dessous contient un ensemble de fonctions utilitaires qui peuvent être utilisées pour
+            <h3>Les fonctions utilitaires</h3>
+            <p>La table ci-dessous contient un ensemble de fonctions utilitaires pouvant être utilisées pour
                développer de nouveaux appels système ou de nouveaux objets de synchronisation : </p>
             <div class="table-scroll-container">
                <table>
@@ -1259,7 +770,12 @@ l_result = <span class="function">mk_semaphore_call</span> ( p_mkSemaphore );
             <a href="./load.html">
                <div>
                   <p>&lt;</p>
-                  <p>Mesurer le temps de charge CPU des tâches</p>
+                  <p>Mesurer le temps de charge CPU</p>
+               </div>
+            </a> <a href="./synchronisation.html">
+               <div>
+                  <p>La synchronisation des tâches</p>
+                  <p>></p>
                </div>
             </a>
          </div>
