@@ -536,17 +536,15 @@ priorityRegister
 
             <ul>
                <li><span class="gray">✔</span> Création et configuration d'une structure
-                  contenant les caractéristiques de l'appel système <span class="bold-strong">T_mkSVCObject</span>.
+                  contenant les caractéristiques de l'appel système (<span class="bold-strong">T_mkSVCObject</span>).
                </li>
                <li><span class="gray">✔</span> Exécution de la fonction <span class="bold-strong">mk_svc_set</span>.
-                  Cette fonction
-                  stocke l'objet instancié dans la donnée partagée <span class="bold-strong">g_mkSVCObject</span>
-                  ou dans le TCB de la tâche en cours d'exécution
-                  en fonction du contexte d'exécution (ISR ou non). Cette fonction détecte si
-                  l'appel provient d'une routine d'interruption ou non.
+                  Cette fonction copie l'objet local dans la donnée partagée <span
+                     class="bold-strong">g_mkSVCObject</span> lorsque l'appel provient d'un vecteur d'interruption,
+                  ou dans le TCB de la tâche en cours d'exécution dans le cas contraire.
                </li>
                <li><span class="gray">✔</span> Déclenchement de l'exception SVC (<span
-                     class="bold-strong">_mk_svc_set</span>).
+                     class="bold-strong">_mk_svc_call</span>).
                </li>
             </ul>
 
@@ -554,17 +552,17 @@ priorityRegister
             <br>
             <pre class="code">
 <span class="multi-line-comment">/* Extrait de mk_task_sleep() */ </span>
-<span class="keyword">T_mkSVCObject</span> l_svc;
+<span class="type">T_mkSVCObject</span> l_svc;
 
 <span class="multi-line-comment">/* Configuration de l'objet SVC */ </span>  
 l_svc.type = K_MK_SYSCALL_SLEEP_FUNCTION;
-l_svc.data[K_MK_OFFSET_TICK] = (<span class="keyword">T_mkAddr</span>) p_tick;
+l_svc.data[K_MK_OFFSET_TICK] = (<span class="type">T_mkAddr</span>) p_tick;
 
 <span class="multi-line-comment">/* Référencement de l'appel système dans le gestionnaire SVC */ </span>  
-( <span class="keyword">void</span> ) mk_svc_set ( &l_svc );
+( <span class="keyword">void</span> ) mk_svc_set ( &amp;l_svc );
 
 <span class="multi-line-comment">/* Déclenchement de l'appel système */ </span>  
-_mk_svc_set ( &l_svc );
+_mk_svc_call ( );
 </pre>
             <br>
 
@@ -583,23 +581,23 @@ _mk_svc_set ( &l_svc );
                   </thead>
                   <tbody>
                      <tr>
-                        <td><span class="gray">1000–1007</span></td>
+                        <td><span class="gray">1000-1007</span></td>
                         <td>Création d'objet (mk_call_create).</td>
                      </tr>
                      <tr>
-                        <td><span class="gray">2000–2006</span></td>
+                        <td><span class="gray">2000-2006</span></td>
                         <td>Suppression d'objet (mk_call_delete).</td>
                      </tr>
                      <tr>
-                        <td><span class="gray">3000–3008</span></td>
+                        <td><span class="gray">3000-3008</span></td>
                         <td>Manipulation de tâches (mk_call_handleTask).</td>
                      </tr>
                      <tr>
-                        <td><span class="gray">4000–4006</span></td>
+                        <td><span class="gray">4000-4006</span></td>
                         <td>Synchronisation de tâches (mk_call_synchronise).</td>
                      </tr>
                      <tr>
-                        <td><span class="gray">5000–5003</span></td>
+                        <td><span class="gray">5000-5003</span></td>
                         <td>Déblocage des tâches (mk_call_unblock).</td>
                      </tr>
                   </tbody>
@@ -611,6 +609,11 @@ _mk_svc_set ( &l_svc );
                changement de contexte explicite est réalisé
                à la fin de l'appel système.
             </p>
+            <br>
+            <p>Les mécanismes de protection contre les accès concurrents, la structure des requêtes <span
+                  class="bold-strong">SVC</span> ainsi que la méthodologie pour créer un nouvel appel système sont
+               détaillés dans l'article <a href="./syscall.html"><span class="bold-strong">Modifier le noyau et créer
+                     des appels système</span></a>.</p>
 
             <h2>20. Les callbacks</h2>
 
