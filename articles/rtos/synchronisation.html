@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="description"
+      content="Comprendre le mécanisme de synchronisation du noyau Mk ainsi que le blocage et le réveil des tâches via les fonctions mk_call_synchronise, mk_call_block et mk_call_unblock.">
+   <title>La synchronisation des tâches</title>
+   <link rel="icon" type="image/png" href="../../favicon.png">
+   <link rel="preload" href="../../assets/fonts/NotoColorEmoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
+   <link rel="canonical" href="https://lafabriquedumcu.com/articles/rtos/synchronisation.html">
+   <link href="../../assets/css/style.css" rel="stylesheet">
+   <link href="../../assets/css/template.css" rel="stylesheet">
+   <link href="../../assets/css/mk.css" rel="stylesheet">
+   <link href="../../assets/css/code.css" rel="stylesheet">
+   <link href="../../assets/css/fonts.css" rel="stylesheet">
+</head>
+
+<body>
+   <header>
+      <div>
+         <a href="../../index.html"><span>✔ </span>La Fabrique du MCU</a>
+      </div>
+      <div class="onglet">
+         <nav>
+            <a href="./index.html">MK</a>
+            <a href="https://github.com/EmbSoft3" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="../contact/contact.html">Contact</a>
+            <a href="./api.html"> 🔍</a>
+         </nav>
+      </div>
+   </header>
+
+   <main>
+      <section class="mk">
+         <div>
+            <h1 class="title-article">La synchronisation des tâches</h1>
+            <p>L'ensemble des objets de synchronisation partage le même mécanisme de blocage et de réveil
+               des
+               tâches. Ce mécanisme n'est implémenté qu'une fois dans le noyau et chaque objet définit seulement
+               ses fonctions d'obtention et de libération. Cet article décrit le fonctionnement de ce mécanisme de
+               synchronisation du noyau. </p>
+
+            <h2>1. Principe des mécanismes de synchronisation et de libération</h2>
+            <p>Les fonctions de synchronisation sont réparties dans deux familles d'appels
+               système :</p>
+            <ul>
+               <li><span class="gray">✔</span> La famille de <span class="bold-strong">synchronisation</span>. Elle est
+                  gérée par la fonction <span class="bold-strong">mk_<wbr>call_<wbr>synchronise</span> et regroupe les
+                  appels qui tentent
+                  d'obtenir
+                  un objet de synchronisation. Lorsque l'objet n'est pas disponible la tâche est bloquée.</li>
+               <li><span class="gray">✔</span> La famille de <span class="bold-strong">désynchronisation</span> ou de
+                  <span class="bold-strong">libération</span>. Elle est gérée par la fonction <span
+                     class="bold-strong">mk_<wbr>call_<wbr>unblock</span> et regroupe les appels qui libèrent un objet.
+                  Si des tâches attendent cet objet, la plus prioritaire est réveillée.
+               </li>
+            </ul>
+            <p>Chaque objet fournit une <span class="bold-strong">fonction de synchronisation</span> et une <span
+                  class="bold-strong">fonction de
+                  libération</span>. Le tableau suivant liste les fonctions utilisées par chaque appel système :
+            </p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Fonction de l'API</th>
+                        <th>Fonction de synchronisation</th>
+                        <th>Fonction de libération</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="gray">mk_mutex_take</span></td>
+                        <td><span class="bold-strong">mk_mutex_lock</span></td>
+                        <td>-</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">mk_mutex_release</span></td>
+                        <td><span class="bold-strong">mk_mutex_lock</span> (réveil)</td>
+                        <td><span class="bold-strong">mk_<wbr>mutex_<wbr>unlock</span></td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">mk_semaphore_take</span></td>
+                        <td><span class="bold-strong">mk_<wbr>semaphore_<wbr>lock</span></td>
+                        <td>-</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">mk_semaphore_release</span></td>
+                        <td><span class="bold-strong">mk_<wbr>semaphore_<wbr>lock</span> (réveil)</td>
+                        <td><span class="bold-strong">mk_<wbr>semaphore_<wbr>unlock</span></td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">mk_pool_allocSafe</span></td>
+                        <td><span class="bold-strong">mk_pool_take</span></td>
+                        <td>-</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">mk_pool_freeSafe</span></td>
+                        <td><span class="bold-strong">mk_pool_take</span> (réveil)</td>
+                        <td><span class="bold-strong">mk_<wbr>pool_<wbr>release</span></td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">mk_event_wait</span></td>
+                        <td><span class="bold-strong">mk_<wbr>event_<wbr>modify</span></td>
+                        <td>-</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">mk_event_clear</span></td>
+                        <td><span class="bold-strong">mk_event_raz</span></td>
+                        <td>-</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">mk_event_set</span></td>
+                        <td><span class="bold-strong">mk_<wbr>event_<wbr>check</span> (réveil)</td>
+                        <td><span class="bold-strong">mk_<wbr>event_<wbr>write</span></td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">mk_mail_post</span></td>
+                        <td><span class="bold-strong">mk_mail_set</span></td>
+                        <td><span class="bold-strong">mk_mail_get</span> (appliquée à la tâche réveillée)</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">mk_mail_pend</span></td>
+                        <td><span class="bold-strong">mk_mail_get</span></td>
+                        <td><span class="bold-strong">mk_mail_set</span> (appliquée à la tâche réveillée)</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+            <p>Les fonctions marquées « réveil » sont exécutées suite à la libération d'un objet.</p>
+            <h3>La disposition mémoire des objets</h3>
+            <p>Le code générique du module de synchronisation ne connaît pas le type des objets
+               qu'il
+               manipule. Il doit donc accéder aux attributs des différents objets en utilisant leur position :
+            </p>
+            <ul>
+               <li><span class="gray">✔</span> le mot à l'indice 0 contient le <span class="bold-strong">type</span> de
+                  l'objet.</li>
+               <li><span class="gray">✔</span> le mot à l'indice 3 contient la <span class="bold-strong">liste des
+                     tâches
+                     bloquées</span> de l'objet.</li>
+               <li><span class="gray">✔</span> Pour un mutex, le mot à l'indice 2 contient l'adresse de la tâche <span
+                     class="bold-strong">propriétaire</span>.
+               </li>
+            </ul>
+            <p>La table ci-dessous contient les quatre premiers champs des objets de synchronisation existant :</p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Structure</th>
+                        <th>Mot 0</th>
+                        <th>Mot 1</th>
+                        <th>Mot 2</th>
+                        <th>Mot 3</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="gray">T_mkMutex</span></td>
+                        <td class="center">type</td>
+                        <td class="center">lock</td>
+                        <td class="center"><span class="bold-strong">owner</span></td>
+                        <td class="center">pendingList</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">T_mkSemaphore</span></td>
+                        <td class="center">type</td>
+                        <td class="center">token</td>
+                        <td class="center">tokenNumber</td>
+                        <td class="center">pendingList</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">T_mkEvent</span></td>
+                        <td class="center">type</td>
+                        <td class="center">bypass</td>
+                        <td class="center">flag</td>
+                        <td class="center">pendingList</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">T_mkMailSynchro</span> (poster et pender)</td>
+                        <td class="center">type</td>
+                        <td class="center">item</td>
+                        <td class="center">reserved</td>
+                        <td class="center">pendingList</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">T_mkPool</span></td>
+                        <td class="center">type</td>
+                        <td class="center">current</td>
+                        <td class="center">size</td>
+                        <td class="center">pendingList</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+            <p>Chaque objet de synchronisation doit donc placer correctement ses champs dans sa structure. Le
+               type doit
+               occuper le premier mot et la liste des tâches bloquées doit occuper le quatrième mot. Si un objet
+               n'utilise pas les mots deux et trois, il doit tout de même réserver leur
+               emplacement
+               (champs <span class="bold-strong">reserved</span> ou <span class="bold-strong">bypass</span>) comme le
+               montre l'exemple ci-dessous :</p>
+            <br>
+            <pre class="code">
+<span class="multi-line-comment">/* Structure T_mkEvent */</span>  
+<span class="keyword">struct</span> <span class="type">T_mkEvent</span>
+{
+   <span class="type">uint32_t</span> type;           <span class="multi-line-comment">/* Type de l'objet */</span>                         
+   <span class="type">uint32_t</span> bypass; 
+   <span class="type">uint32_t</span> flag;                        
+   <span class="type">T_mkList</span> pendingList;    <span class="multi-line-comment">/* Liste des tâches bloquées */</span>
+   <span class="type">T_mkAddr</span> createByAddr;                        
+};
+</pre>
+            <br>
+            <p>Le champ <span class="bold-strong">type</span> combine
+               l'identifiant des objets de synchronisation (énumération <span class="bold-strong">T_mkTaskSync</span>),
+               le bit de protection <span class="bold-strong">K_<wbr>MK_<wbr>AREA_<wbr>PROTECTED</span> et un bit de
+               statut (bit 0). Ce bit indique que les tâches bloquées dans la liste de l'objet doivent
+               être parcourues ou non lors
+               d'une libération. Actuellement, il
+               n'est
+               positionné que pour les champs d'événements de type <span
+                  class="bold-strong">K_<wbr>MK_<wbr>ID_<wbr>EVENT_<wbr>MULTI</span> (valeur 65), pour lesquels
+               plusieurs tâches peuvent être réveillées suite au déclenchement d'un événement.</p>
+
+            <h3>Le prototype des fonctions de synchronisation</h3>
+            <p>Toutes les fonctions de synchronisation et de libération respectent le prototype ci-dessous :</p>
+            <br>
+            <pre class="code">
+<span class="keyword">typedef</span> <span class="type">uint32_t</span> ( *<span class="type">T_mkSyncFunction</span> ) ( 
+   <span class="type">T_mkAddr</span>,   <span class="multi-line-comment">/* Adresse de la tâche */</span> 
+   <span class="type">T_mkAddr</span>,   <span class="multi-line-comment">/* Adresse de l'objet présent à l'offset K_MK_OFFSET_SYNC_HANDLE */</span>
+   <span class="type">T_mkAddr</span>,   <span class="multi-line-comment">/* Adresse de l'objet présent à l'offset K_MK_OFFSET_PARAM_OBJECT */</span>
+   <span class="type">T_mkAddr</span>,   <span class="multi-line-comment">/* Adresse de l'objet présent à l'offset K_MK_OFFSET_MESSAGE */</span>
+   <span class="type">uint32_t</span> ); <span class="multi-line-comment">/* Statut d'interruption (p_mkStatus) */</span>
+</pre>
+            <br>
+            <p>La valeur de retour appartient à l'énumération <span class="bold-strong">T_mkSVCSync</span> et possède
+               les valeurs suivantes :</p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Code</th>
+                        <th>Signification</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="gray">K_MK_SYNC_KO</span></td>
+                        <td>L'objet n'a pas pu être obtenu.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">K_MK_SYNC_OK</span></td>
+                        <td>L'objet a été obtenu (ou libéré).</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">K_MK_SYNC_INHIB</span></td>
+                        <td>Aucune synchronisation n'est requise. Ce code est utilisé lorsqu'une tâche en attente
+                           ne
+                           doit pas être réveillée.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">K_MK_SYNC_RIGHT</span></td>
+                        <td>La fonction n'a pas été exécutée car les permissions sont insuffisantes (boîtes de
+                           messages).</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">K_MK_SYNC_PARAM</span></td>
+                        <td>La fonction n'a pas été exécutée car un paramètre est invalide (corruption d'une
+                           pool).</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+            <p>Les fonctions de synchronisation doivent respecter les règles suivantes :</p>
+            <ul>
+               <li><span class="gray">✔</span> Le premier paramètre contient l'adresse de la tâche ayant déclenché
+                  l'appel système. Celui-ci est nul lorsque
+                  l'appel provient d'un vecteur d'interruption ou lorsque la fonction exécutée est une fonction de
+                  libération.</li>
+               <li><span class="gray">✔</span> A l'exception des fonctions de libération, le résultat d'une fonction de
+                  synchronisation doit être enregistré dans
+                  le champ <span class="bold-strong">synchro.object</span> de la tâche ayant déclenché l'appel système.
+                  Il
+                  prend comme valeur l'adresse de l'objet si celui-ci a été obtenu ou la valeur nulle en cas d'échec.
+               </li>
+               <li><span class="gray">✔</span> Lorsque le noyau réveille une tâche suite à une libération, le paramètre
+                  <span class="bold-strong">K_<wbr>MK_<wbr>OFFSET_<wbr>MESSAGE</span> de la fonction prend la
+                  valeur du champ <span class="bold-strong">synchro.message</span> de la tâche réveillée. La fonction
+                  de synchronisation peut alors terminer son opération. Par exemple, copier un message pour une boîte
+                  ou enregistrer l'adresse du bloc alloué pour une pool.
+               </li>
+            </ul>
+
+            <h3>La récupération du résultat</h3>
+            <p>Suite à l'appel système, les champs <span class="bold-strong">synchro.object</span> et <span
+                  class="bold-strong">svc.result</span> permettent à la fonction de l'API de connaître le résultat de
+               l'appel système :</p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Valeur de svc.result</th>
+                        <th>Valeur de synchro.object</th>
+                        <th>Signification</th>
+
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="bold-strong">K_MK_OK</span></td>
+                        <td>Adresse de l'objet</td>
+                        <td>L'objet a été obtenu.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">K_MK_OK</span></td>
+                        <td><span class="gray">K_MK_NULL</span></td>
+                        <td>L'objet n'a pas été obtenu (tentative sans attente ou échéance de la temporisation).
+                        </td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">K_MK_OK</span></td>
+                        <td><span class="gray">K_MK_INVALID_HANDLE</span></td>
+                        <td>L'objet a été supprimé pendant que la tâche était bloquée.</td>
+                     </tr>
+                     <tr>
+                        <td><span class="bold-strong">K_MK_ERROR_*</span></td>
+                        <td><span class="gray">-</span></td>
+                        <td>Une erreur s'est produite durant l'appel système.</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+
+            <h2>2. La fonction mk_call_synchronise</h2>
+            <p>La fonction <span class="bold-strong">mk_<wbr>call_<wbr>synchronise</span> traite les appels système
+               permettant
+               d'obtenir un objet de synchronisation. L'algorithme de cette fonction est décrit dans l'organigramme
+               ci-dessous :
+            </p>
+            <figure>
+               <img src="../../images/rtos/rtos-synchronise.svg" alt="Organigramme de la fonction mk_call_synchronise"
+                  style="background:#ffffff;width: 100%;">
+               <figcaption>
+                  <span class="underline">Figure 1</span> : Organigramme de la fonction mk_call_synchronise.
+               </figcaption>
+            </figure>
+            <p>Dans un premier temps, la fonction <span class="bold-strong">mk_<wbr>call_<wbr>synchronise</span>
+               détermine l'échéance de la
+               temporisation puis identifie la fonction
+               <span class="bold-strong">mk_<wbr>call_<wbr>handleXXX</span> à exécuter.
+            </p>
+            <br>
+            <p>Ces dernières sont propres à
+               chaque type d'objet. Elles vérifient que l'adresse de l'objet est valide
+               et que celui-ci n'a pas été supprimé. Elles effectuent aussi les contrôles propres au type d'objet puis
+               renseignent
+               les adresses des fonctions et des objets de
+               synchronisation dans l'objet <span class="bold-strong">SVC</span> avant de lancer la
+               séquence de synchronisation générique.
+            </p>
+            <br>
+            <p>Cette séquence générique contrôle d'abord les droits de la tâche avec la routine <span
+                  class="bold-strong">mk_<wbr>call_<wbr>isProtectedArea</span> puis exécute la fonction de
+               synchronisation spécifique à l'objet. Les trois situations suivantes peuvent se présenter :</p>
+            <ul>
+               <li><span class="gray">✔</span> La synchronisation réussie, l'objet est obtenu (<span
+                     class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>OK</span>),
+                  la tâche poursuit alors son exécution. Pour une boîte de messages, le noyau réveille la tâche
+                  éventuellement en attente de l'objet antagoniste.</li>
+               <li><span class="gray">✔</span> La synchronisation échoue, l'objet
+                  n'est pas disponible (<span class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>KO</span>) et la
+                  temporisation est nulle. L'appel système retourne alors un code erreur et si celui-ci provient
+                  d'un vecteur d'interruption, une erreur critique
+                  est
+                  déclenchée.</li>
+               <li><span class="gray">✔</span> La synchronisation échoue, l'objet
+                  n'est pas disponible (<span class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>KO</span>) et la
+                  temporisation est non nulle, la tâche est alors bloquée suite à l'exécution de la fonction <span
+                     class="bold-strong">mk_call_block</span>.</li>
+
+            </ul>
+            <h2>3. La fonction mk_call_block</h2>
+            <p>La fonction de blocage <span class="bold-strong">mk_<wbr>call_<wbr>block</span> réalise les opérations
+               suivantes :</p>
+            <ul>
+               <li><span class="gray">✔</span> Elle positionne la tâche dans l'état <span
+                     class="bold-strong">K_<wbr>MK_<wbr>STATE_<wbr>BLOCKED</span>, mémorise l'adresse de l'objet
+                  de synchronisation dans la donnée
+                  <span class="bold-strong">synchro.object</span> de son <span class="bold-strong">TCB</span>, la durée
+                  et l'échéance de
+                  la
+                  temporisation.
+               </li>
+               <li><span class="gray">✔</span> Elle retire la tâche de sa liste des tâches prêtes à être exécutées et
+                  actualise le
+                  registre de priorité si cette liste devient vide.</li>
+               <li><span class="gray">✔</span> Elle insère la tâche dans la liste des tâches bloquées de l'objet.</li>
+               <li><span class="gray">✔</span> Si la tâche doit être suspendue après l'envoi d'un message, elle
+                  ajoute
+                  l'état <span class="bold-strong">K_<wbr>MK_<wbr>STATE_<wbr>SUSPENDED</span>.</li>
+               <li><span class="gray">✔</span> Si la temporisation n'est pas infinie, elle ajoute l'état
+                  <span class="bold-strong">K_<wbr>MK_<wbr>STATE_<wbr>DELAYED</span> et insère la tâche dans la
+                  liste des
+                  tâches temporisées. La tâche appartient alors à deux listes distinctes.
+               </li>
+               <li><span class="gray">✔</span> Elle exécute l'héritage de priorité si l'objet est un mutex.</li>
+               <li><span class="gray">✔</span> Elle réalise un changement de contexte inconditionnel.</li>
+            </ul>
+
+            <h2>4. La fonction mk_call_unblock</h2>
+            <p>La fonction <span class="bold-strong">mk_<wbr>call_<wbr>unblock</span> traite les appels qui
+               libèrent un objet. Son organigramme est le suivant : </p>
+            <figure>
+               <img src="../../images/rtos/rtos-unblock.svg" alt="Organigramme de la fonction mk_call_unblock"
+                  style="background:#ffffff;width: 100%;">
+               <figcaption>
+                  <span class="underline">Figure 2</span> : Organigramme de la fonction mk_call_unblock.
+               </figcaption>
+            </figure>
+            <p>Comme pour la fonction précédente, les routines <span
+                  class="bold-strong">mk_<wbr>call_<wbr>handleXXX</span> vérifient
+               les instances, contrôlent les paramètres puis configurent la fonction
+               de libération et la fonction
+               synchronisation appliquée aux tâches en attente de l'objet. Elles exécutent ensuite
+               la fonction <span class="bold-strong">mk_<wbr>call_<wbr>executeUnblock</span> qui
+               réalise les opérations suivantes :</p>
+            <ul>
+               <li><span class="gray">✔</span> Elle exécute d'abord la fonction de libération afin que l'objet
+                  redevienne disponible.
+               </li>
+               <li><span class="gray">✔</span> Si nécessaire, elle restitue la priorité de base de la tâche suite à
+                  un héritage de priorité.</li>
+               <li><span class="gray">✔</span> Elle analyse ensuite la première tâche dans la liste d'attente de
+                  l'objet. Si celle-ci n'est
+                  pas vide, elle exécute alors la
+                  fonction de
+                  synchronisation avec cette tâche.</li>
+               <li><span class="gray">✔</span> Si cette fonction retourne <span
+                     class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>OK</span>, la
+                  tâche obtient l'objet de synchronisation puis est soit réveillée (<span
+                     class="bold-strong">mk_<wbr>call_<wbr>wakeTask</span>),
+                  soit suspendue (<span class="bold-strong">mk_<wbr>call_<wbr>suspend</span>).
+                  Un
+                  changement de contexte est demandé si la tâche réveillée est plus prioritaire que la tâche
+                  courante.
+               </li>
+               <li><span class="gray">✔</span> Si la fonction retourne <span
+                     class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>INHIB</span>, la tâche reste bloquée et la tâche
+                  suivante est examinée.</li>
+               <li><span class="gray">✔</span> Pour les types d'objet dont le bit 0 est positionné, la boucle de
+                  synchronisation recommence
+                  tant que la liste n'a pas été entièrement parcourue. Pour les autres objets, seule la tâche la plus
+                  prioritaire est
+                  réveillée.
+               </li>
+            </ul>
+
+            <h2>5. Les erreurs de synchronisation</h2>
+
+            <p>Un code de retour inattendu après l'exécution d'une fonction de synchronisation signale une incohérence
+               dans l'objet ou
+               dans les données du noyau. Celui-ci les traite donc comme une erreur critique :</p>
+            <div class="table-scroll-container">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Erreur</th>
+                        <th>Origine</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr>
+                        <td><span class="gray">K_MK_ERROR_SYNC1</span></td>
+                        <td>Une tentative de synchronisation sans attente a échoué depuis un vecteur d'interruption
+                           malgré les contrôles
+                           réalisés en amont (<span class="bold-strong">mk_<wbr>call_<wbr>synchronise</span>).</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">K_MK_ERROR_SYNC2</span></td>
+                        <td>La fonction de libération a retourné un code différent de <span
+                              class="bold-strong">K_MK_SYNC_OK</span>, <span
+                              class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>RIGHT</span> et <span
+                              class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>PARAM</span> (<span
+                              class="bold-strong">mk_<wbr>call_<wbr>unblock</span>).</td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">K_MK_ERROR_SYNC3</span></td>
+                        <td>La fonction de synchronisation appliquée à une tâche bloquée a retourné un code
+                           différent de
+                           <span class="bold-strong">K_MK_SYNC_OK</span> et <span
+                              class="bold-strong">K_<wbr>MK_<wbr>SYNC_<wbr>INHIB</span> (<span
+                              class="bold-strong">mk_<wbr>call_<wbr>unblock</span>).
+                        </td>
+                     </tr>
+                     <tr>
+                        <td><span class="gray">K_MK_ERROR_SYNC4</span></td>
+                        <td>Une suspension a été demandée depuis un vecteur d'interruption après l'envoi d'un
+                           message malgré les contrôles réalisés en amont
+                           (<span class="bold-strong">mk_<wbr>call_<wbr>synchronise</span>).</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <br>
+            <p>Le traitement de ces erreurs est décrit dans l'article <a href="./handler.html"><span
+                     class="bold-strong">Traiter les erreurs avec les gestionnaires</span></a>.</p>
+
+            <h2>6. Les objets antagonistes</h2>
+            <p>Une boîte de messages contient deux objets de synchronisation distincts qui contiennent chacun leur
+               propre
+               liste de
+               tâches bloquées (le <span class="bold-strong">poster</span> pour l'écriture et le <span
+                  class="bold-strong">pender</span> pour la lecture).
+               Un <span class="bold-strong">post</span> attend
+               un
+               emplacement libre alors qu'un <span class="bold-strong">pend</span> attend un message. Les deux
+               objets
+               sont antagonistes et chaque opération réussie peut débloquer une tâche qui attend l'autre.</p>
+            <br>
+            <p>Lors d'un <span class="bold-strong">post</span>, la fonction <span
+                  class="bold-strong">mk_<wbr>call_<wbr>synchronise</span> exécute la routine <span
+                  class="bold-strong">mk_mail_set</span> sur
+               l'objet <span class="bold-strong">poster</span>
+               puis si
+               une tâche est en attente sur l'objet <span class="bold-strong">pender</span>, permute les
+               objets et
+               les fonctions de synchronisation (<span class="bold-strong">mk_call_swap</span>) et appelle la routine
+               <span class="bold-strong">mk_<wbr>call_<wbr>unblock</span>. La fonction <span
+                  class="bold-strong">mk_mail_get</span> est alors appliquée à la tâche en attente.
+            </p>
+            <br>
+            <p>Lors d'un <span class="bold-strong">pend</span>, la fonction <span
+                  class="bold-strong">mk_<wbr>call_<wbr>synchronise</span> suit le chemin inverse.
+               La routine <span class="bold-strong">mk_mail_get</span> libère un emplacement puis <span
+                  class="bold-strong">mk_mail_set</span> est appliquée à une éventuelle tâche en attente de
+               l'objet <span class="bold-strong">poster</span>.
+            </p>
+
+            <h2>7. Créer un objet de synchronisation</h2>
+            <p>La création d'un nouvel objet de synchronisation nécessite les étapes suivantes :</p>
+            <ul>
+               <li><span class="gray">✔</span>Définir un nouvel identifiant dans l'énumération <span
+                     class="bold-strong">T_mkTaskSync</span> en ne positionnant le bit 0 que
+                  si la
+                  liste des tâches bloquées doit être parcourue entièrement.</li>
+               <li><span class="gray">✔</span>Définir la structure de l'objet de
+                  synchronisation en respectant les contraintes de disposition. Ajouter un champ <span
+                     class="bold-strong">createByAddr</span>.
+               </li>
+               <li><span class="gray">✔</span> Allouer les
+                  instances de l'objet avec une pool dédiée puis écrire les fonctions de création et de suppression de
+                  l'objet.
+               </li>
+               <li><span class="gray">✔</span>Écrire les fonctions de synchronisation
+                  et de
+                  libération. Elles doivent respecter le prototype <span
+                     class="bold-strong">T_<wbr>mkSyncFunction</span>.</li>
+               <li><span class="gray">✔</span>Créer une fonction <span
+                     class="bold-strong">mk_<wbr>call_<wbr>handleXXX</span> dans les fonctions <span
+                     class="bold-strong">mk_<wbr>call_<wbr>synchronise</span> et <span
+                     class="bold-strong">mk_<wbr>call_<wbr>unblock</span>.
+               </li>
+               <li><span class="gray">✔</span>Écrire les fonctions de l'<span class="bold-strong">API</span> en suivant
+                  le
+                  même modèle que les fonctions existantes.</li>
+            </ul>
+      </section>
+
+      <section>
+         <div class="button-article">
+            <a href="./syscall.html">
+               <div>
+                  <p>&lt;</p>
+                  <p>Modifier le noyau et créer des appels système</p>
+               </div>
+            </a> <a href="../progress/progress.html">
+               <div>
+                  <p>Les symboles et la résolution dynamique</p>
+                  <p>></p>
+               </div>
+            </a>
+         </div>
+      </section>
+   </main>
+
+   <footer>
+      <div>
+         <p>La Fabrique du MCU.</p>
+         <p>Copyright © 2024-2026, All rights reserved.</p>
+      </div>
+   </footer>
+
+</body>
+
+</html>
